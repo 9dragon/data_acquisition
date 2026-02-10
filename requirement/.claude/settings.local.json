@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(npm create vite:*)",
+      "Bash(npm init:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run dev:*)",
+      "Bash(command:*)",
+      "Bash(nvm:*)",
+      "Bash(python:*)",
+      "Bash(cmd /c \"nvm list\")",
+      "Bash(netstat:*)",
+      "Bash(tasklist:*)",
+      "Bash(cmd /c \"npm run dev > dev-server.log 2>&1 &\")",
+      "Bash(pkill:*)",
+      "Bash(taskkill:*)",
+      "Bash(curl:*)",
+      "Bash(findstr:*)",
+      "Bash(tree:*)",
+      "Bash(del:*)",
+      "Bash(test:*)",
+      "Bash(wmic:*)"
+    ]
+  }
+}
