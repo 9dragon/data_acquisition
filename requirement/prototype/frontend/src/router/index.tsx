@@ -12,17 +12,20 @@ import PlanList from '../pages/Plan/PlanList';
 import ProjectPlan from '../pages/Plan/ProjectPlan';
 import ProgressReport from '../pages/Plan/ProgressReport';
 import BatchReport from '../pages/Plan/BatchReport';
-import GanttView from '../pages/Plan/GanttView';
 import IssueList from '../pages/Issue/List';
 import IssueDetail from '../pages/Issue/Detail';
 import MyIssue from '../pages/Issue/MyIssue';
 import IssueStatistics from '../pages/Issue/Statistics';
 import ProjectDoc from '../pages/Document/ProjectDoc';
 import TagManage from '../pages/Document/TagManage';
+import StageList from '../pages/Project/StageList';
+import ProgressList from '../pages/Progress/ProgressList';
 
 // 懒加载页面组件
+const ProfileCenter = React.lazy(() => import('../pages/Profile/Center'));
 const UserManage = React.lazy(() => import('../pages/System/User'));
 const RoleManage = React.lazy(() => import('../pages/System/Role'));
+const NotificationManage = React.lazy(() => import('../pages/System/Notification'));
 const ConfigManage = React.lazy(() => import('../pages/System/Config'));
 
 const router = createBrowserRouter([
@@ -46,6 +49,10 @@ const router = createBrowserRouter([
       {
         path: 'project/:id/dashboard',
         element: <ProjectDashboard />,
+      },
+      {
+        path: 'project/stage',
+        element: <StageList />,
       },
       // 设备管理
       {
@@ -78,8 +85,8 @@ const router = createBrowserRouter([
         element: <BatchReport />,
       },
       {
-        path: 'plan/gantt/:projectId',
-        element: <GanttView />,
+        path: 'progress',
+        element: <ProgressList />,
       },
       // 问题管理
       {
@@ -107,6 +114,15 @@ const router = createBrowserRouter([
         path: 'document/tag',
         element: <TagManage />,
       },
+      // 个人中心
+      {
+        path: 'profile',
+        element: (
+          <React.Suspense fallback={<div>加载中...</div>}>
+            <ProfileCenter />
+          </React.Suspense>
+        ),
+      },
       // 系统管理
       {
         path: 'system/user',
@@ -121,6 +137,14 @@ const router = createBrowserRouter([
         element: (
           <React.Suspense fallback={<div>加载中...</div>}>
             <RoleManage />
+          </React.Suspense>
+        ),
+      },
+      {
+        path: 'system/notification',
+        element: (
+          <React.Suspense fallback={<div>加载中...</div>}>
+            <NotificationManage />
           </React.Suspense>
         ),
       },

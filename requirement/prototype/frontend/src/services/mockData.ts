@@ -1,4 +1,4 @@
-import { Project, ProjectStats, ProjectStage, ProjectStatus, ProjectPriority } from '../types/project';
+import { Project, ProjectStats, ProjectStage, ProjectStatus, ProjectPriority, StageDefinition } from '../types/project';
 import { Device, DeviceType, DeviceCategory, DeviceStatus, CollectionMethod } from '../types/device';
 import { Issue, IssueStats, IssueType, IssuePriority, IssueStatus } from '../types/issue';
 import { Document, DocumentTag, DocumentCategory, DocumentStatus } from '../types/document';
@@ -28,6 +28,12 @@ export const mockProjects: Project[] = [
     startDate: '2024-01-15', plannedEndDate: '2024-06-30',
     progress: 45, deviceCount: 12, completedDeviceCount: 5,
     issueCount: 3, documentCount: 8,
+    stageConfigs: [
+      { stageKey: 'planning', weight: 20, status: 'completed' },
+      { stageKey: 'construction', weight: 40, status: 'in_progress' },
+      { stageKey: 'configuration', weight: 25, status: 'not_started' },
+      { stageKey: 'verification', weight: 15, status: 'not_started' },
+    ],
     createTime: '2024-01-10 10:00:00', updateTime: '2024-02-01 14:30:00', creator: '张经理',
   },
   {
@@ -38,6 +44,12 @@ export const mockProjects: Project[] = [
     startDate: '2024-02-01', plannedEndDate: '2024-05-31',
     progress: 75, deviceCount: 8, completedDeviceCount: 6,
     issueCount: 1, documentCount: 5,
+    stageConfigs: [
+      { stageKey: 'planning', weight: 20, status: 'completed' },
+      { stageKey: 'construction', weight: 40, status: 'completed' },
+      { stageKey: 'configuration', weight: 25, status: 'in_progress' },
+      { stageKey: 'verification', weight: 15, status: 'not_started' },
+    ],
     createTime: '2024-01-25 09:00:00', updateTime: '2024-02-03 16:00:00', creator: '李工程师',
   },
   {
@@ -48,6 +60,12 @@ export const mockProjects: Project[] = [
     startDate: '2024-03-01', plannedEndDate: '2024-07-31',
     progress: 0, deviceCount: 5, completedDeviceCount: 0,
     issueCount: 0, documentCount: 2,
+    stageConfigs: [
+      { stageKey: 'planning', weight: 20, status: 'not_started' },
+      { stageKey: 'construction', weight: 40, status: 'not_started' },
+      { stageKey: 'configuration', weight: 25, status: 'not_started' },
+      { stageKey: 'verification', weight: 15, status: 'not_started' },
+    ],
     createTime: '2024-02-01 11:00:00', updateTime: '2024-02-01 11:00:00', creator: '王工程师',
   },
   {
@@ -58,6 +76,12 @@ export const mockProjects: Project[] = [
     startDate: '2024-01-20', plannedEndDate: '2024-04-30',
     progress: 60, deviceCount: 10, completedDeviceCount: 6,
     issueCount: 2, documentCount: 6,
+    stageConfigs: [
+      { stageKey: 'planning', weight: 20, status: 'completed' },
+      { stageKey: 'construction', weight: 40, status: 'in_progress' },
+      { stageKey: 'configuration', weight: 25, status: 'not_started' },
+      { stageKey: 'verification', weight: 15, status: 'not_started' },
+    ],
     createTime: '2024-01-15 14:00:00', updateTime: '2024-02-02 10:00:00', creator: '赵工程师',
   },
   {
@@ -68,6 +92,12 @@ export const mockProjects: Project[] = [
     startDate: '2023-09-01', endDate: '2023-12-31', plannedEndDate: '2023-12-31',
     progress: 100, deviceCount: 15, completedDeviceCount: 15,
     issueCount: 0, documentCount: 12,
+    stageConfigs: [
+      { stageKey: 'planning', weight: 20, status: 'completed' },
+      { stageKey: 'construction', weight: 40, status: 'completed' },
+      { stageKey: 'configuration', weight: 25, status: 'completed' },
+      { stageKey: 'verification', weight: 15, status: 'completed' },
+    ],
     createTime: '2023-08-25 10:00:00', updateTime: '2023-12-31 17:00:00', creator: '张经理',
   },
   {
@@ -78,6 +108,12 @@ export const mockProjects: Project[] = [
     startDate: '2024-02-10', plannedEndDate: '2024-06-15',
     progress: 85, deviceCount: 6, completedDeviceCount: 5,
     issueCount: 1, documentCount: 3,
+    stageConfigs: [
+      { stageKey: 'planning', weight: 20, status: 'completed' },
+      { stageKey: 'construction', weight: 40, status: 'completed' },
+      { stageKey: 'configuration', weight: 25, status: 'completed' },
+      { stageKey: 'verification', weight: 15, status: 'in_progress' },
+    ],
     createTime: '2024-02-05 13:00:00', updateTime: '2024-02-04 09:30:00', creator: '刘工程师',
   },
   {
@@ -88,6 +124,7 @@ export const mockProjects: Project[] = [
     startDate: '2024-04-01', plannedEndDate: '2024-08-31',
     progress: 0, deviceCount: 8, completedDeviceCount: 0,
     issueCount: 0, documentCount: 1,
+    stageConfigs: [],
     createTime: '2024-01-30 15:00:00', updateTime: '2024-02-01 10:00:00', creator: '陈工程师',
   },
   {
@@ -98,6 +135,12 @@ export const mockProjects: Project[] = [
     startDate: '2024-05-01', plannedEndDate: '2024-09-30',
     progress: 95, deviceCount: 10, completedDeviceCount: 10,
     issueCount: 0, documentCount: 15,
+    stageConfigs: [
+      { stageKey: 'planning', weight: 20, status: 'completed' },
+      { stageKey: 'construction', weight: 40, status: 'completed' },
+      { stageKey: 'configuration', weight: 25, status: 'completed' },
+      { stageKey: 'verification', weight: 15, status: 'completed' },
+    ],
     createTime: '2024-02-03 11:00:00', updateTime: '2024-02-03 11:00:00', creator: '李工程师',
   },
 ];
@@ -141,7 +184,7 @@ export const mockDevices: Device[] = [
   {
     id: '1', code: 'DEV-001', name: '注塑机-01', projectId: '1', projectName: '智能制造车间数采项目',
     typeId: '1', typeName: '西门子PLC S7-1200', category: 'PLC',
-    status: 'completed', ip: '192.168.1.101', port: 102, location: '车间A区',
+    status: 'completed', ip: '192.168.1.101', port: 102, location: '车间A区', workshop: '车间A区',
     manufacturer: '西门子', model: 'S7-1214C', serialNumber: 'SN20240101',
     collectionMethod: 'OPC_UA', pointCount: 50, collectedPointCount: 50, progress: 100,
     responsiblePersonId: '2', responsiblePerson: '李工程师',
@@ -152,7 +195,7 @@ export const mockDevices: Device[] = [
   {
     id: '2', code: 'DEV-002', name: '注塑机-02', projectId: '1', projectName: '智能制造车间数采项目',
     typeId: '1', typeName: '西门子PLC S7-1200', category: 'PLC',
-    status: 'completed', ip: '192.168.1.102', port: 102, location: '车间A区',
+    status: 'completed', ip: '192.168.1.102', port: 102, location: '车间A区', workshop: '车间A区',
     manufacturer: '西门子', model: 'S7-1214C', serialNumber: 'SN20240102',
     collectionMethod: 'OPC_UA', pointCount: 50, collectedPointCount: 48, progress: 96,
     responsiblePersonId: '2', responsiblePerson: '李工程师',
@@ -163,7 +206,7 @@ export const mockDevices: Device[] = [
   {
     id: '3', code: 'DEV-003', name: '装配机器人-01', projectId: '1', projectName: '智能制造车间数采项目',
     typeId: '4', typeName: 'ABB机器人', category: 'Robot',
-    status: 'in_progress', ip: '192.168.1.201', location: '车间B区',
+    status: 'in_progress', ip: '192.168.1.201', location: '车间B区', workshop: '车间B区',
     manufacturer: 'ABB', model: 'IRB-1200', serialNumber: 'SN20240103',
     collectionMethod: 'OPC_UA', pointCount: 80, collectedPointCount: 50, progress: 62,
     responsiblePersonId: '3', responsiblePerson: '王工程师',
@@ -174,7 +217,7 @@ export const mockDevices: Device[] = [
   {
     id: '4', code: 'DEV-004', name: 'CNC加工中心-01', projectId: '4', projectName: 'CNC加工中心联网',
     typeId: '3', typeName: '发那科CNC', category: 'CNC',
-    status: 'completed', ip: '192.168.1.151', location: '加工车间',
+    status: 'completed', ip: '192.168.1.151', location: '加工车间', workshop: '加工车间',
     manufacturer: '发那科', model: '0i-MF', serialNumber: 'SN20240104',
     collectionMethod: 'OPC_UA', pointCount: 100, collectedPointCount: 100, progress: 100,
     responsiblePersonId: '4', responsiblePerson: '赵工程师',
@@ -185,7 +228,7 @@ export const mockDevices: Device[] = [
   {
     id: '5', code: 'DEV-005', name: 'CNC加工中心-02', projectId: '4', projectName: 'CNC加工中心联网',
     typeId: '3', typeName: '发那科CNC', category: 'CNC',
-    status: 'in_progress', ip: '192.168.1.152', location: '加工车间',
+    status: 'in_progress', ip: '192.168.1.152', location: '加工车间', workshop: '加工车间',
     manufacturer: '发那科', model: '0i-MF', serialNumber: 'SN20240105',
     collectionMethod: 'OPC_UA', pointCount: 100, collectedPointCount: 70, progress: 70,
     responsiblePersonId: '7', responsiblePerson: '周工程师',
@@ -196,7 +239,7 @@ export const mockDevices: Device[] = [
   {
     id: '6', code: 'DEV-006', name: '装配线PLC-01', projectId: '2', projectName: '装配线数字化改造',
     typeId: '1', typeName: '西门子PLC S7-1200', category: 'PLC',
-    status: 'completed', ip: '192.168.2.101', port: 102, location: '装配车间',
+    status: 'completed', ip: '192.168.2.101', port: 102, location: '装配车间', workshop: '装配车间',
     manufacturer: '西门子', model: 'S7-1215C', serialNumber: 'SN20240106',
     collectionMethod: 'OPC_UA', pointCount: 60, collectedPointCount: 60, progress: 100,
     responsiblePersonId: '5', responsiblePerson: '刘工程师',
@@ -207,7 +250,7 @@ export const mockDevices: Device[] = [
   {
     id: '7', code: 'DEV-007', name: '温控设备-01', projectId: '6', projectName: '涂装线设备监控',
     typeId: '5', typeName: '温度传感器', category: 'Sensor',
-    status: 'in_progress', location: '涂装车间',
+    status: 'in_progress', location: '涂装车间', workshop: '涂装车间',
     manufacturer: '国产', model: 'TH-100', serialNumber: 'SN20240107',
     collectionMethod: 'Modbus_RTU', pointCount: 20, collectedPointCount: 12, progress: 60,
     responsiblePersonId: '6', responsiblePerson: '陈工程师',
@@ -218,7 +261,7 @@ export const mockDevices: Device[] = [
   {
     id: '8', code: 'DEV-008', name: '装配机器人-02', projectId: '1', projectName: '智能制造车间数采项目',
     typeId: '4', typeName: 'ABB机器人', category: 'Robot',
-    status: 'not_started', location: '车间B区',
+    status: 'not_started', location: '车间B区', workshop: '车间B区',
     manufacturer: 'ABB', model: 'IRB-1200', serialNumber: 'SN20240108',
     collectionMethod: 'OPC_UA', pointCount: 80, collectedPointCount: 0, progress: 0,
     responsiblePersonId: '3', responsiblePerson: '王工程师',
@@ -229,7 +272,7 @@ export const mockDevices: Device[] = [
   {
     id: '9', code: 'DEV-009', name: 'CNC加工中心-03', projectId: '4', projectName: 'CNC加工中心联网',
     typeId: '3', typeName: '发那科CNC', category: 'CNC',
-    status: 'completed', ip: '192.168.1.153', location: '加工车间',
+    status: 'completed', ip: '192.168.1.153', location: '加工车间', workshop: '加工车间',
     manufacturer: '发那科', model: '0i-MF', serialNumber: 'SN20240109',
     collectionMethod: 'OPC_UA', pointCount: 100, collectedPointCount: 100, progress: 100,
     responsiblePersonId: '8', responsiblePerson: '吴工程师',
@@ -240,7 +283,7 @@ export const mockDevices: Device[] = [
   {
     id: '10', code: 'DEV-010', name: 'CNC加工中心-04', projectId: '4', projectName: 'CNC加工中心联网',
     typeId: '3', typeName: '发那科CNC', category: 'CNC',
-    status: 'in_progress', ip: '192.168.1.154', location: '加工车间',
+    status: 'in_progress', ip: '192.168.1.154', location: '加工车间', workshop: '加工车间',
     manufacturer: '发那科', model: '0i-MD', serialNumber: 'SN20240110',
     collectionMethod: 'OPC_UA', pointCount: 100, collectedPointCount: 75, progress: 75,
     responsiblePersonId: '4', responsiblePerson: '赵工程师',
@@ -427,4 +470,302 @@ export const getIssueById = (id: string): Issue | undefined => {
 // 辅助函数：根据ID获取文档
 export const getDocumentById = (id: string): Document | undefined => {
   return mockDocuments.find(d => d.id === id);
+};
+
+// 模拟项目计划
+import { ProjectPlan } from '../types/project';
+
+export const mockProjectPlans: ProjectPlan[] = [
+  {
+    id: 'plan-1',
+    projectId: '1',
+    name: '智能制造车间数采项目实施计划',
+    description: '车间生产线设备数据采集系统建设的完整实施计划',
+    startDate: '2024-02-01',
+    endDate: '2024-04-30',
+    stages: [
+      {
+        stage: 'planning',
+        startDate: '2024-02-01',
+        endDate: '2024-02-15',
+        managerId: '1',
+        participantIds: ['1', '2', '3'],
+      },
+      {
+        stage: 'construction',
+        startDate: '2024-02-16',
+        endDate: '2024-03-20',
+        managerId: '2',
+        participantIds: ['2', '3', '4'],
+      },
+      {
+        stage: 'configuration',
+        startDate: '2024-03-21',
+        endDate: '2024-04-10',
+        managerId: '3',
+        participantIds: ['2', '3'],
+      },
+      {
+        stage: 'verification',
+        startDate: '2024-04-11',
+        endDate: '2024-04-30',
+        managerId: '2',
+        participantIds: ['2', '3', '9'],
+      },
+    ],
+    tasks: [
+      {
+        id: 'task-1',
+        name: '人员配置',
+        description: '确定项目经理和工程师团队',
+        stage: 'planning',
+        status: 'completed',
+        startDate: '2024-02-01',
+        endDate: '2024-02-03',
+        progress: 100,
+        assignees: ['1', '2'],
+      },
+      {
+        id: 'task-2',
+        name: '设备采购',
+        description: '采购必要的数采设备和工具',
+        stage: 'planning',
+        status: 'completed',
+        startDate: '2024-02-04',
+        endDate: '2024-02-08',
+        progress: 100,
+        assignees: ['2'],
+      },
+      {
+        id: 'task-3',
+        name: '工具准备',
+        description: '准备调试工具和软件',
+        stage: 'planning',
+        status: 'completed',
+        startDate: '2024-02-09',
+        endDate: '2024-02-12',
+        progress: 100,
+        assignees: ['3'],
+      },
+      {
+        id: 'task-4',
+        name: '技术方案确认',
+        description: '与客户确认最终技术方案',
+        stage: 'planning',
+        status: 'completed',
+        startDate: '2024-02-13',
+        endDate: '2024-02-15',
+        progress: 100,
+        assignees: ['1', '2'],
+      },
+      {
+        id: 'task-5',
+        name: '设备安装',
+        description: '安装PLC通讯模块和网关设备',
+        stage: 'construction',
+        status: 'completed',
+        startDate: '2024-02-16',
+        endDate: '2024-02-25',
+        progress: 100,
+        assignees: ['2', '3'],
+      },
+      {
+        id: 'task-6',
+        name: '网络布线',
+        description: '完成设备间网络布线',
+        stage: 'construction',
+        status: 'in_progress',
+        startDate: '2024-02-26',
+        endDate: '2024-03-05',
+        progress: 80,
+        assignees: ['3'],
+      },
+      {
+        id: 'task-7',
+        name: '硬件调试',
+        description: '调试硬件连接和通讯',
+        stage: 'construction',
+        status: 'in_progress',
+        startDate: '2024-03-06',
+        endDate: '2024-03-15',
+        progress: 40,
+        assignees: ['2', '4'],
+      },
+      {
+        id: 'task-8',
+        name: '现场测试',
+        description: '现场设备连通性测试',
+        stage: 'construction',
+        status: 'pending',
+        startDate: '2024-03-16',
+        endDate: '2024-03-20',
+        progress: 0,
+        assignees: ['2', '3', '4'],
+      },
+    ],
+    createTime: '2024-01-15 10:00:00',
+    updateTime: '2024-02-01 10:00:00',
+  },
+  {
+    id: 'plan-2',
+    projectId: '2',
+    name: '装配线数字化改造实施计划',
+    description: '装配线设备联网与数据采集项目实施计划',
+    startDate: '2024-02-01',
+    endDate: '2024-05-31',
+    stages: [
+      {
+        stage: 'configuration',
+        startDate: '2024-02-01',
+        endDate: '2024-05-31',
+        managerId: '2',
+        participantIds: ['2', '3', '5'],
+      },
+    ],
+    tasks: [
+      {
+        id: 'task-9',
+        name: '点位配置',
+        description: '配置数据采集点位',
+        stage: 'configuration',
+        status: 'completed',
+        startDate: '2024-04-16',
+        endDate: '2024-04-25',
+        progress: 100,
+        assignees: ['2'],
+      },
+      {
+        id: 'task-10',
+        name: '协议配置',
+        description: '配置OPC UA和Modbus协议',
+        stage: 'configuration',
+        status: 'in_progress',
+        startDate: '2024-04-26',
+        endDate: '2024-05-05',
+        progress: 60,
+        assignees: ['3'],
+      },
+    ],
+    createTime: '2024-01-25 09:00:00',
+    updateTime: '2024-02-03 16:00:00',
+  },
+];
+
+// 内置阶段定义
+export const mockStageDefinitions: StageDefinition[] = [
+  {
+    id: 'stage-planning',
+    key: 'planning',
+    name: '准备阶段',
+    description: '项目前期准备工作，包括需求确认、资源准备等',
+    icon: 'ProjectOutlined',
+    color: '#1890ff',
+    progressMode: 'by_task',
+    isSystem: true,
+    defaultWeight: 20,
+    defaultTasks: ['人员配置', '设备采购', '工具准备', '技术方案确认'],
+    createTime: '2024-01-01 00:00:00',
+    updateTime: '2024-01-01 00:00:00',
+  },
+  {
+    id: 'stage-construction',
+    key: 'construction',
+    name: '施工阶段',
+    description: '现场施工实施，包括设备安装、网络部署等',
+    icon: 'SyncOutlined',
+    color: '#52c41a',
+    progressMode: 'by_device',
+    isSystem: true,
+    defaultWeight: 40,
+    defaultTasks: ['设备安装', '网络布线', '硬件调试'],
+    createTime: '2024-01-01 00:00:00',
+    updateTime: '2024-01-01 00:00:00',
+  },
+  {
+    id: 'stage-configuration',
+    key: 'configuration',
+    name: '配置阶段',
+    description: '系统配置与调试，包括参数设置、功能测试等',
+    icon: 'ClockCircleOutlined',
+    color: '#faad14',
+    progressMode: 'by_device',
+    isSystem: true,
+    defaultWeight: 25,
+    defaultTasks: ['点位配置', '协议配置', '状态逻辑配置'],
+    createTime: '2024-01-01 00:00:00',
+    updateTime: '2024-01-01 00:00:00',
+  },
+  {
+    id: 'stage-verification',
+    key: 'verification',
+    name: '核对阶段',
+    description: '数据核对与验证，确保采集数据准确无误',
+    icon: 'CheckCircleOutlined',
+    color: '#722ed1',
+    progressMode: 'by_task',
+    isSystem: true,
+    defaultWeight: 15,
+    defaultTasks: ['数据核对', '准确性验证', '完整性检查'],
+    createTime: '2024-01-01 00:00:00',
+    updateTime: '2024-01-01 00:00:00',
+  },
+];
+
+// 导入阶段进度辅助函数（实际使用时需要导入）
+// import { generatePlanningStageProgress, generateConstructionStageProgress, generateConfigurationStageProgress, generateVerificationStageProgress } from '../utils/mockDataHelpers';
+
+// 为项目1添加详细的阶段进度数据（示例）
+// 实际使用时，可以在项目初始化时调用这些函数生成阶段配置数据
+export const exampleStageProgressData = {
+  projectId: '1',
+  stageConfigs: [
+    {
+      stageKey: 'planning',
+      weight: 20,
+      status: 'completed' as const,
+      actualProgress: 100,
+      taskProgress: [
+        { taskId: 't1', taskName: '人员配置', completed: true, completedDate: '2024-01-20', remark: '已配置项目经理和工程师团队' },
+        { taskId: 't2', taskName: '设备采购', completed: true, completedDate: '2024-01-25', remark: '采购完成' },
+        { taskId: 't3', taskName: '工具准备', completed: true, completedDate: '2024-02-01', remark: '工具齐全' },
+        { taskId: 't4', taskName: '技术方案确认', completed: true, completedDate: '2024-02-10', remark: '方案已确认' },
+      ],
+      remark: '准备阶段已完成',
+      lastReportDate: '2024-02-10T10:00:00.000Z',
+    },
+    {
+      stageKey: 'construction',
+      weight: 40,
+      status: 'in_progress' as const,
+      actualProgress: 50,
+      deviceProgress: [
+        { deviceId: '1', deviceName: '注塑机-01', completed: true, completedDate: '2024-02-01' },
+        { deviceId: '2', deviceName: '注塑机-02', completed: true, completedDate: '2024-02-01' },
+        { deviceId: '3', deviceName: '装配机器人-01', completed: false },
+        { deviceId: '4', deviceName: '装配机器人-02', completed: false },
+      ],
+      remark: '设备安装进行中，已完成2台设备',
+      lastReportDate: '2024-02-05T14:30:00.000Z',
+    },
+    {
+      stageKey: 'configuration',
+      weight: 25,
+      status: 'not_started' as const,
+      actualProgress: 0,
+      deviceProgress: [],
+      remark: '',
+    },
+    {
+      stageKey: 'verification',
+      weight: 15,
+      status: 'not_started' as const,
+      actualProgress: 0,
+      taskProgress: [
+        { taskId: 'v1', taskName: '数据核对', completed: false },
+        { taskId: 'v2', taskName: '准确性验证', completed: false },
+        { taskId: 'v3', taskName: '完整性检查', completed: false },
+      ],
+      remark: '',
+    },
+  ],
 };

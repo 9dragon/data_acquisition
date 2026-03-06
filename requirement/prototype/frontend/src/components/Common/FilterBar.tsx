@@ -13,13 +13,14 @@ interface FilterItem {
 }
 
 interface FilterBarProps {
+  initialValues?: Record<string, any>;
   filters: FilterItem[];
   onSearch: (values: any) => void;
   onReset: () => void;
   loading?: boolean;
 }
 
-const FilterBar: React.FC<FilterBarProps> = ({ filters, onSearch, onReset, loading }) => {
+const FilterBar: React.FC<FilterBarProps> = ({ filters, onSearch, onReset, loading, initialValues }) => {
   const [form] = Form.useForm();
 
   const handleFinish = (values: any) => {
@@ -57,7 +58,7 @@ const FilterBar: React.FC<FilterBarProps> = ({ filters, onSearch, onReset, loadi
   };
 
   return (
-    <Form form={form} onFinish={handleFinish} style={{ marginBottom: 16 }}>
+    <Form form={form} onFinish={handleFinish} initialValues={initialValues} style={{ marginBottom: 16 }}>
       <Row gutter={[12, 16]} align="bottom">
         {filters.map((filter) => (
           <Col key={filter.name} flex="auto">

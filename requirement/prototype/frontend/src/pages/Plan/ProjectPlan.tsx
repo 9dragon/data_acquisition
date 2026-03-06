@@ -1,17 +1,25 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Row, Col, Timeline, Progress, Tag, Button, Space, message } from 'antd';
-import { CheckCircleOutlined, SyncOutlined, ClockCircleOutlined, EditOutlined, FastForwardOutlined } from '@ant-design/icons';
+import { Card, Row, Col, Timeline, Progress, Tag, Button, Space, message, Modal } from 'antd';
+import { CheckCircleOutlined, SyncOutlined, ClockCircleOutlined, EditOutlined, FastForwardOutlined, PlusOutlined } from '@ant-design/icons';
 import PageHeader from '../../components/Common/PageHeader';
 import StatusTag from '../../components/Common/StatusTag';
 import QuickReportModal from '../../components/Plan/QuickReportModal';
-import { getProjectById, mockDevices } from '../../services/mockData';
+import TaskFormModal from '../../components/Plan/TaskFormModal';
+import TaskList from '../../components/Plan/TaskList';
+import { getProjectById, mockDevices, mockProjectPlans } from '../../services/mockData';
+import { ProjectTask } from '../../types/project';
 
 const ProjectPlan: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const [quickReportVisible, setQuickReportVisible] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<any>(null);
+
+  // 任务管理状态
+  const [taskModalVisible, setTaskModalVisible] = useState(false);
+  const [editingTask, setEditingTask] = useState<ProjectTask | null>(null);
+  const [tasks, setTasks] = useState<ProjectTask[]>([]);
 
   // 使用 useMemo 动态计算设备和项目数据
   const project = useMemo(() => {
@@ -41,6 +49,55 @@ const ProjectPlan: React.FC = () => {
     // 这里可以添加更新设备数据的逻辑
   };
 
+  // 从mock数据加载任务
+  useEffect(() => {
+    if (projectId) {
+      const projectTasks = mockProjectPlans
+        .filter(p => p.projectId === projectId)
+        .flatMap(p => p.tasks);
+      setTasks(projectTasks);
+    }
+  }, [projectId]);
+
+  // 创建任务
+  const handleCreateTask = () => {
+    setEditingTask(null);
+    setTaskModalVisible(true);
+  };
+
+  // 编辑任务
+  const handleEditTask = (task: ProjectTask) => {
+    setEditingTask(task);
+    setTaskModalVisible(true);
+  };
+
+  // 删除任务
+  const handleDeleteTask = (taskId: string) => {
+    setTasks(tasks.filter(t => t.id !== taskId));
+    message.success('任务删除成功');
+  };
+
+  // 任务表单提交
+  const handleTaskSubmit = (taskData: any) => {
+    if (editingTask) {
+      // 编辑模式
+      setTasks(tasks.map(t =>
+        t.id === editingTask.id ? { ...t, ...taskData } : t
+      ));
+      message.success('任务更新成功');
+    } else {
+      // 新建模式
+      const newTask: ProjectTask = {
+        id: `task-${Date.now()}`,
+        ...taskData,
+      };
+      setTasks([...tasks, newTask]);
+      message.success('任务创建成功');
+    }
+    setTaskModalVisible(false);
+    setEditingTask(null);
+  };
+
   if (!project) {
     return (
       <Card>
@@ -52,41 +109,51 @@ const ProjectPlan: React.FC = () => {
     );
   }
 
-  // 实施阶段计划（仅针对实施阶段：准备/施工/配置/核对）
-  const implementationStages = [
-    {
-      key: 'preparation',
-      title: '准备阶段',
-      status: 'finish',
-      date: '2024-02-01 ~ 2024-02-15',
-      progress: 100,
-      tasks: ['人员配置', '设备采购', '工具准备', '技术方案确认'],
-    },
-    {
-      key: 'construction',
-      title: '施工阶段',
-      status: 'process',
-      date: '2024-02-16 ~ 2024-04-15',
-      progress: 60,
-      tasks: ['设备安装', '网络布线', '硬件调试', '现场测试'],
-    },
-    {
-      key: 'configuration',
-      title: '配置阶段',
-      status: 'wait',
-      date: '2024-04-16 ~ 2024-05-15',
-      progress: 0,
-      tasks: ['点位配置', '协议配置', '状态逻辑配置', '采集测试'],
-    },
-    {
-      key: 'verification',
-      title: '核对阶段',
-      status: 'wait',
-      date: '2024-05-16 ~ 2024-05-31',
-      progress: 0,
-      tasks: ['数据核对', '准确性验证', '完整性检查', '问题修复'],
-    },
-  ];
+  // 实施阶段计划（动态计算）
+  const implementationStages = useMemo(() => {
+    const stages = [
+      { key: 'planning', title: '准备阶段', tasks: [] as ProjectTask[] },
+      { key: 'construction', title: '施工阶段', tasks: [] as ProjectTask[] },
+      { key: 'configuration', title: '配置阶段', tasks: [] as ProjectTask[] },
+      { key: 'verification', title: '核对阶段', tasks: [] as ProjectTask[] },
+    ];
+
+    // 按阶段分组任务
+    tasks.forEach(task => {
+      const stage = stages.find(s => s.key === task.stage);
+      if (stage) {
+        stage.tasks.push(task);
+      }
+    });
+
+    // 计算每个阶段的进度
+    return stages.map(stage => {
+      const stageTasks = stage.tasks;
+      const avgProgress = stageTasks.length > 0
+        ? Math.round(stageTasks.reduce((sum, t) => sum + t.progress, 0) / stageTasks.length)
+        : 0;
+      const completedCount = stageTasks.filter(t => t.status === 'completed').length;
+      const inProgressCount = stageTasks.filter(t => t.status === 'in_progress').length;
+      const status = completedCount === stageTasks.length && stageTasks.length > 0 ? 'finish' :
+                     inProgressCount > 0 ? 'process' : 'wait';
+
+      // 计算日期范围
+      let dateRange = '未设置';
+      if (stageTasks.length > 0) {
+        const sortedTasks = [...stageTasks].sort((a, b) =>
+          a.startDate.localeCompare(b.startDate)
+        );
+        dateRange = `${sortedTasks[0].startDate} ~ ${sortedTasks[sortedTasks.length - 1].endDate}`;
+      }
+
+      return {
+        ...stage,
+        status,
+        progress: avgProgress,
+        date: dateRange,
+      };
+    });
+  }, [tasks]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -112,6 +179,13 @@ const ProjectPlan: React.FC = () => {
         ]}
         extra={
           <Space>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={handleCreateTask}
+            >
+              创建任务
+            </Button>
             <Button
               icon={<FastForwardOutlined />}
               onClick={() => {
@@ -161,13 +235,12 @@ const ProjectPlan: React.FC = () => {
                       <span key="date" style={{ color: '#666' }}>{stage.date}</span>
                     </Space>
                     <Progress percent={stage.progress} style={{ marginBottom: 8 }} />
-                    <div>
-                      {stage.tasks.map((task, index) => (
-                        <Tag key={index} style={{ marginBottom: 4 }}>
-                          {task}
-                        </Tag>
-                      ))}
-                    </div>
+                    <TaskList
+                      tasks={stage.tasks}
+                      onEdit={handleEditTask}
+                      onDelete={handleDeleteTask}
+                      stageTitle={stage.title}
+                    />
                   </div>
                 </Timeline.Item>
               ))}
@@ -180,7 +253,7 @@ const ProjectPlan: React.FC = () => {
                 <Button
                   key="preparation"
                   size="small"
-                  onClick={() => handleBatchReport('preparation')}
+                  onClick={() => handleBatchReport('planning')}
                 >
                   批量填报准备阶段
                 </Button>
@@ -275,6 +348,19 @@ const ProjectPlan: React.FC = () => {
           setSelectedDevice(null);
         }}
         onSubmit={handleQuickReportSubmit}
+      />
+
+      {/* 任务表单弹窗 */}
+      <TaskFormModal
+        visible={taskModalVisible}
+        task={editingTask}
+        projectId={projectId || ''}
+        allTasks={tasks}
+        onClose={() => {
+          setTaskModalVisible(false);
+          setEditingTask(null);
+        }}
+        onSubmit={handleTaskSubmit}
       />
     </Card>
   );

@@ -6,7 +6,7 @@ const { TextArea } = Input;
 
 // 实施阶段定义
 const IMPLEMENTATION_STAGES = [
-  { key: 'preparation', label: '准备阶段', description: '人员配置、设备采购、工具准备、技术方案确认' },
+  { key: 'planning', label: '准备阶段', description: '人员配置、设备采购、工具准备、技术方案确认' },
   { key: 'construction', label: '施工阶段', description: '设备安装、网络布线、硬件调试、现场测试' },
   { key: 'configuration', label: '配置阶段', description: '点位配置、协议配置、状态逻辑配置、采集测试' },
   { key: 'verification', label: '核对阶段', description: '数据核对、准确性验证、完整性检查、问题修复' },
@@ -26,7 +26,7 @@ const QuickReportModal: React.FC<QuickReportModalProps> = ({
   onSubmit,
 }) => {
   const [form, setForm] = useState({
-    stage: 'preparation',
+    stage: 'planning',
     progress: 0,
     stageRemark: '',
     overallRemark: '',
@@ -37,7 +37,7 @@ const QuickReportModal: React.FC<QuickReportModalProps> = ({
   useEffect(() => {
     if (visible && device) {
       setForm({
-        stage: 'preparation',
+        stage: 'planning',
         progress: 0,
         stageRemark: '',
         overallRemark: '',

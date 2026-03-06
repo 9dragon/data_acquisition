@@ -21,6 +21,8 @@ export interface Device extends BaseEntity {
   ip?: string;
   port?: number;
   location?: string;
+  workshop?: string;      // 所属车间
+  workshopId?: string;    // 车间ID（可选，用于关联主数据）
   manufacturer?: string;
   model?: string;
   serialNumber?: string;

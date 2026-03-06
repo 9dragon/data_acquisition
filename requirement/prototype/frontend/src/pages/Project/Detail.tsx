@@ -1,17 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Row, Col, Descriptions, Tag, Button, Space, Progress, Tabs, List, Badge } from 'antd';
+import { Card, Row, Col, Descriptions, Tag, Button, Space, Progress, Tabs, List, Table } from 'antd';
 import { EditOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import PageHeader from '../../components/Common/PageHeader';
 import StatusTag from '../../components/Common/StatusTag';
 import { useProjectStore } from '../../stores/projectStore';
+import { useStageStore } from '../../stores/stageStore';
 import { mockDevices, mockIssues, mockDocuments, getProjectById } from '../../services/mockData';
+import { getDeviceCurrentStage } from '../../utils/deviceStageHelper';
+import { getStageStatusText, formatReportDate } from '../../utils/progressCalculators';
 import type { Project } from '../../types/project';
 
 const ProjectDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { currentProject, setCurrentProject } = useProjectStore();
+  const { getStageByKey } = useStageStore();
   const [devices, setDevices] = useState(mockDevices.filter(d => d.projectId === id));
   const [issues, setIssues] = useState(mockIssues.filter(i => i.projectId === id));
   const [documents, setDocuments] = useState(mockDocuments.filter(d => d.projectId === id));
@@ -31,15 +35,6 @@ const ProjectDetail: React.FC = () => {
 
   const project = currentProject;
 
-  const stageMap: Record<string, string> = {
-    planning: '计划中',
-    design: '设计中',
-    development: '开发中',
-    testing: '测试中',
-    deployment: '部署中',
-    completed: '已完成',
-  };
-
   const priorityMap: Record<string, { text: string; color: string }> = {
     low: { text: '低', color: 'default' },
     medium: { text: '中', color: 'processing' },
@@ -54,43 +49,66 @@ const ProjectDetail: React.FC = () => {
       key: 'overview',
       label: '基本信息',
       children: (
-        <Descriptions bordered column={2}>
-          <Descriptions.Item label="项目编号">{project.code}</Descriptions.Item>
-          <Descriptions.Item label="项目名称">{project.name}</Descriptions.Item>
-          <Descriptions.Item label="项目阶段">
-            <Tag color="blue">{stageMap[project.stage]}</Tag>
-          </Descriptions.Item>
-          <Descriptions.Item label="项目状态">
-            <StatusTag status={project.status} />
-          </Descriptions.Item>
-          <Descriptions.Item label="优先级">
-            <Tag color={priority.color}>{priority.text}</Tag>
-          </Descriptions.Item>
-          <Descriptions.Item label="项目经理">{project.manager || '张经理'}</Descriptions.Item>
-          <Descriptions.Item label="开始日期">{project.startDate}</Descriptions.Item>
-          <Descriptions.Item label="计划结束日期">{project.plannedEndDate}</Descriptions.Item>
-          <Descriptions.Item label="实际结束日期">
-            {project.endDate || '-'}
-          </Descriptions.Item>
-          <Descriptions.Item label="项目进度">
-            <Progress percent={project.progress} style={{ width: 200 }} />
-          </Descriptions.Item>
-          <Descriptions.Item label="设备进度" span={2}>
-            <Space>
-              <span key="count">{project.completedDeviceCount}/{project.deviceCount}</span>
-              <Progress
-                key="progress"
-                percent={project.deviceCount > 0 ? Math.round((project.completedDeviceCount / project.deviceCount) * 100) : 0}
-                style={{ width: 200 }}
-              />
-            </Space>
-          </Descriptions.Item>
-          <Descriptions.Item label="项目描述" span={2}>
-            {project.description || '-'}
-          </Descriptions.Item>
-          <Descriptions.Item label="创建时间">{project.createTime}</Descriptions.Item>
-          <Descriptions.Item label="更新时间">{project.updateTime}</Descriptions.Item>
-        </Descriptions>
+        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+          {/* 项目基本信息 */}
+          <Descriptions bordered column={2}>
+            <Descriptions.Item label="项目编号">{project.code}</Descriptions.Item>
+            <Descriptions.Item label="项目名称">{project.name}</Descriptions.Item>
+            <Descriptions.Item label="项目状态">
+              <StatusTag status={project.status} />
+            </Descriptions.Item>
+            <Descriptions.Item label="优先级">
+              <Tag color={priority.color}>{priority.text}</Tag>
+            </Descriptions.Item>
+            <Descriptions.Item label="项目经理">{project.manager || '张经理'}</Descriptions.Item>
+            <Descriptions.Item label="团队成员">
+              {project.members?.map(m => <Tag key={m.id}>{m.name}</Tag>)}
+            </Descriptions.Item>
+            <Descriptions.Item label="开始日期">{project.startDate}</Descriptions.Item>
+            <Descriptions.Item label="计划结束日期">{project.plannedEndDate}</Descriptions.Item>
+            <Descriptions.Item label="实际结束日期">
+              {project.endDate || '-'}
+            </Descriptions.Item>
+            <Descriptions.Item label="项目描述" span={2}>
+              {project.description || '-'}
+            </Descriptions.Item>
+            <Descriptions.Item label="创建时间">{project.createTime}</Descriptions.Item>
+            <Descriptions.Item label="更新时间">{project.updateTime}</Descriptions.Item>
+          </Descriptions>
+
+          {/* 项目计划和实际进度 */}
+          <Card title="项目计划和实际进度" size="small">
+            <Table
+              columns={[
+                { title: '阶段名称', dataIndex: 'stageName', key: 'stageName' },
+                { title: '权重', dataIndex: 'weight', key: 'weight', render: (w: number) => `${w}%` },
+                { title: '状态', dataIndex: 'status', key: 'status', render: (s: string) => <StatusTag status={s} /> },
+                { title: '实际进度', dataIndex: 'actualProgress', key: 'actualProgress', render: (p: number) => `${p}%` },
+                { title: '负责人', dataIndex: 'managerId', key: 'managerId', render: (id: string) => {
+                  const managers: Record<string, string> = {
+                    '1': '张经理',
+                    '2': '李工程师',
+                    '3': '王工程师',
+                    '4': '赵工程师',
+                    '5': '刘工程师',
+                  };
+                  return managers[id] || '-';
+                }},
+                { title: '最后填报', dataIndex: 'lastReportDate', key: 'lastReportDate', render: (d: string) => formatReportDate(d) },
+              ]}
+              dataSource={project.stageConfigs?.map(config => {
+                const stageDef = getStageByKey(config.stageKey);
+                return {
+                  key: config.stageKey,
+                  stageName: stageDef?.name || config.stageKey,
+                  ...config,
+                };
+              }) || []}
+              pagination={false}
+              size="small"
+            />
+          </Card>
+        </Space>
       ),
     },
     {
@@ -115,6 +133,9 @@ const ProjectDetail: React.FC = () => {
                   <Space>
                     <span key="name">{device.name}</span>
                     <StatusTag key="status" status={device.status} />
+                    <Tag key="currentStage" color="blue">
+                      {getDeviceCurrentStage(device.id, project.stageConfigs)}
+                    </Tag>
                   </Space>
                 }
                 description={

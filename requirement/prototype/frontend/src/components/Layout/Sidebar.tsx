@@ -36,28 +36,12 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
       label: '工作台',
     },
     {
-      key: 'project-group',
-      icon: <ProjectOutlined />,
-      label: '项目管理',
-      children: [
-        { key: '/project', label: '项目列表' },
-      ],
-    },
-    {
-      key: 'device-group',
-      icon: <DatabaseOutlined />,
-      label: '设备管理',
-      children: [
-        { key: '/device', label: '设备列表' },
-        { key: '/device/type', label: '设备类型' },
-      ],
-    },
-    {
-      key: 'plan-group',
+      key: 'progress-group',
       icon: <CalendarOutlined />,
-      label: '计划管理',
+      label: '进度管理',
       children: [
         { key: '/plan', label: '项目计划' },
+        { key: '/progress', label: '项目进度' },
       ],
     },
     {
@@ -80,12 +64,31 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
       ],
     },
     {
+      key: 'project-group',
+      icon: <ProjectOutlined />,
+      label: '项目管理',
+      children: [
+        { key: '/project', label: '项目列表' },
+        { key: '/project/stage', label: '项目阶段' },
+      ],
+    },
+    {
+      key: 'device-group',
+      icon: <DatabaseOutlined />,
+      label: '设备管理',
+      children: [
+        { key: '/device', label: '设备列表' },
+        { key: '/device/type', label: '设备类型' },
+      ],
+    },
+    {
       key: 'system-group',
       icon: <SettingOutlined />,
       label: '系统管理',
       children: [
         { key: '/system/user', label: '用户管理' },
         { key: '/system/role', label: '角色权限' },
+        { key: '/system/notification', label: '通知公告' },
         { key: '/system/config', label: '基础配置' },
       ],
     },
@@ -101,6 +104,9 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
   const getSelectedKeys = () => {
     const path = location.pathname;
     // 处理动态路由
+    if (path === '/project/stage') {
+      return ['/project/stage'];
+    }
     if (path.startsWith('/project/') && !path.endsWith('/dashboard')) {
       return ['/project'];
     }
@@ -112,6 +118,9 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
     }
     if (path === '/plan') {
       return ['/plan'];
+    }
+    if (path.startsWith('/progress')) {
+      return ['/progress'];
     }
     if (path.startsWith('/issue/') && path !== '/issue/my' && path !== '/issue/statistics') {
       return ['/issue'];
@@ -127,7 +136,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
     const path = location.pathname;
     if (path.startsWith('/project')) return ['project-group'];
     if (path.startsWith('/device')) return ['device-group'];
-    if (path.startsWith('/plan')) return ['plan-group'];
+    if (path.startsWith('/plan') || path.startsWith('/progress')) return ['progress-group'];
     if (path.startsWith('/issue')) return ['issue-group'];
     if (path.startsWith('/document')) return ['document-group'];
     if (path.startsWith('/system')) return ['system-group'];
@@ -172,12 +181,12 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
         }}
       >
         {collapsed ? (
-          <CloudServerOutlined style={{ fontSize: '28px', color: '#fff' }} />
+          <ControlOutlined style={{ fontSize: '28px', color: '#fff' }} />
         ) : (
           <Space size={8}>
-            <CloudServerOutlined style={{ fontSize: '28px', color: '#fff' }} />
+            <ControlOutlined style={{ fontSize: '28px', color: '#fff' }} />
             <span style={{ fontSize: '18px', fontWeight: 600, color: '#fff' }}>
-              数采管理系统
+              数采项目管理系统
             </span>
           </Space>
         )}

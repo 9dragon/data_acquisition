@@ -43,6 +43,13 @@ const DeviceList: React.FC = () => {
       { label: 'Instrument', value: 'Instrument' },
       { label: 'Other', value: 'Other' },
     ]},
+    { name: 'workshop', label: '所属车间', type: 'select' as const, placeholder: '请选择车间', options: [
+      { label: '车间A区', value: '车间A区' },
+      { label: '车间B区', value: '车间B区' },
+      { label: '装配车间', value: '装配车间' },
+      { label: '加工车间', value: '加工车间' },
+      { label: '涂装车间', value: '涂装车间' },
+    ]},
   ];
 
   const columns: ColumnsType<Device> = [
@@ -71,6 +78,13 @@ const DeviceList: React.FC = () => {
       dataIndex: 'typeName',
       key: 'typeName',
       width: 150,
+    },
+    {
+      title: '所属车间',
+      dataIndex: 'workshop',
+      key: 'workshop',
+      width: 120,
+      render: (workshop: string) => workshop || '-',
     },
     {
       title: '分类',

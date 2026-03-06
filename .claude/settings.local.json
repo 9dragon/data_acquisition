@@ -3,7 +3,12 @@
     "allow": [
       "Bash(python:*)",
       "Bash(pip install:*)",
-      "Bash(iconv:*)"
+      "Bash(iconv:*)",
+      "Bash(npm run:*)",
+      "Bash(sed:*)",
+      "Bash(grep:*)",
+      "Bash(timeout 3 bash:*)",
+      "Bash(rm:*)"
     ]
   }
 }

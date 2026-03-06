@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useProjectStore } from '../../stores/projectStore';
 import { useIssueStore } from '../../stores/issueStore';
 import { useDocumentStore } from '../../stores/documentStore';
+import { useNotificationStore } from '../../stores/notificationStore';
 import { mockProjects, mockIssues, mockDocuments } from '../../services/mockData';
 
 const Dashboard: React.FC = () => {
@@ -12,6 +13,7 @@ const Dashboard: React.FC = () => {
   const { projects, setProjects, stats } = useProjectStore();
   const { issues, setIssues } = useIssueStore();
   const { documents, setDocuments } = useDocumentStore();
+  const { notifications } = useNotificationStore();
 
   useEffect(() => {
     // 初始化数据
@@ -68,24 +70,6 @@ const Dashboard: React.FC = () => {
       title: '注塑机02采集异常',
       project: '智能制造车间数采项目',
       reason: '部分点位数据读取失败',
-    },
-  ];
-
-  // 通知公告
-  const notifications = [
-    {
-      id: '1',
-      title: '关于系统维护的通知',
-      content: '系统将于本周六晚上22:00进行维护，预计2小时',
-      time: '2024-02-04 10:00',
-      type: 'info',
-    },
-    {
-      id: '2',
-      title: '数采项目进度汇报会议',
-      content: '请各项目负责人准备进度汇报材料',
-      time: '2024-02-03 14:00',
-      type: 'warning',
     },
   ];
 
@@ -259,7 +243,7 @@ const Dashboard: React.FC = () => {
                     description={
                       <Space direction="vertical" size={0}>
                         <span>{item.content}</span>
-                        <span style={{ color: '#999', fontSize: '12px' }}>{item.time}</span>
+                        <span style={{ color: '#999', fontSize: '12px' }}>{item.createTime}</span>
                       </Space>
                     }
                   />

@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
-import { Card, Space, Button, Tag, Upload } from 'antd';
-import { UploadOutlined, FileOutlined } from '@ant-design/icons';
+import { Card, Space, Button, Tag, Upload, Modal, message } from 'antd';
+import { UploadOutlined, FileOutlined, EyeOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../../components/Common/PageHeader';
 import FilterBar from '../../components/Common/FilterBar';
 import DataTable from '../../components/Common/DataTable';
 import StatusTag from '../../components/Common/StatusTag';
+import UploadProgressModal, { FileUploadItem } from '../../components/Document/UploadProgressModal';
 import { useDocumentStore } from '../../stores/documentStore';
 import { mockDocuments, mockProjects, mockDocumentTags } from '../../services/mockData';
+import { downloadFile } from '../../services/fileUploadService';
+import { getFileIcon, canPreviewFile } from '../../utils/fileHelpers';
 import type { ColumnsType } from 'antd/es/table';
 import type { Document } from '../../types/document';
 
@@ -15,6 +18,10 @@ const ProjectDoc: React.FC = () => {
   const navigate = useNavigate();
   const { documents } = useDocumentStore();
   const [loading, setLoading] = useState(false);
+  const [uploadModalVisible, setUploadModalVisible] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previewModalVisible, setPreviewModalVisible] = useState(false);
+  const [previewDocument, setPreviewDocument] = useState<Document | null>(null);
 
   const documentsWithProjectName = documents.map(doc => ({
     ...doc,
@@ -135,10 +142,38 @@ const ProjectDoc: React.FC = () => {
     },
   ];
 
+  const handleDownload = async (record: Document) => {
+    try {
+      await downloadFile(record.fileUrl, record.name, (progress) => {
+        console.log(`Download progress: ${progress.percent}%`);
+      });
+
+      // Update download count in store
+      // In production, this would be updated via API
+      message.success('下载成功');
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : '下载失败');
+    }
+  };
+
+  const handlePreview = (record: Document) => {
+    if (!canPreviewFile(record.fileType)) {
+      message.info('该文件类型不支持预览，请下载后查看');
+      return;
+    }
+    setPreviewDocument(record);
+    setPreviewModalVisible(true);
+  };
+
   const actions = [
     {
+      label: '预览',
+      onClick: (record: Document) => handlePreview(record),
+      show: (record: Document) => canPreviewFile(record.fileType),
+    },
+    {
       label: '下载',
-      onClick: (record: Document) => console.log('下载文档', record),
+      onClick: (record: Document) => handleDownload(record),
     },
     {
       label: '编辑',
@@ -160,13 +195,43 @@ const ProjectDoc: React.FC = () => {
     }, 500);
   };
 
+  const handleUploadChange = (info: any) => {
+    const files = info.fileList.map((item: any) => item.originFileObj).filter(Boolean);
+    setSelectedFiles(files);
+    setUploadModalVisible(true);
+  };
+
+  const handleUploadComplete = (results: FileUploadItem[]) => {
+    const successCount = results.filter(r => r.status === 'success').length;
+
+    if (successCount > 0) {
+      message.success(`成功上传 ${successCount} 个文件`);
+
+      // In production, you would refresh the document list from the server
+      // For now, we'll just show a success message
+      console.log('Successfully uploaded files:', results.filter(r => r.status === 'success'));
+    }
+
+    const errorCount = results.filter(r => r.status === 'error').length;
+    if (errorCount > 0) {
+      message.warning(`${errorCount} 个文件上传失败`);
+    }
+  };
+
   const uploadProps = {
     name: 'file',
     multiple: true,
     showUploadList: false,
-    beforeUpload: (file: any) => {
-      console.log('上传文件:', file);
-      return false;
+    onChange: handleUploadChange,
+    beforeUpload: (file: File, fileList: File[]) => {
+      // Validate files
+      const { validateFile } = require('../../utils/fileHelpers');
+      const validation = validateFile(file);
+      if (!validation.valid) {
+        message.error(validation.error);
+        return Upload.LIST_IGNORE; // Skip this file
+      }
+      return false; // Prevent automatic upload
     },
   };
 
@@ -198,6 +263,71 @@ const ProjectDoc: React.FC = () => {
         loading={loading}
         rowKey="id"
       />
+
+      <UploadProgressModal
+        visible={uploadModalVisible}
+        files={selectedFiles}
+        onClose={() => setUploadModalVisible(false)}
+        onComplete={handleUploadComplete}
+      />
+
+      <Modal
+        title={previewDocument?.name}
+        open={previewModalVisible}
+        onCancel={() => setPreviewModalVisible(false)}
+        footer={[
+          <Button key="close" onClick={() => setPreviewModalVisible(false)}>
+            关闭
+          </Button>,
+          <Button
+            key="download"
+            type="primary"
+            onClick={() => {
+              if (previewDocument) {
+                handleDownload(previewDocument);
+              }
+            }}
+          >
+            下载
+          </Button>,
+        ]}
+        width="80%"
+        style={{ top: 20 }}
+      >
+        {previewDocument && (
+          <div style={{ minHeight: 500 }}>
+            {canPreviewFile(previewDocument.fileType) ? (
+              previewDocument.fileType === 'pdf' ? (
+                <iframe
+                  src={previewDocument.fileUrl}
+                  style={{ width: '100%', height: '70vh', border: 'none' }}
+                  title={previewDocument.name}
+                />
+              ) : ['png', 'jpg', 'jpeg', 'gif', 'svg', 'bmp'].includes(previewDocument.fileType.toLowerCase()) ? (
+                <img
+                  src={previewDocument.fileUrl}
+                  alt={previewDocument.name}
+                  style={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain' }}
+                />
+              ) : previewDocument.fileType === 'txt' ? (
+                <div style={{ padding: 16, background: '#f5f5f5', borderRadius: 4 }}>
+                  <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
+                    {/* In production, load actual file content */}
+                    文本文件预览功能（需要后端支持）
+                  </pre>
+                </div>
+              ) : null
+            ) : (
+              <div style={{ textAlign: 'center', padding: 40 }}>
+                <div style={{ fontSize: 48 }}>{getFileIcon(previewDocument.fileType)}</div>
+                <p style={{ marginTop: 16, color: '#666' }}>
+                  该文件类型不支持预览，请下载后查看
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
     </Card>
   );
 };

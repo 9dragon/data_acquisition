@@ -1,29 +1,38 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Tag, Button, Space, Progress, Input, Select } from 'antd';
-import { SearchOutlined, EyeOutlined, CalendarOutlined } from '@ant-design/icons';
+import { Card, Table, Tag, Button, Space, Input, Popconfirm, message } from 'antd';
+import { SearchOutlined, PlusOutlined, EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useProjectStore } from '../../stores/projectStore';
 import { mockProjects } from '../../services/mockData';
+import { ProjectPlan, ProjectStage } from '../../types/project';
 import type { ColumnsType } from 'antd/es/table';
+import PlanFormModal from '../../components/Plan/PlanFormModal';
 
-interface ProjectRecord {
+// 实施阶段标签映射
+const STAGE_LABELS: Record<string, { label: string; color: string }> = {
+  planning: { label: '准备阶段', color: 'blue' },
+  construction: { label: '施工阶段', color: 'processing' },
+  configuration: { label: '配置阶段', color: 'orange' },
+  verification: { label: '核对阶段', color: 'purple' },
+};
+
+interface PlanRecord {
   key: string;
   id: string;
-  code: string;
   name: string;
-  stage: string;
-  progress: number;
-  deviceCount: number;
-  completedDeviceCount: number;
-  managerId: string;
-  plannedEndDate: string;
+  projectName: string;
+  description?: string;
+  startDate: string;
+  endDate: string;
+  stages: ProjectStage[];
 }
 
 const PlanList: React.FC = () => {
   const navigate = useNavigate();
-  const { projects, setProjects } = useProjectStore();
+  const { projects, setProjects, projectPlans, getProjectPlan, createProjectPlan, updateProjectPlan, deleteProjectPlan } = useProjectStore();
   const [searchText, setSearchText] = useState('');
-  const [stageFilter, setStageFilter] = useState<string | undefined>();
+  const [planModalVisible, setPlanModalVisible] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<ProjectPlan | null>(null);
 
   // 初始化项目数据
   useEffect(() => {
@@ -32,119 +41,150 @@ const PlanList: React.FC = () => {
     }
   }, []);
 
-  // 过滤出实施阶段的项目（准备/施工/配置/核对）
-  const implementationProjects = projects.filter(p =>
-    ['planning', 'development', 'testing', 'verification'].includes(p.stage)
-  );
-
-  const getStageLabel = (stage: string) => {
-    const stageMap: Record<string, { label: string; color: string }> = {
-      planning: { label: '准备阶段', color: 'blue' },
-      construction: { label: '施工阶段', color: 'processing' },
-      configuration: { label: '配置阶段', color: 'orange' },
-      verification: { label: '核对阶段', color: 'purple' },
-    };
-    return stageMap[stage] || { label: stage, color: 'default' };
+  // 处理编辑
+  const handleEdit = (planId: string) => {
+    const plan = getProjectPlan(planId);
+    if (plan) {
+      setEditingPlan(plan);
+      setPlanModalVisible(true);
+    }
   };
 
-  const filteredProjects = implementationProjects
+  // 处理删除
+  const handleDelete = (planId: string) => {
+    deleteProjectPlan(planId);
+    message.success('删除成功');
+  };
+
+  // 处理计划表单提交
+  const handlePlanSubmit = (data: any) => {
+    if (editingPlan) {
+      updateProjectPlan(editingPlan.id, data);
+      message.success('更新成功');
+    } else {
+      createProjectPlan(data);
+      message.success('创建成功');
+    }
+    setPlanModalVisible(false);
+    setEditingPlan(null);
+  };
+
+  // 处理关闭计划表单
+  const handlePlanModalClose = () => {
+    setPlanModalVisible(false);
+    setEditingPlan(null);
+  };
+
+  // 处理创建新计划
+  const handleCreatePlan = () => {
+    setEditingPlan(null);
+    setPlanModalVisible(true);
+  };
+
+  // 过滤后的计划列表
+  const filteredPlans = projectPlans
     .filter(p => {
+      const project = projects.find(proj => proj.id === p.projectId);
       const matchSearch = !searchText ||
         p.name.toLowerCase().includes(searchText.toLowerCase()) ||
-        p.code.toLowerCase().includes(searchText.toLowerCase());
-      const matchStage = !stageFilter || p.stage === stageFilter;
-      return matchSearch && matchStage;
+        (project && project.name.toLowerCase().includes(searchText.toLowerCase()));
+      return matchSearch;
     })
-    .map(p => ({
-      key: p.id,
-      id: p.id,
-      code: p.code,
-      name: p.name,
-      stage: p.stage,
-      progress: p.progress,
-      deviceCount: p.deviceCount,
-      completedDeviceCount: p.completedDeviceCount,
-      managerId: p.managerId,
-      plannedEndDate: p.plannedEndDate,
-    }));
+    .map(p => {
+      const project = projects.find(proj => proj.id === p.projectId);
+      return {
+        key: p.id,
+        id: p.id,
+        name: p.name,
+        projectName: project?.name || '未知项目',
+        description: p.description,
+        startDate: p.startDate,
+        endDate: p.endDate,
+        stages: p.stages.map(s => s.stage),
+        projectId: p.projectId,
+      };
+    });
 
-  const columns: ColumnsType<ProjectRecord> = [
+  const columns: ColumnsType<PlanRecord> = [
     {
-      title: '项目编号',
-      dataIndex: 'code',
-      key: 'code',
-      width: 150,
-    },
-    {
-      title: '项目名称',
+      title: '计划名称',
       dataIndex: 'name',
       key: 'name',
+      width: 200,
       ellipsis: true,
     },
     {
-      title: '实施阶段',
-      dataIndex: 'stage',
-      key: 'stage',
-      width: 120,
-      render: (stage: string) => {
-        const { label, color } = getStageLabel(stage);
-        return <Tag color={color}>{label}</Tag>;
-      },
-      filters: [
-        { text: '准备阶段', value: 'planning' },
-        { text: '施工阶段', value: 'development' },
-        { text: '配置阶段', value: 'testing' },
-        { text: '核对阶段', value: 'verification' },
-      ],
-    },
-    {
-      title: '项目进度',
-      dataIndex: 'progress',
-      key: 'progress',
+      title: '所属项目',
+      dataIndex: 'projectName',
+      key: 'projectName',
       width: 200,
-      render: (progress: number) => (
-        <Progress percent={progress} size="small" />
+      ellipsis: true,
+    },
+    {
+      title: '包含阶段',
+      dataIndex: 'stages',
+      key: 'stages',
+      width: 240,
+      render: (stages: ProjectStage[]) => (
+        <Space size="small" wrap>
+          {stages.map(stage => {
+            const { label, color } = STAGE_LABELS[stage] || { label: stage, color: 'default' };
+            return <Tag key={stage} color={color}>{label}</Tag>;
+          })}
+        </Space>
       ),
     },
     {
-      title: '设备进度',
-      key: 'deviceProgress',
-      width: 150,
-      render: (_, record) => (
-        <span style={{ fontSize: 12, color: '#666' }}>
-          {record.completedDeviceCount}/{record.deviceCount}
-        </span>
-      ),
+      title: '计划开始日期',
+      dataIndex: 'startDate',
+      key: 'startDate',
+      width: 120,
     },
     {
-      title: '计划完成日期',
-      dataIndex: 'plannedEndDate',
-      key: 'plannedEndDate',
+      title: '计划结束日期',
+      dataIndex: 'endDate',
+      key: 'endDate',
       width: 120,
     },
     {
       title: '操作',
       key: 'action',
-      width: 180,
+      width: 200,
       fixed: 'right' as const,
       render: (_, record) => (
         <Space size="small">
           <Button
             type="link"
             size="small"
-            icon={<CalendarOutlined />}
-            onClick={() => navigate(`/plan/${record.id}`)}
+            icon={<EyeOutlined />}
+            onClick={() => navigate(`/plan/${record.projectId}`)}
           >
-            项目计划
+            查看
           </Button>
           <Button
             type="link"
             size="small"
-            icon={<EyeOutlined />}
-            onClick={() => navigate(`/plan/gantt/${record.id}`)}
+            icon={<EditOutlined />}
+            onClick={() => handleEdit(record.id)}
           >
-            甘特图
+            编辑
           </Button>
+          <Popconfirm
+            title="确认删除"
+            description="确定要删除这个计划吗？"
+            onConfirm={() => handleDelete(record.id)}
+            okText="确定"
+            cancelText="取消"
+          >
+            <Button
+              type="link"
+              size="small"
+              icon={<DeleteOutlined />}
+              danger
+            >
+              删除
+            </Button>
+          </Popconfirm>
         </Space>
       ),
     },
@@ -155,40 +195,56 @@ const PlanList: React.FC = () => {
       <Card
         title={
           <Space>
-            <CalendarOutlined key="icon" />
-            <span key="text">项目计划管理</span>
+            <span>项目计划管理</span>
           </Space>
         }
         extra={
           <Space>
             <Input
-              key="search"
-              placeholder="搜索项目名称或编号"
+              placeholder="搜索计划名称或项目名称"
               prefix={<SearchOutlined />}
               style={{ width: 250 }}
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               allowClear
             />
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={handleCreatePlan}
+            >
+              创建计划
+            </Button>
           </Space>
         }
       >
         <div style={{ marginBottom: 16, color: '#666', fontSize: 14 }}>
-          本页面展示所有进入实施阶段的项目计划。项目计划仅针对实施阶段（准备/施工/配置/核对），不包括售前调研和验收阶段。
+          项目计划仅针对实施阶段（准备/施工/配置/核对），用于管理项目的实施计划和任务安排。
         </div>
 
         <Table
           columns={columns}
-          dataSource={filteredProjects}
+          dataSource={filteredPlans}
           pagination={{
-            total: filteredProjects.length,
+            total: filteredPlans.length,
             pageSize: 10,
             showSizeChanger: true,
-            showTotal: (total) => `共 ${total} 个项目`,
+            showTotal: (total) => `共 ${total} 个计划`,
           }}
-          scroll={{ x: 1200 }}
+          scroll={{ x: 1000 }}
         />
       </Card>
+
+      {/* 计划表单 Modal */}
+      {planModalVisible && (
+        <PlanFormModal
+          visible={planModalVisible}
+          plan={editingPlan}
+          projectId={editingPlan?.projectId || projects[0]?.id || ''}
+          onClose={handlePlanModalClose}
+          onSubmit={handlePlanSubmit}
+        />
+      )}
     </div>
   );
 };

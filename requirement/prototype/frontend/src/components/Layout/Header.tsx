@@ -1,7 +1,9 @@
 import React from 'react';
-import { Layout, Dropdown, Avatar, Badge, Space, Button } from 'antd';
-import { UserOutlined, BellOutlined, LogoutOutlined, SettingOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
+import { Layout, Dropdown, Avatar, Space, Button } from 'antd';
+import { UserOutlined, LogoutOutlined, SettingOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
+import { useNavigate } from 'react-router-dom';
+import { useUserStore } from '../../stores/userStore';
 
 const { Header: AntHeader } = Layout;
 
@@ -11,11 +13,15 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ collapsed, onToggle }) => {
+  const navigate = useNavigate();
+  const { currentUser } = useUserStore();
+
   const menuItems: MenuProps['items'] = [
     {
       key: 'profile',
       icon: <UserOutlined />,
       label: '个人中心',
+      onClick: () => navigate('/profile'),
     },
     {
       key: 'settings',
@@ -63,18 +69,10 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle }) => {
       </Space>
 
       <Space size="large">
-        <Badge count={3} size="small">
-          <Button
-            type="text"
-            icon={<BellOutlined />}
-            style={{ fontSize: '16px' }}
-          />
-        </Badge>
-
         <Dropdown menu={{ items: menuItems }} placement="bottomRight">
           <Space style={{ cursor: 'pointer' }}>
             <Avatar key="avatar" size="small" icon={<UserOutlined />} />
-            <span key="name">张经理</span>
+            <span key="name">{currentUser?.name || '用户'}</span>
           </Space>
         </Dropdown>
       </Space>

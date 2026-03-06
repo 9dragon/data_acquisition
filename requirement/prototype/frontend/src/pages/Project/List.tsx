@@ -1,19 +1,42 @@
-import React, { useState } from 'react';
-import { Card, Space, Button, Tag, Progress } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Card, Space, Button, Tag, Progress, message, Popconfirm } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import PageHeader from '../../components/Common/PageHeader';
 import FilterBar from '../../components/Common/FilterBar';
 import DataTable from '../../components/Common/DataTable';
 import StatusTag from '../../components/Common/StatusTag';
+import ProjectFormModal from '../../components/Project/ProjectFormModal';
 import { useProjectStore } from '../../stores/projectStore';
+import { mockProjects } from '../../services/mockData';
 import type { ColumnsType } from 'antd/es/table';
 import type { Project } from '../../types/project';
+import dayjs from 'dayjs';
 
 const ProjectList: React.FC = () => {
   const navigate = useNavigate();
-  const { projects } = useProjectStore();
+  const location = useLocation();
+  const { projects, setProjects, updateProject, deleteProject } = useProjectStore();
   const [loading, setLoading] = useState(false);
+  const [filterValues, setFilterValues] = React.useState<Record<string, any>>({});
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+
+  // 初始化项目数据
+  useEffect(() => {
+    if (projects.length === 0) {
+      setProjects(mockProjects);
+    }
+  }, []);
+
+  // 从 URL 参数读取初始筛选值
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const stage = params.get('stage');
+    if (stage) {
+      setFilterValues({ stage });
+    }
+  }, []);
 
   const filters = [
     { name: 'name', label: '项目名称', type: 'input' as const, placeholder: '请输入项目名称' },
@@ -25,14 +48,34 @@ const ProjectList: React.FC = () => {
       { label: '暂停', value: 'on_hold' },
     ]},
     { name: 'stage', label: '项目阶段', type: 'select' as const, placeholder: '请选择阶段', options: [
-      { label: '计划中', value: 'planning' },
-      { label: '设计中', value: 'design' },
-      { label: '开发中', value: 'development' },
-      { label: '测试中', value: 'testing' },
-      { label: '部署中', value: 'deployment' },
+      { label: '售前调研', value: 'presale' },
+      { label: '准备阶段', value: 'planning' },
+      { label: '施工阶段', value: 'construction' },
+      { label: '配置阶段', value: 'configuration' },
+      { label: '核对阶段', value: 'verification' },
+      { label: '验收阶段', value: 'acceptance' },
       { label: '已完成', value: 'completed' },
     ]},
   ];
+
+  // 应用筛选到数据源
+  const getFilteredData = () => {
+    return projects.filter(project => {
+      if (filterValues.stage && project.stage !== filterValues.stage) {
+        return false;
+      }
+      if (filterValues.status && project.status !== filterValues.status) {
+        return false;
+      }
+      if (filterValues.name && !project.name.toLowerCase().includes(filterValues.name.toLowerCase())) {
+        return false;
+      }
+      if (filterValues.code && !project.code.toLowerCase().includes(filterValues.code.toLowerCase())) {
+        return false;
+      }
+      return true;
+    });
+  };
 
   const columns: ColumnsType<Project> = [
     {
@@ -48,23 +91,6 @@ const ProjectList: React.FC = () => {
       key: 'name',
       width: 200,
       fixed: 'left',
-    },
-    {
-      title: '项目阶段',
-      dataIndex: 'stage',
-      key: 'stage',
-      width: 120,
-      render: (stage: string) => {
-        const stageMap: Record<string, string> = {
-          planning: '计划中',
-          design: '设计中',
-          development: '开发中',
-          testing: '测试中',
-          deployment: '部署中',
-          completed: '已完成',
-        };
-        return <Tag color="blue">{stageMap[stage] || stage}</Tag>;
-      },
     },
     {
       title: '状态',
@@ -97,42 +123,6 @@ const ProjectList: React.FC = () => {
       render: (_, record) => record.manager || '张经理',
     },
     {
-      title: '进度',
-      dataIndex: 'progress',
-      key: 'progress',
-      width: 150,
-      render: (progress: number) => (
-        <Progress
-          percent={progress}
-          size="small"
-          status={progress === 100 ? 'success' : undefined}
-        />
-      ),
-    },
-    {
-      title: '设备进度',
-      key: 'deviceProgress',
-      width: 150,
-      render: (_, record) => (
-        <Space direction="vertical" size={0}>
-          <span style={{ fontSize: '12px' }}>
-            {record.completedDeviceCount}/{record.deviceCount}
-          </span>
-          <Progress
-            percent={record.deviceCount > 0 ? Math.round((record.completedDeviceCount / record.deviceCount) * 100) : 0}
-            size="small"
-            showInfo={false}
-          />
-        </Space>
-      ),
-    },
-    {
-      title: '计划结束日期',
-      dataIndex: 'plannedEndDate',
-      key: 'plannedEndDate',
-      width: 120,
-    },
-    {
       title: '创建时间',
       dataIndex: 'createTime',
       key: 'createTime',
@@ -147,24 +137,93 @@ const ProjectList: React.FC = () => {
       onClick: (record: Project) => navigate(`/project/${record.id}`),
     },
     {
-      label: '仪表盘',
-      onClick: (record: Project) => navigate(`/project/${record.id}/dashboard`),
+      label: '编辑',
+      onClick: (record: Project) => handleEdit(record),
+    },
+    {
+      label: '删除',
+      danger: true,
+      render: (record: Project) => (
+        <Popconfirm
+          title="确认删除"
+          description="确定要删除这个项目吗？删除后无法恢复。"
+          onConfirm={() => handleDelete(record)}
+          okText="确定"
+          cancelText="取消"
+        >
+          <Button type="link" size="small" danger>
+            删除
+          </Button>
+        </Popconfirm>
+      ),
     },
   ];
 
   const handleSearch = (values: any) => {
+    setFilterValues(values);
     setLoading(true);
-    // 模拟筛选
     setTimeout(() => {
       setLoading(false);
     }, 500);
   };
 
   const handleReset = () => {
+    setFilterValues({});
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
     }, 500);
+  };
+
+  const handleCreateProject = () => {
+    setModalVisible(true);
+  };
+
+  const handleModalOk = (values: any) => {
+    const newProject: Project = {
+      id: String(projects.length + 1),
+      ...values,
+      stage: 'planning',
+      status: 'not_started',
+      progress: 0,
+      deviceCount: 0,
+      completedDeviceCount: 0,
+      issueCount: 0,
+      documentCount: 0,
+      teamMembers: [values.managerId],
+      createTime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+      updateTime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+      creator: '当前用户',
+    };
+    setProjects([...projects, newProject]);
+    setModalVisible(false);
+    message.success('项目创建成功');
+  };
+
+  const handleEdit = (project: Project) => {
+    setEditingProject(project);
+    setModalVisible(true);
+  };
+
+  const handleEditSubmit = (values: any) => {
+    updateProject(editingProject!.id, values);
+    setModalVisible(false);
+    setEditingProject(null);
+    message.success('项目更新成功');
+  };
+
+  const handleDelete = (project: Project) => {
+    deleteProject(project.id);
+    message.success('删除成功');
+    // 如果当前在详情页，导航回列表页
+    if (location.pathname.startsWith('/project/') && location.pathname !== '/project') {
+      navigate('/project');
+    }
+  };
+
+  const handleModalCancel = () => {
+    setModalVisible(false);
+    setEditingProject(null);
   };
 
   return (
@@ -172,7 +231,7 @@ const ProjectList: React.FC = () => {
       <PageHeader
         title="项目管理"
         extra={
-          <Button type="primary" icon={<PlusOutlined />}>
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreateProject}>
             新建项目
           </Button>
         }
@@ -183,14 +242,23 @@ const ProjectList: React.FC = () => {
         onSearch={handleSearch}
         onReset={handleReset}
         loading={loading}
+        initialValues={filterValues}
       />
 
       <DataTable
         columns={columns}
-        dataSource={projects}
+        dataSource={getFilteredData()}
         actions={actions}
         loading={loading}
         rowKey="id"
+      />
+
+      <ProjectFormModal
+        visible={modalVisible}
+        project={editingProject}
+        mode={editingProject ? 'edit' : 'create'}
+        onCancel={handleModalCancel}
+        onOk={editingProject ? handleEditSubmit : handleModalOk}
       />
     </Card>
   );
