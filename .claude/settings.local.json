@@ -8,7 +8,11 @@
       "Bash(sed:*)",
       "Bash(grep:*)",
       "Bash(timeout 3 bash:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(powershell:*)",
+      "Bash(npm list:*)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

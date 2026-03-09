@@ -7,6 +7,10 @@ import ProjectDetail from '../pages/Project/Detail';
 import ProjectDashboard from '../pages/Project/Dashboard';
 import DeviceList from '../pages/Device/List';
 import DeviceDetail from '../pages/Device/Detail';
+import DeviceResearch from '../pages/Device/Research';
+import CreateResearch from '../pages/Device/CreateResearch';
+import SelectDeviceForResearch from '../pages/Device/SelectDeviceForResearch';
+import ResearchList from '../pages/Device/ResearchList';
 import DeviceTypeManage from '../pages/Device/TypeManage';
 import PlanList from '../pages/Plan/PlanList';
 import ProjectPlan from '../pages/Plan/ProjectPlan';
@@ -64,6 +68,26 @@ const router = createBrowserRouter([
         element: <DeviceDetail />,
       },
       {
+        path: 'device/research/:deviceId',
+        element: <DeviceResearch />,
+      },
+      {
+        path: 'device/:id/research',
+        element: <DeviceResearch />,
+      },
+      {
+        path: 'device/research/create',
+        element: <CreateResearch />,
+      },
+      {
+        path: 'device/research-list',
+        element: <ResearchList />,
+      },
+      {
+        path: 'device/research/view/:researchId',
+        element: <DeviceResearch />,
+      },
+      {
         path: 'device/type',
         element: <DeviceTypeManage />,
       },
@@ -75,10 +99,6 @@ const router = createBrowserRouter([
       {
         path: 'plan/:projectId',
         element: <ProjectPlan />,
-      },
-      {
-        path: 'plan/report/:deviceId',
-        element: <ProgressReport />,
       },
       {
         path: 'plan/batch-report/:projectId/:stage',

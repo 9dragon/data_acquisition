@@ -78,6 +78,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
       label: '设备管理',
       children: [
         { key: '/device', label: '设备列表' },
+        { key: '/device/research-list', label: '设备调研' },
         { key: '/device/type', label: '设备类型' },
       ],
     },
@@ -110,7 +111,10 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
     if (path.startsWith('/project/') && !path.endsWith('/dashboard')) {
       return ['/project'];
     }
-    if (path.startsWith('/device/') && path !== '/device/type') {
+    if (path === '/device/research-list' || path.startsWith('/device/research/')) {
+      return ['/device/research-list'];
+    }
+    if (path.startsWith('/device/') && path !== '/device/type' && !path.startsWith('/device/research')) {
       return ['/device'];
     }
     if (path.startsWith('/plan/')) {

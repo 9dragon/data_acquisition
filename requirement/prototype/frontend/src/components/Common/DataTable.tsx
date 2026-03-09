@@ -3,10 +3,11 @@ import { Table, Space, Button, Tag } from 'antd';
 import type { ColumnsType, TableProps } from 'antd/es/table';
 
 export interface ActionItem {
-  label: string;
-  onClick: (record: any) => void;
+  label?: string;  // 改为可选
+  onClick?: (record: any) => void;  // 改为可选
   danger?: boolean;
   disabled?: boolean | ((record: any) => boolean);
+  render?: (record: any) => React.ReactNode;  // 新增
 }
 
 interface DataTableProps<T> extends Omit<TableProps<T>, 'columns'> {
@@ -31,6 +32,12 @@ function DataTable<T extends Record<string, any>>({
           render: (_: any, record: T) => (
             <Space size="small">
               {actions.map((action, index) => {
+                // 如果有 render 函数，直接使用
+                if (action.render) {
+                  return <React.Fragment key={index}>{action.render(record)}</React.Fragment>;
+                }
+
+                // 否则使用原有的 Button 渲染逻辑
                 const isDisabled = typeof action.disabled === 'function'
                   ? action.disabled(record)
                   : action.disabled;
@@ -42,7 +49,7 @@ function DataTable<T extends Record<string, any>>({
                     size="small"
                     danger={action.danger}
                     disabled={isDisabled}
-                    onClick={() => action.onClick(record)}
+                    onClick={() => action.onClick!(record)}
                   >
                     {action.label}
                   </Button>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Space, Button, Tag, Progress } from 'antd';
+import { Card, Space, Button, Tag, message, Popconfirm } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import PageHeader from '../../components/Common/PageHeader';
 import FilterBar from '../../components/Common/FilterBar';
 import DataTable from '../../components/Common/DataTable';
@@ -13,7 +13,8 @@ import type { Device } from '../../types/device';
 
 const DeviceList: React.FC = () => {
   const navigate = useNavigate();
-  const { devices, setDevices } = useDeviceStore();
+  const location = useLocation();
+  const { devices, setDevices, deleteDevice } = useDeviceStore();
   const [loading, setLoading] = useState(false);
 
   // 初始化设备数据
@@ -34,14 +35,6 @@ const DeviceList: React.FC = () => {
     { name: 'code', label: '设备编号', type: 'input' as const, placeholder: '请输入设备编号' },
     { name: 'projectId', label: '所属项目', type: 'select' as const, placeholder: '请选择项目', options: [
       ...mockProjects.map(p => ({ label: p.name, value: p.id })),
-    ]},
-    { name: 'category', label: '设备分类', type: 'select' as const, placeholder: '请选择分类', options: [
-      { label: 'PLC', value: 'PLC' },
-      { label: 'CNC', value: 'CNC' },
-      { label: 'Robot', value: 'Robot' },
-      { label: 'Sensor', value: 'Sensor' },
-      { label: 'Instrument', value: 'Instrument' },
-      { label: 'Other', value: 'Other' },
     ]},
     { name: 'workshop', label: '所属车间', type: 'select' as const, placeholder: '请选择车间', options: [
       { label: '车间A区', value: '车间A区' },
@@ -74,101 +67,11 @@ const DeviceList: React.FC = () => {
       width: 200,
     },
     {
-      title: '设备类型',
-      dataIndex: 'typeName',
-      key: 'typeName',
-      width: 150,
-    },
-    {
       title: '所属车间',
       dataIndex: 'workshop',
       key: 'workshop',
       width: 120,
       render: (workshop: string) => workshop || '-',
-    },
-    {
-      title: '分类',
-      dataIndex: 'category',
-      key: 'category',
-      width: 100,
-      render: (category: string) => {
-        const categoryMap: Record<string, { text: string; color: string }> = {
-          PLC: { text: 'PLC', color: 'blue' },
-          CNC: { text: 'CNC', color: 'green' },
-          Robot: { text: '机器人', color: 'purple' },
-          Sensor: { text: '传感器', color: 'orange' },
-          Instrument: { text: '仪表', color: 'cyan' },
-          Other: { text: '其他', color: 'default' },
-        };
-        const c = categoryMap[category] || { text: category, color: 'default' };
-        return <Tag color={c.color}>{c.text}</Tag>;
-      },
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-      width: 100,
-      render: (status: string) => <StatusTag status={status} />,
-    },
-    {
-      title: '采集方式',
-      dataIndex: 'collectionMethod',
-      key: 'collectionMethod',
-      width: 120,
-      render: (method: string) => {
-        const methodMap: Record<string, string> = {
-          OPC_UA: 'OPC UA',
-          Modbus_TCP: 'Modbus TCP',
-          Modbus_RTU: 'Modbus RTU',
-          MQTT: 'MQTT',
-          HTTP: 'HTTP',
-          Other: '其他',
-        };
-        return methodMap[method] || method;
-      },
-    },
-    {
-      title: 'IP地址',
-      dataIndex: 'ip',
-      key: 'ip',
-      width: 140,
-    },
-    {
-      title: '点位进度',
-      key: 'pointProgress',
-      width: 150,
-      render: (_, record) => (
-        <Space direction="vertical" size={0}>
-          <span style={{ fontSize: '12px' }}>
-            {record.collectedPointCount}/{record.pointCount}
-          </span>
-          <Progress
-            percent={record.pointCount > 0 ? Math.round((record.collectedPointCount / record.pointCount) * 100) : 0}
-            size="small"
-            showInfo={false}
-          />
-        </Space>
-      ),
-    },
-    {
-      title: '总进度',
-      dataIndex: 'progress',
-      key: 'progress',
-      width: 120,
-      render: (progress: number) => (
-        <Progress
-          percent={progress}
-          size="small"
-          status={progress === 100 ? 'success' : undefined}
-        />
-      ),
-    },
-    {
-      title: '负责人',
-      dataIndex: 'responsiblePerson',
-      key: 'responsiblePerson',
-      width: 120,
     },
   ];
 
@@ -178,14 +81,50 @@ const DeviceList: React.FC = () => {
       onClick: (record: Device) => navigate(`/device/${record.id}`),
     },
     {
-      label: '填报进度',
-      onClick: (record: Device) => navigate(`/plan/report/${record.id}`),
+      label: '调研',
+      onClick: (record: Device) => navigate(`/device/research/${record.id}`),
     },
     {
       label: '编辑',
       onClick: (record: Device) => console.log('编辑设备', record),
     },
+    {
+      label: '删除',
+      danger: true,
+      render: (record: Device) => (
+        <Popconfirm
+          title="确认删除"
+          description={
+            <div>
+              <p>确定要删除这个设备吗？删除后无法恢复。</p>
+              <p style={{ fontSize: '12px', color: '#666' }}>
+                关联数据：{record.pointCount || 0} 个数据点、
+                {record.issues || 0} 个问题、
+                {record.documents || 0} 个文档
+              </p>
+            </div>
+          }
+          onConfirm={() => handleDelete(record)}
+          okText="确定"
+          cancelText="取消"
+        >
+          <Button type="link" size="small" danger>
+            删除
+          </Button>
+        </Popconfirm>
+      ),
+    },
   ];
+
+  const handleDelete = (device: Device) => {
+    deleteDevice(device.id);
+    message.success('删除成功');
+
+    // 如果当前在详情页，自动返回列表页
+    if (location.pathname.startsWith('/device/') && location.pathname !== '/device') {
+      navigate('/device');
+    }
+  };
 
   const handleSearch = (values: any) => {
     setLoading(true);
