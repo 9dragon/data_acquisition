@@ -218,10 +218,8 @@ const PlanFormModal: React.FC<PlanFormModalProps> = ({
             取消
           </button>
           <button
-            type="primary"
+            type="button"
             className="ant-btn ant-btn-primary"
-            icon={<CheckOutlined />}
-            loading={loading}
             onClick={handleSubmit}
             style={{ padding: '6.4px 20px', fontSize: 14 }}
           >

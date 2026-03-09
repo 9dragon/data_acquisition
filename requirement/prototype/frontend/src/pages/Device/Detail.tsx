@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Drawer, Descriptions, Button, Space, Tabs, List, Card, Progress, Empty } from 'antd';
+import { Drawer, Descriptions, Button, Space, Tabs, List, Card, Progress, Empty, Tag } from 'antd';
 import { EditOutlined, FileTextOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { useDeviceStore } from '../../stores/deviceStore';
 import { getDeviceById, mockDocuments, mockIssues } from '../../services/mockData';
@@ -127,7 +127,7 @@ const DeviceDetail: React.FC = () => {
                   </Space>
                 }
               />
-              <StatusTag status={doc.status} />
+              <Tag color={doc.status === 'approved' ? 'success' : 'default'}>{doc.status}</Tag>
             </List.Item>
           )}
         />
@@ -154,7 +154,7 @@ const DeviceDetail: React.FC = () => {
                 title={
                   <Space>
                     <span key="title">{issue.title}</span>
-                    <StatusTag key="status" status={issue.status} />
+                    <Tag key="status" color={issue.status === 'resolved' ? 'success' : 'default'}>{issue.status}</Tag>
                   </Space>
                 }
                 description={

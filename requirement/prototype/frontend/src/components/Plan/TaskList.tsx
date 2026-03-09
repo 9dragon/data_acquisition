@@ -116,7 +116,7 @@ const TaskList: React.FC<TaskListProps> = ({
                 {assigneeNames && <span>👤 {assigneeNames}</span>}
               </Space>
               {task.dependencies && task.dependencies.length > 0 && (
-                <Tag size="small" color="orange">
+                <Tag color="orange">
                   依赖 {task.dependencies.length} 个任务
                 </Tag>
               )}

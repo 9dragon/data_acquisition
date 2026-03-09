@@ -19,6 +19,7 @@ const STAGE_LABELS: Record<string, { label: string; color: string }> = {
 interface PlanRecord {
   key: string;
   id: string;
+  projectId: string;
   name: string;
   projectName: string;
   description?: string;

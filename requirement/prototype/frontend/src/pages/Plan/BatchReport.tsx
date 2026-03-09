@@ -6,6 +6,7 @@ import {
   Button,
   Progress,
   InputNumber,
+  Input,
   Space,
   message,
   Descriptions,
@@ -253,7 +254,7 @@ const BatchReport: React.FC = () => {
               min={0}
               max={100}
       value={unifiedProgress}
-              onChange={(value) => setUnifiedProgress(value === null ? undefined : value)}
+              onChange={(value) => setUnifiedProgress(value)}
               placeholder="请输入进度百分比"
               style={{ width: 200 }}
               suffix="%"
@@ -277,7 +278,7 @@ const BatchReport: React.FC = () => {
               rows={4}
               placeholder={`请说明为什么这批设备统一设置为 ${unifiedProgress || ''}%，例如：施工阶段已全部完成，设备安装调试正常，网络布线完成，可以进入配置阶段`}
               value={stageRemark}
-              onChange={(e) => setStageRemark(e.target.value)}
+              onChange={(e: any) => setStageRemark(e.target.value)}
               maxLength={500}
               showCount
             />
@@ -291,7 +292,7 @@ const BatchReport: React.FC = () => {
               rows={4}
               placeholder="请填写总体进度说明、项目整体情况、存在的风险和问题、需要协调的资源等"
               value={overallRemark}
-              onChange={(e) => setOverallRemark(e.target.value)}
+              onChange={(e: any) => setOverallRemark(e.target.value)}
               maxLength={500}
               showCount
             />

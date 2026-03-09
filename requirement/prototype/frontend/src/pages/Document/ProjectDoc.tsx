@@ -10,7 +10,7 @@ import UploadProgressModal, { FileUploadItem } from '../../components/Document/U
 import { useDocumentStore } from '../../stores/documentStore';
 import { mockDocuments, mockProjects, mockDocumentTags } from '../../services/mockData';
 import { downloadFile } from '../../services/fileUploadService';
-import { getFileIcon, canPreviewFile } from '../../utils/fileHelpers';
+import { getFileIcon, canPreviewFile, validateFile } from '../../utils/fileHelpers';
 import type { ColumnsType } from 'antd/es/table';
 import type { Document } from '../../types/document';
 
@@ -225,10 +225,9 @@ const ProjectDoc: React.FC = () => {
     onChange: handleUploadChange,
     beforeUpload: (file: File, fileList: File[]) => {
       // Validate files
-      const { validateFile } = require('../../utils/fileHelpers');
-      const validation = validateFile(file);
-      if (!validation.valid) {
-        message.error(validation.error);
+      const validationResult = validateFile(file);
+      if (!validationResult.valid) {
+        message.error(validationResult.error);
         return Upload.LIST_IGNORE; // Skip this file
       }
       return false; // Prevent automatic upload

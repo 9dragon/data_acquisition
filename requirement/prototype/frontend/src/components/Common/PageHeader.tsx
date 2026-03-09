@@ -7,6 +7,7 @@ const { Title } = Typography;
 
 interface PageHeaderProps {
   title: string;
+  subTitle?: string;
   breadcrumbs?: Array<{ label: string; path?: string }>;
   extra?: React.ReactNode;
   showBack?: boolean;
@@ -15,6 +16,7 @@ interface PageHeaderProps {
 
 const PageHeader: React.FC<PageHeaderProps> = ({
   title,
+  subTitle,
   breadcrumbs,
   extra,
   showBack = false,
@@ -57,9 +59,16 @@ const PageHeader: React.FC<PageHeaderProps> = ({
               style={{ fontSize: '16px' }}
             />
           )}
-          <Title key="title" level={3} style={{ margin: 0 }}>
-            {title}
-          </Title>
+          <div>
+            <Title key="title" level={3} style={{ margin: 0 }}>
+              {title}
+            </Title>
+            {subTitle && (
+              <div style={{ fontSize: 14, color: '#666', marginTop: 4 }}>
+                {subTitle}
+              </div>
+            )}
+          </div>
         </Space>
 
         {extra && <div>{extra}</div>}

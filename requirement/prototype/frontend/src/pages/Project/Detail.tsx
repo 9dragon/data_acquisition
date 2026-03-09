@@ -60,9 +60,9 @@ const ProjectDetail: React.FC = () => {
             <Descriptions.Item label="优先级">
               <Tag color={priority.color}>{priority.text}</Tag>
             </Descriptions.Item>
-            <Descriptions.Item label="项目经理">{project.manager || '张经理'}</Descriptions.Item>
+            <Descriptions.Item label="项目经理">{(project.manager as any)?.name || '张经理'}</Descriptions.Item>
             <Descriptions.Item label="团队成员">
-              {project.members?.map(m => <Tag key={m.id}>{m.name}</Tag>)}
+              {project.members?.map((m: any) => <Tag key={m.id}>{m.name}</Tag>)}
             </Descriptions.Item>
             <Descriptions.Item label="开始日期">{project.startDate}</Descriptions.Item>
             <Descriptions.Item label="计划结束日期">{project.plannedEndDate}</Descriptions.Item>
@@ -96,7 +96,7 @@ const ProjectDetail: React.FC = () => {
                 }},
                 { title: '最后填报', dataIndex: 'lastReportDate', key: 'lastReportDate', render: (d: string) => formatReportDate(d) },
               ]}
-              dataSource={project.stageConfigs?.map(config => {
+              dataSource={project.stageConfigs?.map((config: any) => {
                 const stageDef = getStageByKey(config.stageKey);
                 return {
                   key: config.stageKey,

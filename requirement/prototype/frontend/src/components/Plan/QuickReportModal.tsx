@@ -88,10 +88,8 @@ const QuickReportModal: React.FC<QuickReportModalProps> = ({
             取消
           </button>
           <button
-            type="primary"
+            type="button"
             className="ant-btn ant-btn-primary"
-            icon={<CheckOutlined />}
-            loading={loading}
             onClick={handleSubmit}
             style={{ padding: '6.4px 20px', fontSize: 14 }}
           >
@@ -143,7 +141,7 @@ const QuickReportModal: React.FC<QuickReportModalProps> = ({
                       <div style={{ flex: 1 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                           <span style={{ fontWeight: 500 }}>{stage.label}</span>
-                          <Tag color={currentProgress === 100 ? 'success' : 'processing'} size="small">
+                          <Tag color={currentProgress === 100 ? 'success' : 'processing'}>
                             {currentProgress}%
                           </Tag>
                         </div>

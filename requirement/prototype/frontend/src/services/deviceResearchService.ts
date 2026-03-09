@@ -116,7 +116,7 @@ export const exportResearchData = async (
 
     // 基础信息数据
     const basicData = researches.map(r => {
-      const device = deviceMap.get(r.deviceId);
+      const device = r.deviceId ? deviceMap.get(r.deviceId) : undefined;
       return {
         '设备编号': device?.code || '',
         '设备名称': device?.name || '',
@@ -130,7 +130,7 @@ export const exportResearchData = async (
 
     // 控制器信息数据
     const controllerData = researches.map(r => {
-      const device = deviceMap.get(r.deviceId);
+      const device = r.deviceId ? deviceMap.get(r.deviceId) : undefined;
       return {
         '设备编号': device?.code || '',
         '接口是否被占用': r.controller?.isInterfaceOccupied ? '是' : '否',
@@ -148,7 +148,7 @@ export const exportResearchData = async (
 
     // 采集信息数据
     const collectionData = researches.map(r => {
-      const device = deviceMap.get(r.deviceId);
+      const device = r.deviceId ? deviceMap.get(r.deviceId) : undefined;
       return {
         '设备编号': device?.code || '',
         '采集设备状态': r.collection?.collectDeviceStatus ? '是' : '否',

@@ -114,10 +114,16 @@ const ByDeviceStageProgressPanel: React.FC<ByDeviceStageProgressPanelProps> = ({
         <div style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#666' }}>
           <span>已完成 {completedCount} / {totalDeviceCount} 台设备</span>
           <Space size="small">
-            <a onClick={handleBatchComplete} disabled={disabled} style={{ fontSize: 12 }}>
+            <a
+              onClick={disabled ? undefined : handleBatchComplete}
+              style={{ fontSize: 12, color: disabled ? '#ccc' : undefined, cursor: disabled ? 'not-allowed' : 'pointer' }}
+            >
               全部完成
             </a>
-            <a onClick={handleBatchReset} disabled={disabled} style={{ fontSize: 12 }}>
+            <a
+              onClick={disabled ? undefined : handleBatchReset}
+              style={{ fontSize: 12, color: disabled ? '#ccc' : undefined, cursor: disabled ? 'not-allowed' : 'pointer' }}
+            >
               全部重置
             </a>
           </Space>

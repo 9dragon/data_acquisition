@@ -27,6 +27,7 @@ export const FILE_SIZE_LIMITS = {
   default: 50 * 1024 * 1024, // 50MB
   image: 10 * 1024 * 1024,   // 10MB
   document: 50 * 1024 * 1024, // 50MB
+  text: 10 * 1024 * 1024,    // 10MB
 };
 
 // File type categories
@@ -71,7 +72,7 @@ export const getFileCategory = (file: File): FileTypeCategory | null => {
   const extension = getFileExtension(file.name);
 
   for (const [category, types] of Object.entries(FILE_TYPE_CATEGORIES)) {
-    if (types.includes(extension as any)) {
+    if ((types as readonly string[]).includes(extension)) {
       return category as FileTypeCategory;
     }
   }

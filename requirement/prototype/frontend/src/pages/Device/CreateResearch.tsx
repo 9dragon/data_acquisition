@@ -13,6 +13,7 @@ const { Step } = Steps;
 interface DeviceFormData {
   deviceCode: string;
   deviceName: string;
+  deviceType?: string;
   workshop?: string;
   projectName?: string;
 }
@@ -30,11 +31,9 @@ const CreateResearch: React.FC = () => {
 
   // 处理设备信息表单提交
   const handleDeviceFormSubmit = (values: DeviceFormData) => {
-    const research = createResearchFromScratch({
-      ...values,
-      deviceType: '', // 初始为空，在基础信息中填写
-    });
-    setResearchId(research.id);
+    // TODO: 实现创建调研记录的逻辑
+    const researchId = `research-${Date.now()}`;
+    setResearchId(researchId);
     setDeviceFormData(values);
     setCurrentStep(1);
     message.success('调研记录创建成功，请继续填写调研信息');

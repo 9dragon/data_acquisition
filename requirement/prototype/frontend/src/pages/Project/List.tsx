@@ -60,7 +60,7 @@ const ProjectList: React.FC = () => {
 
   // 应用筛选到数据源
   const getFilteredData = () => {
-    return projects.filter(project => {
+    return projects.filter((project: any) => {
       if (filterValues.stage && project.stage !== filterValues.stage) {
         return false;
       }
@@ -120,7 +120,7 @@ const ProjectList: React.FC = () => {
       dataIndex: 'manager',
       key: 'manager',
       width: 120,
-      render: (_, record) => record.manager || '张经理',
+      render: (_, record) => (record.manager?.name as string) || '张经理',
     },
     {
       title: '创建时间',

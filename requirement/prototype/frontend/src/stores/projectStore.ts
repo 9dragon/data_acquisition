@@ -1,6 +1,5 @@
 import { create } from 'zustand';
-import { Project, ProjectPlan, ProjectTask, ProjectStats, PaginationParams, ProjectStageConfig } from '../types/project';
-import { PaginationResponse } from '../types/common';
+import { Project, ProjectPlan, ProjectTask, ProjectStats, ProjectStageConfig } from '../types/project';
 import { mockProjectPlans } from '../services/mockData';
 import { calculateOverallProgress, updateStageProgress } from '../utils/progressCalculators';
 
@@ -49,7 +48,7 @@ export interface ProgressReportData {
   overallRemark?: string;
 }
 
-export const useProjectStore = create<ProjectState>((set) => ({
+export const useProjectStore = create<ProjectState>((set, get) => ({
   projects: [],
   currentProject: null,
   projectPlans: mockProjectPlans, // Initialize with mock data
@@ -75,7 +74,8 @@ export const useProjectStore = create<ProjectState>((set) => ({
 
   // 计划管理方法
   getProjectPlan: (planId) => {
-    return useProjectStore.getState().projectPlans.find(p => p.id === planId);
+    const state = get();
+    return state.projectPlans.find((p) => p.id === planId);
   },
   createProjectPlan: (plan) =>
     set((state) => {
@@ -151,8 +151,9 @@ export const useProjectStore = create<ProjectState>((set) => ({
       )
     })),
   getTasksByProject: (projectId) => {
-    const plans = useProjectStore.getState().projectPlans.filter(p => p.projectId === projectId);
-    return plans.flatMap(p => p.tasks);
+    const state = get();
+    const plans = state.projectPlans.filter((p) => p.projectId === projectId);
+    return plans.flatMap((p) => p.tasks);
   },
 
   // 进度管理方法
