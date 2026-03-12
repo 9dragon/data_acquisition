@@ -27,8 +27,7 @@ function DataTable<T extends Record<string, any>>({
         {
           title: '操作',
           key: 'action',
-          fixed: 'right',
-          width: 200,
+          width: 165,
           render: (_: any, record: T) => (
             <Space size="small">
               {actions.map((action, index) => {
@@ -61,11 +60,14 @@ function DataTable<T extends Record<string, any>>({
       ]
     : [];
 
+  // 计算所有列的总宽度
+  const totalWidth = columns.reduce((sum, col) => sum + (col.width || 100), 0) + (actions ? 165 : 0);
+
   return (
     <Table<T>
       columns={[...columns, ...actionColumn]}
       rowKey={rowKey}
-      scroll={{ x: 1200 }}
+      scroll={{ x: totalWidth }}
       pagination={{
         showSizeChanger: true,
         showQuickJumper: true,

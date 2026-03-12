@@ -41,6 +41,10 @@ export interface Device extends BaseEntity {
 }
 
 export interface DeviceType extends BaseEntity {
+  projectId: string;           // 所属项目ID
+  projectName?: string;        // 所属项目名称
+  processId?: string;          // 所属工序ID
+  processName?: string;        // 所属工序名称
   name: string;
   code: string;
   category: DeviceCategory;
@@ -82,9 +86,13 @@ export interface DeviceResearchBasic {
   deviceType?: string;          // 设备类型
   projectName?: string;         // 项目名称
   workshop?: string;            // 所属车间
+  processId?: string;           // 工序ID
+  processName?: string;         // 工序名称
+  quantity?: number;            // 数量
+  deviceManufacturer?: string;  // 设备厂商（区别于控制器厂商）
 
   // 原有字段
-  manufacturer?: string;        // 设备生产厂商
+  manufacturer?: string;        // 设备生产厂商（兼容旧字段）
   productionDate?: string;      // 出厂日期
   remarks?: string;             // 备注
 }
@@ -106,6 +114,7 @@ export interface DeviceResearchController {
   hasTouchScreen?: boolean;                   // 是否连接触摸屏
   controllerBrand?: string;                   // 控制器品牌
   controllerModel?: string;                   // 控制器型号
+  touchScreenBrand?: string;                  // 触摸屏品牌
   hasPointTable?: boolean;                    // 是否提供点位表
   hasPlcSource?: boolean;                     // 是否提供PLC源程序
   hasTouchScreenSource?: boolean;             // 是否提供触摸屏源程序
@@ -140,6 +149,12 @@ export interface DeviceResearch extends BaseEntity {
   deviceCode?: string;                // 设备编号
   deviceType?: string;                // 设备类型
   workshop?: string;                  // 所属车间
+
+  // 新增字段
+  processId?: string;                 // 工序ID
+  processName?: string;               // 工序名称
+  quantity?: number;                  // 数量
+  deviceManufacturer?: string;        // 设备厂商（区别于控制器厂商）
 
   // 三大类调研信息
   basic?: DeviceResearchBasic;

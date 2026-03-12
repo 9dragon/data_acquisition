@@ -81,10 +81,6 @@ const DeviceList: React.FC = () => {
       onClick: (record: Device) => navigate(`/device/${record.id}`),
     },
     {
-      label: '调研',
-      onClick: (record: Device) => navigate(`/device/research/${record.id}`),
-    },
-    {
       label: '编辑',
       onClick: (record: Device) => console.log('编辑设备', record),
     },

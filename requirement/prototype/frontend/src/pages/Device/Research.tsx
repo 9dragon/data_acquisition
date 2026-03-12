@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { Drawer, Tabs, Progress, Card, Space, message, Button, Descriptions, Empty } from 'antd';
+import { Drawer, Tabs, Progress, Card, Space, message, Button, Descriptions } from 'antd';
 import { SaveOutlined, CheckCircleOutlined, EyeOutlined, EditOutlined } from '@ant-design/icons';
 import { useDeviceStore } from '../../stores/deviceStore';
+import { useWorkshopStore } from '../../stores/workshopStore';
+import { useProcessStore } from '../../stores/processStore';
+import { useProjectStore } from '../../stores/projectStore';
 import { getDeviceById } from '../../services/mockData';
 import BasicInfoTab from '../../components/Device/BasicInfoTab';
 import ControllerInfoTab from '../../components/Device/ControllerInfoTab';
@@ -34,7 +37,14 @@ const DeviceResearch: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('basic');
   const [localProgress, setLocalProgress] = useState(0);
-  const [isFromScratch, setIsFromScratch] = useState(false);
+  const [processOptions, setProcessOptions] = useState<Array<{label: string, value: string}>>([]);
+  const [workshopOptions, setWorkshopOptions] = useState<Array<{label: string, value: string}>>([]);
+  const [deviceTypeOptions, setDeviceTypeOptions] = useState<Array<{label: string, value: string}>>([]);
+
+  const { getProcessesByProject } = useProcessStore();
+  const { getWorkshopsByProject } = useWorkshopStore();
+  const { getDeviceTypesByProject } = useDeviceStore();
+  const { projects } = useProjectStore();
 
   useEffect(() => {
     // 支持两种方式访问：通过 deviceId 或 researchId
@@ -44,7 +54,6 @@ const DeviceResearch: React.FC = () => {
       if (research) {
         setCurrentResearch(research);
         setLocalProgress(research.researchProgress || 0);
-        setIsFromScratch(true);
       } else {
         message.error('调研记录不存在');
         navigate('/device/research-list');
@@ -62,13 +71,43 @@ const DeviceResearch: React.FC = () => {
         }
         setCurrentResearch(research);
         setLocalProgress(research.researchProgress || 0);
-        setIsFromScratch(false);
       } else {
         message.error('设备不存在');
         navigate('/device');
       }
     }
   }, [deviceId, researchId]);
+
+  // 监听当前调研记录的项目变化，更新下拉选项
+  useEffect(() => {
+    if (currentResearch?.projectId) {
+      const processes = getProcessesByProject(currentResearch.projectId);
+      setProcessOptions(processes.map(p => ({ label: p.name, value: p.id })));
+
+      const workshops = getWorkshopsByProject(currentResearch.projectId);
+      setWorkshopOptions(workshops.map(w => ({ label: w.name, value: w.name })));
+
+      const deviceTypes = getDeviceTypesByProject(currentResearch.projectId);
+      setDeviceTypeOptions(deviceTypes.map(t => ({ label: t.name, value: t.name })));
+    } else {
+      setProcessOptions([]);
+      setWorkshopOptions([]);
+      setDeviceTypeOptions([]);
+    }
+  }, [currentResearch?.projectId, getProcessesByProject, getWorkshopsByProject, getDeviceTypesByProject]);
+
+  // 处理项目选择变化
+  const handleProjectChange = (projectId: string) => {
+    if (currentResearch) {
+      const selectedProject = projects.find(p => p.id === projectId);
+      const updatedResearch = {
+        ...currentResearch,
+        projectId,
+        projectName: selectedProject?.name,
+      };
+      setCurrentResearch(updatedResearch);
+    }
+  };
 
   const handleClose = () => {
     navigate(-1);
@@ -128,17 +167,6 @@ const DeviceResearch: React.FC = () => {
     return <div>加载中...</div>;
   }
 
-  // 对于从零创建的调研，没有 device 对象
-  const displayDevice = device;
-  const researchTitle = isFromScratch
-    ? `设备调研 - ${currentResearch.deviceName || '未命名设备'}`
-    : `设备调研 - ${device?.name}`;
-
-  const displayCode = currentResearch.deviceCode || displayDevice?.code || '-';
-  const displayName = currentResearch.deviceName || displayDevice?.name || '-';
-  const displayProject = currentResearch.projectName || displayDevice?.projectName || '-';
-  const displayWorkshop = currentResearch.workshop || displayDevice?.workshop || '-';
-
   const getSectionStatus = (section: ResearchSection) => {
     switch (section) {
       case 'basic':
@@ -174,10 +202,21 @@ const DeviceResearch: React.FC = () => {
             projectName: currentResearch.projectName || currentResearch.basic?.projectName,
             deviceName: currentResearch.deviceName || currentResearch.basic?.deviceName,
             workshop: currentResearch.workshop || currentResearch.basic?.workshop,
+            // 新增字段
+            processId: currentResearch.processId || currentResearch.basic?.processId,
+            processName: currentResearch.processName || currentResearch.basic?.processName,
+            quantity: currentResearch.quantity || currentResearch.basic?.quantity,
+            deviceManufacturer: currentResearch.deviceManufacturer || currentResearch.basic?.deviceManufacturer,
           }}
           onSave={isViewMode ? undefined : handleSaveBasic}
           loading={loading}
           disabled={isViewMode}
+          processOptions={processOptions}
+          workshopOptions={workshopOptions}
+          deviceTypeOptions={deviceTypeOptions}
+          projects={projects}
+          projectId={currentResearch.projectId}
+          onProjectChange={isViewMode ? undefined : handleProjectChange}
         />
       ),
     },
@@ -231,7 +270,7 @@ const DeviceResearch: React.FC = () => {
 
   return (
     <Drawer
-      title={researchTitle}
+      title="设备调研"
       placement="right"
       width={800}
       onClose={handleClose}
@@ -247,16 +286,6 @@ const DeviceResearch: React.FC = () => {
         </Space>
       }
     >
-      {/* 设备基本信息 */}
-      <Card style={{ marginBottom: 16 }} size="small">
-        <Descriptions column={2} size="small">
-          <Descriptions.Item label="设备编号">{displayCode}</Descriptions.Item>
-          <Descriptions.Item label="设备名称">{displayName}</Descriptions.Item>
-          <Descriptions.Item label="所属项目">{displayProject}</Descriptions.Item>
-          <Descriptions.Item label="所属车间">{displayWorkshop}</Descriptions.Item>
-        </Descriptions>
-      </Card>
-
       {/* 调研进度 */}
       <Card style={{ marginBottom: 16 }} size="small">
         <Space direction="vertical" style={{ width: '100%' }}>

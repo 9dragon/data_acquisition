@@ -23,6 +23,8 @@ import IssueStatistics from '../pages/Issue/Statistics';
 import ProjectDoc from '../pages/Document/ProjectDoc';
 import TagManage from '../pages/Document/TagManage';
 import StageList from '../pages/Project/StageList';
+import ProcessList from '../pages/Process/ProcessList';
+import WorkshopList from '../pages/Workshop/WorkshopList';
 import ProgressList from '../pages/Progress/ProgressList';
 
 // 懒加载页面组件
@@ -57,6 +59,16 @@ const router = createBrowserRouter([
       {
         path: 'project/stage',
         element: <StageList />,
+      },
+      // 工序管理
+      {
+        path: 'process/list',
+        element: <ProcessList />,
+      },
+      // 车间管理
+      {
+        path: 'workshop/list',
+        element: <WorkshopList />,
       },
       // 设备管理
       {

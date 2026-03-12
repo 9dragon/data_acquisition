@@ -34,6 +34,7 @@ const ControllerInfoTab: React.FC<ControllerInfoTabProps> = ({
         hasTouchScreen: initialValues.hasTouchScreen,
         controllerBrand: initialValues.controllerBrand,
         controllerModel: initialValues.controllerModel,
+        touchScreenBrand: initialValues.touchScreenBrand,
         hasPointTable: initialValues.hasPointTable,
         hasPlcSource: initialValues.hasPlcSource,
         hasTouchScreenSource: initialValues.hasTouchScreenSource,
@@ -58,6 +59,7 @@ const ControllerInfoTab: React.FC<ControllerInfoTabProps> = ({
         hasTouchScreen: values.hasTouchScreen,
         controllerBrand: values.controllerBrand,
         controllerModel: values.controllerModel,
+        touchScreenBrand: values.touchScreenBrand,
         hasPointTable: values.hasPointTable || false,
         hasPlcSource: values.hasPlcSource || false,
         hasTouchScreenSource: values.hasTouchScreenSource || false,
@@ -112,6 +114,19 @@ const ControllerInfoTab: React.FC<ControllerInfoTabProps> = ({
           <Radio value={true}>是</Radio>
           <Radio value={false}>否</Radio>
         </Radio.Group>
+      </Form.Item>
+
+      <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.hasTouchScreen !== currentValues.hasTouchScreen}>
+        {({ getFieldValue }) =>
+          getFieldValue('hasTouchScreen') === true ? (
+            <Form.Item
+              label="触摸屏品牌"
+              name="touchScreenBrand"
+            >
+              <Input placeholder="请输入触摸屏品牌" disabled={disabled} />
+            </Form.Item>
+          ) : null
+        }
       </Form.Item>
 
       <Form.Item

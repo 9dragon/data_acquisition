@@ -80,6 +80,8 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
         { key: '/device', label: '设备列表' },
         { key: '/device/research-list', label: '设备调研' },
         { key: '/device/type', label: '设备类型' },
+        { key: '/process/list', label: '工序列表' },
+        { key: '/workshop/list', label: '车间列表' },
       ],
     },
     {
@@ -117,6 +119,8 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
     if (path.startsWith('/device/') && path !== '/device/type' && !path.startsWith('/device/research')) {
       return ['/device'];
     }
+    if (path.startsWith('/process')) return ['/process/list'];
+    if (path.startsWith('/workshop')) return ['/workshop/list'];
     if (path.startsWith('/plan/')) {
       return ['/plan'];
     }
@@ -139,7 +143,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
   const getOpenKeys = () => {
     const path = location.pathname;
     if (path.startsWith('/project')) return ['project-group'];
-    if (path.startsWith('/device')) return ['device-group'];
+    if (path.startsWith('/device') || path.startsWith('/process') || path.startsWith('/workshop')) return ['device-group'];
     if (path.startsWith('/plan') || path.startsWith('/progress')) return ['progress-group'];
     if (path.startsWith('/issue')) return ['issue-group'];
     if (path.startsWith('/document')) return ['document-group'];

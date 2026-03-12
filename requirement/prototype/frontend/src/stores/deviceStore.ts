@@ -40,14 +40,22 @@ interface DeviceState {
 
   // 新增：从零创建调研
   createResearchFromScratch: (data: {
+    projectId?: string;          // 新增：项目ID
     deviceCode: string;
     deviceName: string;
     workshop?: string;
     projectName?: string;
+    processId?: string;
+    processName?: string;
+    quantity?: number;
+    deviceManufacturer?: string;
   }) => DeviceResearch;
 
   // 新增：关联设备到已有调研
   linkResearchToDevice: (researchId: string, deviceId: string) => void;
+
+  // 新增：按项目筛选设备类型
+  getDeviceTypesByProject: (projectId: string) => DeviceType[];
 }
 
 export const useDeviceStore = create<DeviceState>((set, get) => ({
@@ -266,6 +274,7 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
   createResearchFromScratch: (data) => {
     const newResearch: DeviceResearch = {
       id: `research_${Date.now()}`,
+      projectId: data.projectId,  // 新增：保存项目ID
       // 不设置 deviceId，保持为 undefined
       deviceName: data.deviceName,
       projectName: data.projectName,
@@ -273,6 +282,11 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
       deviceCode: data.deviceCode,
       deviceType: '', // 初始为空，在基础信息中填写
       workshop: data.workshop,
+      // 新增字段
+      processId: data.processId,
+      processName: data.processName,
+      quantity: data.quantity || 1,
+      deviceManufacturer: data.deviceManufacturer,
       // 初始化调研数据
       basic: {
         deviceCode: data.deviceCode,
@@ -280,6 +294,10 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
         deviceType: '', // 在基础信息中填写
         workshop: data.workshop,
         projectName: data.projectName,
+        processId: data.processId,
+        processName: data.processName,
+        quantity: data.quantity || 1,
+        deviceManufacturer: data.deviceManufacturer,
       },
       controller: {},
       collection: {},
@@ -324,5 +342,10 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
 
       return state;
     });
+  },
+
+  getDeviceTypesByProject: (projectId: string) => {
+    const state = get();
+    return state.deviceTypes.filter(t => t.projectId === projectId);
   },
 }));

@@ -68,7 +68,7 @@ const Dashboard: React.FC = () => {
       id: '2',
       type: 'abnormal',
       title: '注塑机02采集异常',
-      project: '智能制造车间数采项目',
+      project: '智能制造车间数采',
       reason: '部分点位数据读取失败',
     },
   ];

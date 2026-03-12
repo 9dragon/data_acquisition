@@ -1,165 +1,170 @@
-import React, { useState } from 'react';
-import { Card, Form, Input, Button, Steps, message, Space, Select } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Card, Form, Input, InputNumber, Button, message, Space, Select, Tabs } from 'antd';
+import { SaveOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../../components/Common/PageHeader';
 import { useDeviceStore } from '../../stores/deviceStore';
 import { useProjectStore } from '../../stores/projectStore';
+import { useProcessStore } from '../../stores/processStore';
+import { useWorkshopStore } from '../../stores/workshopStore';
 import BasicInfoTab from '../../components/Device/BasicInfoTab';
 import ControllerInfoTab from '../../components/Device/ControllerInfoTab';
 import CollectionInfoTab from '../../components/Device/CollectionInfoTab';
-
-const { Step } = Steps;
-
-interface DeviceFormData {
-  deviceCode: string;
-  deviceName: string;
-  deviceType?: string;
-  workshop?: string;
-  projectName?: string;
-}
+import { mockProcesses, mockWorkshops, mockDeviceTypes, mockProjects } from '../../services/mockData';
+import type { DeviceResearchBasic, DeviceResearchController, DeviceResearchCollection } from '../../types/device';
 
 const CreateResearch: React.FC = () => {
   const navigate = useNavigate();
   const { createResearchFromScratch, currentResearch, updateResearchBasic,
-          updateResearchController, updateResearchCollection,
-          updateResearchSectionStatus } = useDeviceStore();
-  const { projects } = useProjectStore();
+          updateResearchController, updateResearchCollection, setDeviceTypes, deviceTypes } = useDeviceStore();
+  const { projects, setProjects } = useProjectStore();
+  const { getProcessesByProject, setProcesses, processes } = useProcessStore();
+  const { workshops, getWorkshopsByProject, setWorkshops } = useWorkshopStore();
+  const { getDeviceTypesByProject } = useDeviceStore();
 
-  const [currentStep, setCurrentStep] = useState(0);
-  const [researchId, setResearchId] = useState<string>();
-  const [deviceFormData, setDeviceFormData] = useState<DeviceFormData>();
+  // 初始化模拟数据
+  useEffect(() => {
+    if (processes.length === 0) {
+      setProcesses(mockProcesses);
+    }
+    if (workshops.length === 0) {
+      setWorkshops(mockWorkshops);
+    }
+    if (deviceTypes.length === 0) {
+      setDeviceTypes(mockDeviceTypes);
+    }
+    if (projects.length === 0) {
+      setProjects(mockProjects);
+    }
+  }, [processes.length, workshops.length, deviceTypes.length, projects.length,
+      setProcesses, setWorkshops, setDeviceTypes, setProjects]);
 
-  // 处理设备信息表单提交
-  const handleDeviceFormSubmit = (values: DeviceFormData) => {
-    // TODO: 实现创建调研记录的逻辑
-    const researchId = `research-${Date.now()}`;
-    setResearchId(researchId);
-    setDeviceFormData(values);
-    setCurrentStep(1);
-    message.success('调研记录创建成功，请继续填写调研信息');
+  const [form] = Form.useForm();
+  const [selectedProjectId, setSelectedProjectId] = useState<string>();
+  const [currentTab, setCurrentTab] = useState<string>('basic');
+  const [processOptions, setProcessOptions] = useState<Array<{label: string, value: string}>>([]);
+  const [workshopOptions, setWorkshopOptions] = useState<Array<{label: string, value: string}>>([]);
+  const [deviceTypeOptions, setDeviceTypeOptions] = useState<Array<{label: string, value: string}>>([]);
+
+  // 监听项目选择变化，更新工序、车间、设备类型列表
+  useEffect(() => {
+    if (selectedProjectId) {
+      const processes = getProcessesByProject(selectedProjectId);
+      setProcessOptions(processes.map(p => ({ label: p.name, value: p.id })));
+
+      const workshops = getWorkshopsByProject(selectedProjectId);
+      setWorkshopOptions(workshops.map(w => ({ label: w.name, value: w.name })));
+
+      const deviceTypes = getDeviceTypesByProject(selectedProjectId);
+      setDeviceTypeOptions(deviceTypes.map(t => ({ label: t.name, value: t.name })));
+    } else {
+      setProcessOptions([]);
+      setWorkshopOptions([]);
+      setDeviceTypeOptions([]);
+    }
+  }, [selectedProjectId, getProcessesByProject, getWorkshopsByProject, getDeviceTypesByProject]);
+
+  // 处理项目选择变化
+  const handleProjectChange = (projectId: string) => {
+    setSelectedProjectId(projectId);
+    form.setFieldsValue({ processId: undefined, workshop: undefined, deviceType: undefined });
   };
 
   // 处理基础信息保存
-  const handleBasicSave = (data: any) => {
-    if (researchId) {
-      updateResearchBasic(researchId, data);
-      updateResearchSectionStatus(researchId, 'basic', true);
+  const handleBasicSave = (data: DeviceResearchBasic) => {
+    if (!currentResearch) {
+      // 首次保存，创建调研记录
+      const research = createResearchFromScratch({
+        projectId: selectedProjectId,  // 新增：传递项目ID
+        deviceCode: data.deviceCode || '',
+        deviceName: data.deviceName || '',
+        workshop: data.workshop,
+        projectName: data.projectName,
+        processId: data.processId,
+        processName: data.processName,
+        quantity: data.quantity,
+        deviceManufacturer: data.deviceManufacturer,
+      });
+      message.success('调研记录创建成功');
+    } else {
+      // 更新已有调研记录
+      const id = currentResearch.id;
+      updateResearchBasic(id, data);
       message.success('基础信息已保存');
     }
   };
 
   // 处理控制器信息保存
-  const handleControllerSave = (data: any) => {
-    if (researchId) {
-      updateResearchController(researchId, data);
-      updateResearchSectionStatus(researchId, 'controller', true);
-      message.success('控制器信息已保存');
+  const handleControllerSave = (data: DeviceResearchController) => {
+    if (!currentResearch) {
+      message.warning('请先保存基础信息');
+      return;
     }
+    const id = currentResearch.id;
+    updateResearchController(id, data);
+    message.success('控制器信息已保存');
   };
 
   // 处理采集信息保存
-  const handleCollectionSave = (data: any) => {
-    if (researchId) {
-      updateResearchCollection(researchId, data);
-      updateResearchSectionStatus(researchId, 'collection', true);
-      message.success('采集信息已保存');
+  const handleCollectionSave = (data: DeviceResearchCollection) => {
+    if (!currentResearch) {
+      message.warning('请先保存基础信息');
+      return;
     }
+    const id = currentResearch.id;
+    updateResearchCollection(id, data);
+    message.success('采集信息已保存');
   };
 
-  const steps = [
+  // 获取基础信息初始值
+  const getBasicInitialValues = () => {
+    if (currentResearch?.basic) {
+      return {
+        ...currentResearch.basic,
+        processId: currentResearch.processId || currentResearch.basic?.processId,
+        processName: currentResearch.processName || currentResearch.basic?.processName,
+        quantity: currentResearch.quantity || currentResearch.basic?.quantity,
+        deviceManufacturer: currentResearch.deviceManufacturer || currentResearch.basic?.deviceManufacturer,
+      };
+    }
+    return undefined;
+  };
+
+  const tabItems = [
     {
-      title: '设备信息',
-      content: (
-        <Card>
-          <div style={{ marginBottom: 16 }}>
-            <h3>填写设备基本信息</h3>
-            <p style={{ color: '#666' }}>请填写设备的基本信息，这些信息将用于创建调研记录</p>
-          </div>
-          <Form
-            layout="vertical"
-            onFinish={handleDeviceFormSubmit}
-          >
-            <Form.Item
-              label="设备编号"
-              name="deviceCode"
-              rules={[{ required: true, message: '请输入设备编号' }]}
-            >
-              <Input placeholder="请输入设备编号" />
-            </Form.Item>
-
-            <Form.Item
-              label="设备名称"
-              name="deviceName"
-              rules={[{ required: true, message: '请输入设备名称' }]}
-            >
-              <Input placeholder="请输入设备名称" />
-            </Form.Item>
-
-            <Form.Item
-              label="所属车间"
-              name="workshop"
-            >
-              <Input placeholder="请输入所属车间（可选）" />
-            </Form.Item>
-
-            <Form.Item
-              label="项目名称"
-              name="projectName"
-            >
-              <Select
-                placeholder="请选择项目名称（可选）"
-                allowClear
-                showSearch
-                optionFilterProp="label"
-              >
-                {projects.map(project => (
-                  <Select.Option key={project.id} value={project.name} label={project.name}>
-                    {project.name}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-
-            <Form.Item>
-              <Button type="primary" htmlType="submit">
-                下一步：填写调研信息
-              </Button>
-            </Form.Item>
-          </Form>
-        </Card>
+      key: 'basic',
+      label: '基础信息',
+      children: (
+        <BasicInfoTab
+          initialValues={getBasicInitialValues()}
+          onSave={handleBasicSave}
+          processOptions={processOptions}
+          workshopOptions={workshopOptions}
+          deviceTypeOptions={deviceTypeOptions}
+          projects={projects}
+          projectId={selectedProjectId}
+          onProjectChange={handleProjectChange}
+        />
       ),
     },
     {
-      title: '基础信息',
-      content: (
-        <Card>
-          <BasicInfoTab
-            initialValues={currentResearch?.basic}
-            onSave={handleBasicSave}
-          />
-        </Card>
+      key: 'controller',
+      label: '控制器信息',
+      children: (
+        <ControllerInfoTab
+          initialValues={currentResearch?.controller}
+          onSave={handleControllerSave}
+        />
       ),
     },
     {
-      title: '控制器信息',
-      content: (
-        <Card>
-          <ControllerInfoTab
-            initialValues={currentResearch?.controller}
-            onSave={handleControllerSave}
-          />
-        </Card>
-      ),
-    },
-    {
-      title: '采集信息',
-      content: (
-        <Card>
-          <CollectionInfoTab
-            initialValues={currentResearch?.collection}
-            onSave={handleCollectionSave}
-          />
-        </Card>
+      key: 'collection',
+      label: '采集信息',
+      children: (
+        <CollectionInfoTab
+          initialValues={currentResearch?.collection}
+          onSave={handleCollectionSave}
+        />
       ),
     },
   ];
@@ -167,49 +172,25 @@ const CreateResearch: React.FC = () => {
   return (
     <Card>
       <PageHeader
-        title="从零创建调研"
+        title="新建调研"
         extra={
           <Space>
-            <Button onClick={() => navigate('/device/research-list')}>
+            <Button
+              icon={<ArrowLeftOutlined />}
+              onClick={() => navigate('/device/research-list')}
+            >
               返回列表
             </Button>
           </Space>
         }
       />
 
-      <Steps current={currentStep} style={{ marginBottom: 24 }}>
-        {steps.map((step, index) => (
-          <Step key={index} title={step.title} />
-        ))}
-      </Steps>
-
-      <div>{steps[currentStep].content}</div>
-
-      {currentStep > 0 && (
-        <div style={{ marginTop: 16 }}>
-          <Button onClick={() => setCurrentStep(currentStep - 1)}>
-            上一步
-          </Button>
-          {currentStep < steps.length - 1 && (
-            <Button
-              type="primary"
-              onClick={() => setCurrentStep(currentStep + 1)}
-              style={{ marginLeft: 8 }}
-            >
-              下一步
-            </Button>
-          )}
-          {currentStep === steps.length - 1 && (
-            <Button
-              type="primary"
-              onClick={() => navigate('/device/research-list')}
-              style={{ marginLeft: 8 }}
-            >
-              完成
-            </Button>
-          )}
-        </div>
-      )}
+      <Tabs
+        activeKey={currentTab}
+        onChange={setCurrentTab}
+        items={tabItems}
+        size="large"
+      />
     </Card>
   );
 };

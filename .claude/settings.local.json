@@ -12,7 +12,11 @@
       "Bash(powershell:*)",
       "Bash(npm list:*)",
       "Bash(npm install:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(find ./requirement/prototype/frontend/src -type f \\\\\\( -name \"*.ts\" -o -name \"*.tsx\" \\\\\\) 2>/dev/null | head -50)",
+      "mcp__ide__getDiagnostics",
+      "Bash(find /d/work/projects/data_acquisition/requirement -name \"*.md\" -type f 2>/dev/null | head -30)",
+      "Bash(find /d/work/projects/data_acquisition/requirement -type f \\\\\\( -name \"*.doc*\" -o -name \"*.pdf\" -o -name \"*规格*\" -o -name \"*需求*\" \\\\\\) 2>/dev/null | grep -v node_modules)"
     ]
   }
 }
