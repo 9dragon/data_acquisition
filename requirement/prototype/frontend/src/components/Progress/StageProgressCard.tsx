@@ -115,6 +115,7 @@ const StageProgressCard: React.FC<StageProgressCardProps> = ({
           {stageDefinition.progressMode === 'by_task' ? (
             <ByTaskStageProgressPanel
               taskProgress={stageConfig.taskProgress || []}
+              taskTemplates={stageDefinition.taskTemplates || []}
               onChange={(taskProgress) => handleProgressDataChange('taskProgress', taskProgress)}
               disabled={disabled}
             />
@@ -122,6 +123,7 @@ const StageProgressCard: React.FC<StageProgressCardProps> = ({
             <ByDeviceStageProgressPanel
               deviceProgress={stageConfig.deviceProgress || []}
               totalDeviceCount={projectDeviceCount}
+              taskTemplates={stageDefinition.taskTemplates || []}
               onChange={(deviceProgress) => handleProgressDataChange('deviceProgress', deviceProgress)}
               disabled={disabled}
             />

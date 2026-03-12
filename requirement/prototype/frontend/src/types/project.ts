@@ -1,4 +1,63 @@
 import { BaseEntity, StatusType, User } from './common';
+import { MediaAttachment } from './device';
+
+// ==================== 资料收集相关类型 ====================
+
+// 文件类型枚举（支持所有常用类型）
+export enum MaterialFileType {
+  IMAGE = 'image',           // 图片：jpg, png, gif等
+  VIDEO = 'video',           // 视频：mp4, mov等
+  DOCUMENT = 'document',     // 文档：pdf, doc, docx等
+  SPREADSHEET = 'spreadsheet', // 表格：xls, xlsx, csv等
+  CAD = 'cad',               // CAD图纸：dwg, dxf等
+  OTHER = 'other'            // 其他
+}
+
+// 资料需求定义
+export interface MaterialRequirement {
+  key: string;                    // 资料类型唯一标识，如 'before_install_photo'
+  name: string;                   // 资料名称，如 '安装前照片'
+  description?: string;           // 资料说明
+  fileType: MaterialFileType;     // 文件类型
+  required: boolean;              // 是否必填
+  minCount?: number;              // 最少数量（用于照片等）
+  maxCount?: number;              // 最多数量
+  acceptTypes?: string[];         // 接受的文件MIME类型，如 ['image/jpeg', 'image/png']
+}
+
+// 已上传的资料信息
+export interface TaskMaterial {
+  requirementKey: string;         // 对应的资料需求key
+  requirementName: string;        // 资料名称
+  files: MediaAttachment[];       // 已上传的文件列表（复用现有类型）
+  completed: boolean;             // 是否已完成（根据required和minCount判断）
+  completedDate?: string;         // 完成日期
+}
+
+// 任务模板定义（用于阶段定义中）
+export interface StageTaskTemplate {
+  id: string;                     // 任务ID
+  key: string;                    // 任务唯一标识
+  name: string;                   // 任务名称，如 '设备安装'
+  description?: string;           // 任务描述
+  defaultWeight?: number;         // 默认权重（用于计算任务在阶段中的权重）
+  materialRequirements: MaterialRequirement[];  // 该任务需要的资料列表
+}
+
+// 设备任务进度（按设备推进时的任务级进度）
+export interface DeviceTaskProgress {
+  deviceId: string;
+  deviceName: string;
+  taskId: string;
+  taskKey: string;
+  taskName: string;
+  completed: boolean;
+  completedDate?: string;
+  remark?: string;
+  materials?: TaskMaterial[];     // 资料收集
+}
+
+// ==================== 项目阶段相关类型 ====================
 
 // 项目阶段（包含售前调研和验收）
 export type ProjectStage =
@@ -22,6 +81,12 @@ export interface StageDefinition extends BaseEntity {
   color: string;            // 显示颜色
   progressMode: StageProgressMode;  // 推进方式
   isSystem: boolean;        // 是否系统内置
+
+  // 新增：任务模板配置
+  taskTemplates?: StageTaskTemplate[];  // 任务模板列表（用于按设备推进时的任务级填报）
+
+  // 兼容旧字段（标记为废弃，保留以兼容现有数据）
+  /** @deprecated 使用 taskTemplates 替代 */
   defaultTasks?: string[];  // 默认任务列表（可选）
   defaultWeight?: number;   // 默认权重（0-100）
 }
@@ -29,10 +94,12 @@ export interface StageDefinition extends BaseEntity {
 // 阶段任务完成情况
 export interface StageTaskProgress {
   taskId: string;
+  taskKey?: string;          // 新增：任务唯一标识（用于关联任务模板）
   taskName: string;
   completed: boolean;
   completedDate?: string;
   remark?: string;
+  materials?: TaskMaterial[];  // 新增：资料收集
 }
 
 // 阶段设备完成情况
@@ -42,6 +109,7 @@ export interface StageDeviceProgress {
   completed: boolean;
   completedDate?: string;
   remark?: string;
+  taskProgress?: DeviceTaskProgress[];  // 新增：任务级进度（按设备推进时支持任务级填报）
 }
 
 // 项目采用阶段配置

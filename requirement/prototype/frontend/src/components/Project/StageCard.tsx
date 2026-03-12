@@ -96,7 +96,28 @@ const StageCard: React.FC<StageCardProps> = ({ stage, onEdit, onDelete }) => {
             {stage.isSystem && <Tag color="default">系统内置</Tag>}
           </Space>
 
-          {stage.defaultTasks && stage.defaultTasks.length > 0 && (
+          {/* 任务模板信息（优先显示） */}
+          {stage.taskTemplates && stage.taskTemplates.length > 0 ? (
+            <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #f0f0f0' }}>
+              <div style={{ fontSize: 12, color: '#999', marginBottom: 8 }}>任务模板：{stage.taskTemplates.length} 个任务</div>
+              <Space wrap size={[4, 4]}>
+                {stage.taskTemplates.slice(0, 3).map((task, index) => (
+                  <Tag key={index} color="blue" style={{ fontSize: 11 }}>
+                    {task.name} ({task.materialRequirements.length}项资料)
+                  </Tag>
+                ))}
+                {stage.taskTemplates.length > 3 && (
+                  <Tag color="default" style={{ fontSize: 11 }}>
+                    +{stage.taskTemplates.length - 3}
+                  </Tag>
+                )}
+              </Space>
+              <div style={{ fontSize: 11, color: '#666', marginTop: 6 }}>
+                共 {stage.taskTemplates.reduce((sum, t) => sum + t.materialRequirements.length, 0)} 项资料要求
+              </div>
+            </div>
+          ) : stage.defaultTasks && stage.defaultTasks.length > 0 ? (
+            // 旧数据兼容
             <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #f0f0f0' }}>
               <div style={{ fontSize: 12, color: '#999', marginBottom: 8 }}>默认任务：</div>
               <Space wrap size={[4, 4]}>
@@ -112,7 +133,7 @@ const StageCard: React.FC<StageCardProps> = ({ stage, onEdit, onDelete }) => {
                 )}
               </Space>
             </div>
-          )}
+          ) : null}
         </div>
 
         <Dropdown menu={{ items: menuItems }} trigger={['click']}>

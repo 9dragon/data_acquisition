@@ -1,4 +1,4 @@
-import { Project, ProjectStats, ProjectStage, ProjectStatus, ProjectPriority, StageDefinition } from '../types/project';
+import { Project, ProjectStats, ProjectStage, ProjectStatus, ProjectPriority, StageDefinition, MaterialFileType } from '../types/project';
 import { Device, DeviceType, DeviceCategory, DeviceStatus, CollectionMethod } from '../types/device';
 import { Issue, IssueStats, IssueType, IssuePriority, IssueStatus } from '../types/issue';
 import { Document, DocumentTag, DocumentCategory, DocumentStatus } from '../types/document';
@@ -29,10 +29,421 @@ export const mockProjects: Project[] = [
     progress: 45, deviceCount: 12, completedDeviceCount: 5,
     issueCount: 3, documentCount: 8,
     stageConfigs: [
-      { stageKey: 'planning', weight: 20, status: 'completed' },
-      { stageKey: 'construction', weight: 40, status: 'in_progress' },
-      { stageKey: 'configuration', weight: 25, status: 'not_started' },
-      { stageKey: 'verification', weight: 15, status: 'not_started' },
+      {
+        stageKey: 'planning',
+        weight: 20,
+        status: 'completed',
+        actualProgress: 100,
+        taskProgress: [
+          {
+            taskId: 't1',
+            taskKey: 'staff_config',
+            taskName: '人员配置',
+            completed: true,
+            completedDate: '2024-01-20',
+            remark: '已配置项目经理和工程师团队',
+            materials: [
+              {
+                requirementKey: 'staff_list',
+                requirementName: '人员名单',
+                files: [
+                  { id: 'f1', url: '/mock/staff_list.jpg', type: 'image', name: '项目人员配置表.jpg' }
+                ],
+                completed: true
+              }
+            ]
+          },
+          {
+            taskId: 't2',
+            taskKey: 'equipment_purchase',
+            taskName: '设备采购',
+            completed: true,
+            completedDate: '2024-01-25',
+            remark: '采购完成',
+            materials: [
+              {
+                requirementKey: 'purchase_contract',
+                requirementName: '采购合同',
+                files: [
+                  { id: 'f2', url: '/mock/contract.jpg', type: 'image', name: '设备采购合同.jpg' }
+                ],
+                completed: true
+              }
+            ]
+          },
+          {
+            taskId: 't3',
+            taskKey: 'tools_prepare',
+            taskName: '工具准备',
+            completed: true,
+            completedDate: '2024-02-01',
+            remark: '工具齐全',
+            materials: [
+              {
+                requirementKey: 'tools_list',
+                requirementName: '工具清单',
+                files: [
+                  { id: 'f3', url: '/mock/tools.jpg', type: 'image', name: '施工工具清单.jpg' }
+                ],
+                completed: true
+              }
+            ]
+          },
+          {
+            taskId: 't4',
+            taskKey: 'tech_plan',
+            taskName: '技术方案确认',
+            completed: true,
+            completedDate: '2024-02-10',
+            remark: '方案已确认',
+            materials: [
+              {
+                requirementKey: 'tech_doc',
+                requirementName: '技术方案文档',
+                files: [
+                  { id: 'f4', url: '/mock/tech_plan.jpg', type: 'image', name: '技术实施方案V1.0.jpg' }
+                ],
+                completed: true
+              }
+            ]
+          },
+        ],
+        remark: '准备阶段已完成',
+        lastReportDate: '2024-02-10T10:00:00.000Z',
+      },
+      {
+        stageKey: 'construction',
+        weight: 40,
+        status: 'in_progress',
+        actualProgress: 50,
+        deviceProgress: [
+          {
+            deviceId: '1',
+            deviceName: '注塑机-01',
+            completed: true,
+            completedDate: '2024-02-15',
+            taskProgress: [
+              {
+                deviceId: '1',
+                deviceName: '注塑机-01',
+                taskId: 'task_install',
+                taskKey: 'device_install',
+                taskName: '设备安装',
+                completed: true,
+                completedDate: '2024-02-05',
+                remark: '安装完成，位置正确',
+                materials: [
+                  {
+                    requirementKey: 'before_photo',
+                    requirementName: '安装前照片',
+                    files: [
+                      { id: 'f5', url: '/mock/before1.jpg', type: 'image', name: '安装前照片1.jpg' },
+                      { id: 'f6', url: '/mock/before2.jpg', type: 'image', name: '安装前照片2.jpg' }
+                    ],
+                    completed: true
+                  },
+                  {
+                    requirementKey: 'after_photo',
+                    requirementName: '安装后照片',
+                    files: [
+                      { id: 'f7', url: '/mock/after1.jpg', type: 'image', name: '安装后照片1.jpg' },
+                      { id: 'f8', url: '/mock/after2.jpg', type: 'image', name: '安装后照片2.jpg' }
+                    ],
+                    completed: true
+                  },
+                  {
+                    requirementKey: 'location_doc',
+                    requirementName: '位置确认单',
+                    files: [
+                      { id: 'f9', url: '/mock/location1.jpg', type: 'image', name: '位置确认单_注塑机01.jpg' }
+                    ],
+                    completed: true
+                  }
+                ]
+              },
+              {
+                deviceId: '1',
+                deviceName: '注塑机-01',
+                taskId: 'task_wiring',
+                taskKey: 'network_wiring',
+                taskName: '网络布线',
+                completed: true,
+                completedDate: '2024-02-08',
+                remark: '布线完成，网络连通',
+                materials: [
+                  {
+                    requirementKey: 'wiring_photo',
+                    requirementName: '布线照片',
+                    files: [
+                      { id: 'f10', url: '/mock/wiring1.jpg', type: 'image', name: '布线照片1.jpg' },
+                      { id: 'f11', url: '/mock/wiring2.jpg', type: 'image', name: '布线照片2.jpg' }
+                    ],
+                    completed: true
+                  },
+                  {
+                    requirementKey: 'connection_test',
+                    requirementName: '连通性测试',
+                    files: [
+                      { id: 'f12', url: '/mock/test1.jpg', type: 'image', name: 'ping测试结果.jpg' }
+                    ],
+                    completed: true
+                  }
+                ]
+              },
+              {
+                deviceId: '1',
+                deviceName: '注塑机-01',
+                taskId: 'task_debug',
+                taskKey: 'hardware_debug',
+                taskName: '硬件调试',
+                completed: true,
+                completedDate: '2024-02-15',
+                remark: '调试完成，数据采集正常',
+                materials: [
+                  {
+                    requirementKey: 'test_report',
+                    requirementName: '测试报告',
+                    files: [
+                      { id: 'f13', url: '/mock/test_report1.pdf', type: 'image', name: '硬件调试报告_注塑机01.pdf' }
+                    ],
+                    completed: true
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            deviceId: '2',
+            deviceName: '注塑机-02',
+            completed: true,
+            completedDate: '2024-02-18',
+            taskProgress: [
+              {
+                deviceId: '2',
+                deviceName: '注塑机-02',
+                taskId: 'task_install',
+                taskKey: 'device_install',
+                taskName: '设备安装',
+                completed: true,
+                completedDate: '2024-02-06',
+                remark: '安装完成',
+                materials: [
+                  {
+                    requirementKey: 'before_photo',
+                    requirementName: '安装前照片',
+                    files: [
+                      { id: 'f14', url: '/mock/before3.jpg', type: 'image', name: '安装前照片_注塑机02.jpg' }
+                    ],
+                    completed: true
+                  },
+                  {
+                    requirementKey: 'after_photo',
+                    requirementName: '安装后照片',
+                    files: [
+                      { id: 'f15', url: '/mock/after3.jpg', type: 'image', name: '安装后照片_注塑机02.jpg' }
+                    ],
+                    completed: true
+                  },
+                  {
+                    requirementKey: 'location_doc',
+                    requirementName: '位置确认单',
+                    files: [
+                      { id: 'f16', url: '/mock/location2.pdf', type: 'image', name: '位置确认单_注塑机02.pdf' }
+                    ],
+                    completed: true
+                  }
+                ]
+              },
+              {
+                deviceId: '2',
+                deviceName: '注塑机-02',
+                taskId: 'task_wiring',
+                taskKey: 'network_wiring',
+                taskName: '网络布线',
+                completed: true,
+                completedDate: '2024-02-10',
+                remark: '布线完成',
+                materials: [
+                  {
+                    requirementKey: 'wiring_photo',
+                    requirementName: '布线照片',
+                    files: [
+                      { id: 'f17', url: '/mock/wiring3.jpg', type: 'image', name: '布线照片_注塑机02.jpg' }
+                    ],
+                    completed: true
+                  },
+                  {
+                    requirementKey: 'connection_test',
+                    requirementName: '连通性测试',
+                    files: [
+                      { id: 'f18', url: '/mock/test2.jpg', type: 'image', name: '连通性测试_注塑机02.jpg' }
+                    ],
+                    completed: true
+                  }
+                ]
+              },
+              {
+                deviceId: '2',
+                deviceName: '注塑机-02',
+                taskId: 'task_debug',
+                taskKey: 'hardware_debug',
+                taskName: '硬件调试',
+                completed: true,
+                completedDate: '2024-02-18',
+                remark: '调试完成',
+                materials: [
+                  {
+                    requirementKey: 'test_report',
+                    requirementName: '测试报告',
+                    files: [
+                      { id: 'f19', url: '/mock/test_report2.pdf', type: 'image', name: '硬件调试报告_注塑机02.pdf' }
+                    ],
+                    completed: true
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            deviceId: '3',
+            deviceName: '装配机器人-01',
+            completed: false,
+            taskProgress: [
+              {
+                deviceId: '3',
+                deviceName: '装配机器人-01',
+                taskId: 'task_install',
+                taskKey: 'device_install',
+                taskName: '设备安装',
+                completed: true,
+                completedDate: '2024-02-20',
+                remark: '安装完成',
+                materials: [
+                  {
+                    requirementKey: 'before_photo',
+                    requirementName: '安装前照片',
+                    files: [
+                      { id: 'f20', url: '/mock/before_robot1.jpg', type: 'image', name: '安装前_机器人01.jpg' }
+                    ],
+                    completed: true
+                  },
+                  {
+                    requirementKey: 'after_photo',
+                    requirementName: '安装后照片',
+                    files: [
+                      { id: 'f21', url: '/mock/after_robot1.jpg', type: 'image', name: '安装后_机器人01.jpg' }
+                    ],
+                    completed: true
+                  },
+                  {
+                    requirementKey: 'location_doc',
+                    requirementName: '位置确认单',
+                    files: [
+                      { id: 'f22', url: '/mock/location_robot1.pdf', type: 'image', name: '位置确认单_机器人01.pdf' }
+                    ],
+                    completed: true
+                  }
+                ]
+              },
+              {
+                deviceId: '3',
+                deviceName: '装配机器人-01',
+                taskId: 'task_wiring',
+                taskKey: 'network_wiring',
+                taskName: '网络布线',
+                completed: true,
+                completedDate: '2024-02-22',
+                remark: '布线完成，连接稳定',
+                materials: [
+                  {
+                    requirementKey: 'wiring_photo',
+                    requirementName: '布线照片',
+                    files: [
+                      { id: 'f23', url: '/mock/wiring_robot1.jpg', type: 'image', name: '布线照片_机器人01.jpg' }
+                    ],
+                    completed: true
+                  },
+                  {
+                    requirementKey: 'connection_test',
+                    requirementName: '连通性测试',
+                    files: [
+                      { id: 'f24', url: '/mock/test_robot1.jpg', type: 'image', name: '连通性测试_机器人01.jpg' }
+                    ],
+                    completed: true
+                  }
+                ]
+              },
+              {
+                deviceId: '3',
+                deviceName: '装配机器人-01',
+                taskId: 'task_debug',
+                taskKey: 'hardware_debug',
+                taskName: '硬件调试',
+                completed: false,
+                remark: '调试进行中，OPC UA连接偶尔不稳定',
+                materials: []
+              }
+            ]
+          },
+          {
+            deviceId: '4',
+            deviceName: '装配机器人-02',
+            completed: false,
+            taskProgress: [
+              {
+                deviceId: '4',
+                deviceName: '装配机器人-02',
+                taskId: 'task_install',
+                taskKey: 'device_install',
+                taskName: '设备安装',
+                completed: false,
+                remark: '等待安装',
+                materials: []
+              },
+              {
+                deviceId: '4',
+                deviceName: '装配机器人-02',
+                taskId: 'task_wiring',
+                taskKey: 'network_wiring',
+                taskName: '网络布线',
+                completed: false,
+                remark: '待施工',
+                materials: []
+              },
+              {
+                deviceId: '4',
+                deviceName: '装配机器人-02',
+                taskId: 'task_debug',
+                taskKey: 'hardware_debug',
+                taskName: '硬件调试',
+                completed: false,
+                remark: '未开始',
+                materials: []
+              }
+            ]
+          }
+        ],
+        remark: '施工进行中，已完成2台设备，第3台调试中',
+        lastReportDate: '2024-02-22T16:30:00.000Z',
+      },
+      {
+        stageKey: 'configuration',
+        weight: 25,
+        status: 'not_started',
+        actualProgress: 0,
+        deviceProgress: [],
+        remark: '尚未开始',
+        lastReportDate: undefined,
+      },
+      {
+        stageKey: 'verification',
+        weight: 15,
+        status: 'not_started',
+        actualProgress: 0,
+        taskProgress: [],
+        remark: '尚未开始',
+        lastReportDate: undefined,
+      },
     ],
     createTime: '2024-01-10 10:00:00', updateTime: '2024-02-01 14:30:00', creator: '张经理',
   },
@@ -744,6 +1155,90 @@ export const mockStageDefinitions: StageDefinition[] = [
     isSystem: true,
     defaultWeight: 40,
     defaultTasks: ['设备安装', '网络布线', '硬件调试'],
+    // 新增：任务模板配置
+    taskTemplates: [
+      {
+        id: 'task_install',
+        key: 'device_install',
+        name: '设备安装',
+        description: '安装数据采集设备到指定位置',
+        defaultWeight: 40,
+        materialRequirements: [
+          {
+            key: 'before_photo',
+            name: '安装前照片',
+            description: '安装前现场环境照片',
+            fileType: MaterialFileType.IMAGE,
+            required: true,
+            minCount: 1,
+            maxCount: 5,
+          },
+          {
+            key: 'after_photo',
+            name: '安装后照片',
+            description: '安装完成后设备照片',
+            fileType: MaterialFileType.IMAGE,
+            required: true,
+            minCount: 1,
+            maxCount: 5,
+          },
+          {
+            key: 'location_doc',
+            name: '位置确认单',
+            description: '设备安装位置确认签字文档',
+            fileType: MaterialFileType.DOCUMENT,
+            required: true,
+            minCount: 1,
+            maxCount: 1,
+          },
+        ],
+      },
+      {
+        id: 'task_wiring',
+        key: 'network_wiring',
+        name: '网络布线',
+        description: '网络布线及连接',
+        defaultWeight: 30,
+        materialRequirements: [
+          {
+            key: 'wiring_photo',
+            name: '布线照片',
+            description: '网络布线完成后的照片',
+            fileType: MaterialFileType.IMAGE,
+            required: true,
+            minCount: 1,
+            maxCount: 10,
+          },
+          {
+            key: 'connection_test',
+            name: '连通性测试',
+            description: '网络连通性测试截图',
+            fileType: MaterialFileType.IMAGE,
+            required: true,
+            minCount: 1,
+            maxCount: 3,
+          },
+        ],
+      },
+      {
+        id: 'task_debug',
+        key: 'hardware_debug',
+        name: '硬件调试',
+        description: '硬件设备调试与测试',
+        defaultWeight: 30,
+        materialRequirements: [
+          {
+            key: 'test_report',
+            name: '测试报告',
+            description: '硬件调试测试报告',
+            fileType: MaterialFileType.DOCUMENT,
+            required: true,
+            minCount: 1,
+            maxCount: 1,
+          },
+        ],
+      },
+    ],
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00',
   },
@@ -758,6 +1253,81 @@ export const mockStageDefinitions: StageDefinition[] = [
     isSystem: true,
     defaultWeight: 25,
     defaultTasks: ['点位配置', '协议配置', '状态逻辑配置'],
+    // 新增：任务模板配置
+    taskTemplates: [
+      {
+        id: 'task_point_config',
+        key: 'point_config',
+        name: '点位配置',
+        description: '配置数据采集点位',
+        defaultWeight: 35,
+        materialRequirements: [
+          {
+            key: 'point_list',
+            name: '点位配置表',
+            description: '数据采集点位配置清单',
+            fileType: MaterialFileType.SPREADSHEET,
+            required: true,
+            minCount: 1,
+            maxCount: 1,
+          },
+          {
+            key: 'screenshot',
+            name: '配置截图',
+            description: '系统配置界面截图',
+            fileType: MaterialFileType.IMAGE,
+            required: true,
+            minCount: 1,
+            maxCount: 5,
+          },
+        ],
+      },
+      {
+        id: 'task_protocol_config',
+        key: 'protocol_config',
+        name: '协议配置',
+        description: '配置通信协议参数',
+        defaultWeight: 35,
+        materialRequirements: [
+          {
+            key: 'protocol_doc',
+            name: '协议配置文档',
+            description: '通信协议配置说明文档',
+            fileType: MaterialFileType.DOCUMENT,
+            required: true,
+            minCount: 1,
+            maxCount: 1,
+          },
+        ],
+      },
+      {
+        id: 'task_logic_config',
+        key: 'logic_config',
+        name: '状态逻辑配置',
+        description: '配置设备状态逻辑',
+        defaultWeight: 30,
+        materialRequirements: [
+          {
+            key: 'logic_diagram',
+            name: '逻辑图',
+            description: '状态逻辑配置图',
+            fileType: MaterialFileType.DOCUMENT,
+            required: true,
+            minCount: 1,
+            maxCount: 3,
+          },
+          {
+            key: 'test_result',
+            name: '测试结果',
+            description: '逻辑配置测试结果记录',
+            fileType: MaterialFileType.SPREADSHEET,
+            required: true,
+            minCount: 1,
+            maxCount: 1,
+          },
+        ],
+      },
+    ],
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00',
   },
