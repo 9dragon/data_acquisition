@@ -34,13 +34,13 @@ const DeviceTaskProgressPanel: React.FC<DeviceTaskProgressPanelProps> = ({
   const [localTasks, setLocalTasks] = useState<DeviceTaskProgress[]>(taskProgress);
   const [activeKeys, setActiveKeys] = useState<string[]>([]);
 
+  // 合并初始化和缺失任务的逻辑，避免循环更新
   useEffect(() => {
-    setLocalTasks(taskProgress);
-  }, [taskProgress]);
+    // 首先合并现有任务
+    let updatedTasks = [...taskProgress];
 
-  // 确保所有任务模板都有对应的进度记录
-  useEffect(() => {
-    const existingTaskIds = localTasks.map(t => t.taskId);
+    // 然后添加缺失的任务模板
+    const existingTaskIds = updatedTasks.map(t => t.taskId);
     const missingTasks = taskTemplates.filter(template => !existingTaskIds.includes(template.id));
 
     if (missingTasks.length > 0) {
@@ -58,10 +58,12 @@ const DeviceTaskProgressPanel: React.FC<DeviceTaskProgressPanelProps> = ({
           completed: false,
         })),
       }));
-      setLocalTasks(prev => [...prev, ...newTasks]);
-      onChange([...localTasks, ...newTasks]);
+      updatedTasks = [...updatedTasks, ...newTasks];
     }
-  }, [taskTemplates, localTasks, device, onChange]);
+
+    // 只在真正需要时才更新状态
+    setLocalTasks(updatedTasks);
+  }, [taskProgress, taskTemplates, device]);
 
   // 计算设备整体完成度
   const deviceProgress = calculateDeviceTaskProgress(localTasks, taskTemplates);
@@ -237,6 +239,13 @@ const DeviceTaskProgressPanel: React.FC<DeviceTaskProgressPanelProps> = ({
         {localTasks.map((task) => {
           const template = taskTemplates.find(t => t.id === task.taskId);
           const hasMaterials = template && template.materialRequirements.length > 0;
+
+          console.log('[DeviceTaskProgressPanel] 任务渲染:', {
+            taskKey: task.taskKey,
+            templateFound: !!template,
+            hasMaterials,
+            materialsCount: template?.materialRequirements.length || 0
+          });
 
           return (
             <Collapse.Panel

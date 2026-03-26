@@ -42,6 +42,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
       children: [
         { key: '/plan', label: '项目计划' },
         { key: '/progress', label: '项目进度' },
+        { key: '/tasks', label: '任务列表' },
       ],
     },
     {
@@ -130,6 +131,9 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
     if (path.startsWith('/progress')) {
       return ['/progress'];
     }
+    if (path.startsWith('/tasks')) {
+      return ['/tasks'];
+    }
     if (path.startsWith('/issue/') && path !== '/issue/my' && path !== '/issue/statistics') {
       return ['/issue'];
     }
@@ -144,7 +148,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
     const path = location.pathname;
     if (path.startsWith('/project')) return ['project-group'];
     if (path.startsWith('/device') || path.startsWith('/process') || path.startsWith('/workshop')) return ['device-group'];
-    if (path.startsWith('/plan') || path.startsWith('/progress')) return ['progress-group'];
+    if (path.startsWith('/plan') || path.startsWith('/progress') || path.startsWith('/tasks')) return ['progress-group'];
     if (path.startsWith('/issue')) return ['issue-group'];
     if (path.startsWith('/document')) return ['document-group'];
     if (path.startsWith('/system')) return ['system-group'];

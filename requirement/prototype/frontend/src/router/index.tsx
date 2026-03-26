@@ -26,6 +26,7 @@ import StageList from '../pages/Project/StageList';
 import ProcessList from '../pages/Process/ProcessList';
 import WorkshopList from '../pages/Workshop/WorkshopList';
 import ProgressList from '../pages/Progress/ProgressList';
+import TaskList from '../pages/Task/TaskList';
 
 // 懒加载页面组件
 const ProfileCenter = React.lazy(() => import('../pages/Profile/Center'));
@@ -119,6 +120,10 @@ const router = createBrowserRouter([
       {
         path: 'progress',
         element: <ProgressList />,
+      },
+      {
+        path: 'tasks',
+        element: <TaskList />,
       },
       // 问题管理
       {
