@@ -29,7 +29,8 @@
       "Bash(do sed:*)",
       "Bash(done)",
       "Bash(do echo:*)",
-      "Read(//d/work/projects/data_acquisition/source/**)"
+      "Read(//d/work/projects/data_acquisition/source/**)",
+      "Bash(cd:*)"
     ]
   }
 }

@@ -1,0 +1,177 @@
+# 数据采集系统 - Git忽略文件配置
+
+# ====================
+# 前端项目 (Vue 3 + Vite)
+# ====================
+
+# Node modules
+node_modules/
+jspm_packages/
+
+# 构建输出
+dist/
+dist-ssr/
+build/
+out/
+
+# 日志文件
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# 项目特定日志文件
+source/backend.log
+source/frontend.log
+backend.log
+frontend.log
+
+# 本地环境文件
+.env
+.env.local
+.env.*.local
+
+# 编辑器临时文件
+*.local
+*.swp
+*.swo
+*~
+
+# ====================
+# 后端项目 (Spring Boot + Maven)
+# ====================
+
+# Maven 构建输出
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# IDE 相关
+.idea/
+*.iws
+*.iml
+*.ipr
+.vscode/
+.classpath
+.project
+.settings/
+bin/
+
+# 编译文件
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+
+# 日志文件
+logs/
+*.log
+
+# 临时文件
+*.tmp
+*.bak
+*.swp
+*~.nib
+
+# Maven
+.mvn/
+mvnw
+mvnw.cmd
+
+# ====================
+# 通用配置
+# ====================
+
+# 操作系统相关
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# IDE 和编辑器
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ====================
+# 项目特定
+# ====================
+
+# 部署相关敏感信息
+deployment/config/*.secret
+deployment/config/*.local
+
+# 临时测试文件
+*.test.js.snap
+coverage/
+.nyc_output/
+
+# 数据库文件
+*.db
+*.sqlite
+*.sqlite3
+
+# 备份文件
+*.backup
+*.bak
+
+# Claude Code 相关（可选，根据需要调整）
+# .claude/
+
+# ====================
+# 开发工具
+# ====================
+
+# ESLint cache
+.eslintcache
+
+# Prettier cache
+.prettiercache
+
+# Stylelint cache
+.stylelintcache
+
+# ====================
+# 构建和打包工具
+# ====================
+
+# Webpack
+.webpack/
+
+# Rollup
+.rollup.cache/
+
+# Vite
+.vite/
+
+# ====================
+# 其他
+# ====================
+
+# 压缩文件
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# 临时目录
+tmp/
+temp/
+.cache/
