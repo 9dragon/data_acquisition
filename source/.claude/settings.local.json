@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bash start.sh all)",
+      "Bash(netstat -ano)",
+      "Bash(findstr \"LISTENING\")",
+      "Bash(findstr \":3000 :5173 :8080\")",
+      "Bash(npm run:*)",
+      "Bash(findstr \":3000\")",
+      "Bash(findstr \":8080\")",
+      "Bash(curl:*)",
+      "Bash(taskkill:*)",
+      "Bash(export JAVA_HOME=\"/c/Program Files/Java/jdk-17\")",
+      "Bash(export PATH=\"$JAVA_HOME/bin:$PATH\")",
+      "Bash(/d/devtools/apache-maven-3.6.0/bin/mvn -f backend/pom.xml spring-boot:run -Dspring-boot.run.profiles=dev)",
+      "Bash(mysql -h localhost -u root -e \"USE data_acquisition; SELECT username, name, status FROM t_user WHERE username = ''admin'';\")",
+      "Bash(ls -la D:/work/projects/data_acquisition/source/*.log)",
+      "Bash(mysql:*)",
+      "Bash(/d/devtools/apache-maven-3.6.0/bin/mvn exec:java -Dexec.mainClass=\"PasswordGenerator\" -Dexec.classpathScope=test -q)",
+      "Bash(findstr \":3000 :8080\")",
+      "Bash(bash start.sh)",
+      "Bash(findstr \":3000\\\\|:8080\")",
+      "Bash(findstr \":3000\\\\|:5173\\\\|:8080\")",
+      "Bash(tasklist)",
+      "Bash(findstr \":5173\")",
+      "Bash(ipconfig)",
+      "Bash(findstr \"IPv4\")",
+      "Bash(for file:*)",
+      "Bash(do sed:*)",
+      "Bash(done)",
+      "Bash(do echo:*)",
+      "Read(//d/work/projects/data_acquisition/source/**)"
+    ]
+  }
+}
