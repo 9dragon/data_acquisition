@@ -11,6 +11,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 /**
  * 用户Service实现
  */
@@ -71,6 +74,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException("用户不存在");
         }
         user.setPassword(passwordEncoder.encode(newPassword));
+        return this.updateById(user);
+    }
+
+    @Override
+    public Boolean updateLoginInfo(Long id, String ip) {
+        User user = this.getById(id);
+        if (user == null) {
+            throw new BusinessException("用户不存在");
+        }
+        // 更新登录时间和IP
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        user.setLastLoginTime(LocalDateTime.now().format(formatter));
+        user.setLastLoginIp(ip);
         return this.updateById(user);
     }
 }

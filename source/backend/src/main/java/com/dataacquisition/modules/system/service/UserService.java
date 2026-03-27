@@ -33,4 +33,9 @@ public interface UserService extends IService<User>, UserDetailsService {
      * 重置密码
      */
     Boolean resetPassword(Long id, String newPassword);
+
+    /**
+     * 更新用户登录信息
+     */
+    Boolean updateLoginInfo(Long id, String ip);
 }

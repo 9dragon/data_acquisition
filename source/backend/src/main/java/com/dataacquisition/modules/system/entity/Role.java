@@ -1,6 +1,7 @@
 package com.dataacquisition.modules.system.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.dataacquisition.common.entity.BaseEntity;
@@ -45,4 +46,16 @@ public class Role extends BaseEntity {
      * 是否系统预置角色：0=否, 1=是
      */
     private Integer isSystem;
+
+    /**
+     * 权限数量（非数据库字段）
+     */
+    @TableField(exist = false)
+    private Integer permissionCount;
+
+    /**
+     * 用户数量（非数据库字段）
+     */
+    @TableField(exist = false)
+    private Integer userCount;
 }

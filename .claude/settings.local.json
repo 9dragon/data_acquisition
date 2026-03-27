@@ -99,7 +99,23 @@
       "Bash(findstr \"12636\")",
       "Bash(/d/devtools/apache-maven-3.6.0/bin/mvn -f backend/pom.xml spring-boot:run -Dspring-boot.run.profiles=prod)",
       "Bash(findstr \":8080\\\\|:3306\")",
-      "Bash(findstr \"java.exe\")"
+      "Bash(findstr \"java.exe\")",
+      "Bash(findstr \"java\")",
+      "Bash(findstr -i \"java\")",
+      "Bash(findstr -i \"java.exe\")",
+      "Bash(find D:/work/projects/data_acquisition/source/backend -name *.jar -type f)",
+      "Bash(export JAVA_HOME=\"C:/Program Files/Java/jdk-17\")",
+      "Bash(/d/devtools/apache-maven-3.6.0/bin/mvn -version)",
+      "Bash(powershell.exe -Command \"Get-Command mysql | Select-Object -ExpandProperty Source\")",
+      "Bash(javac com/dataacquisition/SqlExecutor.java)",
+      "Bash(javac -encoding UTF-8 com/dataacquisition/SqlExecutor.java)",
+      "Bash(powershell.exe -Command \"Test-Connection 10.1.2.230 -Count 1 -Quiet\")",
+      "Bash(python3 execute_migration.py)",
+      "Bash(find D:/work/projects/data_acquisition/.worktrees/device-type -name *.md -type f)",
+      "Bash(find /d/work/projects/data_acquisition/.worktrees/device-type/source/backend/src/main/java/com/dataacquisition/modules/device -type f -name *.java)",
+      "Bash(/c/Users/Administrator/.m2/wrapper/dists/apache-maven-3.8.7-bin/1ktonn2lleg549uah6ngl1r74r/apache-maven-3.8.7/bin/mvn.cmd compile:*)",
+      "Bash(npx vue-tsc:*)",
+      "Bash(node -e \"console.log\\(''Node.js is working''\\)\")"
     ]
   }
 }

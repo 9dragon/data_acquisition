@@ -6,10 +6,12 @@ import com.dataacquisition.modules.system.entity.User;
 import com.dataacquisition.modules.system.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -33,7 +35,7 @@ public class AuthController {
      */
     @Operation(summary = "用户登录")
     @PostMapping("/login")
-    public Result<Map<String, Object>> login(@RequestBody Map<String, String> request) {
+    public Result<Map<String, Object>> login(@RequestBody Map<String, String> request, HttpServletRequest httpRequest) {
         String username = request.get("username");
         String password = request.get("password");
 
@@ -44,6 +46,10 @@ public class AuthController {
 
         // 获取用户信息
         User user = userService.getByUsername(username);
+
+        // 更新登录信息
+        String ip = getClientIp(httpRequest);
+        userService.updateLoginInfo(user.getId(), ip);
 
         // 生成Token
         String token = jwtConfig.generateToken(user.getId(), user.getUsername());
@@ -60,9 +66,18 @@ public class AuthController {
      */
     @Operation(summary = "获取当前用户信息")
     @GetMapping("/user-info")
-    public Result<User> getUserInfo() {
-        // TODO: 从SecurityContext获取当前用户
-        return Result.success();
+    public Result<Map<String, Object>> getUserInfo() {
+        // 从SecurityContext获取当前用户
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return Result.error(1001, "未登录");
+        }
+
+        String username = authentication.getName();
+        User user = userService.getByUsername(username);
+
+        Map<String, Object> userInfo = getUserInfo(user);
+        return Result.success(userInfo);
     }
 
     /**
@@ -71,7 +86,8 @@ public class AuthController {
     @Operation(summary = "用户登出")
     @PostMapping("/logout")
     public Result<Void> logout() {
-        // TODO: 清除Token缓存
+        // 前端清除token即可，后端不需要做特殊处理
+        // 如果使用Redis缓存token，可以在这里删除缓存
         return Result.success();
     }
 
@@ -80,12 +96,39 @@ public class AuthController {
      */
     private Map<String, Object> getUserInfo(User user) {
         Map<String, Object> userInfo = new HashMap<>();
-        userInfo.put("id", user.getId());
+        userInfo.put("id", user.getId().toString());
         userInfo.put("username", user.getUsername());
         userInfo.put("name", user.getName());
         userInfo.put("email", user.getEmail());
         userInfo.put("phone", user.getPhone());
         userInfo.put("avatar", user.getAvatar());
         return userInfo;
+    }
+
+    /**
+     * 获取客户端IP地址
+     */
+    private String getClientIp(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("Proxy-Client-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("WL-Proxy-Client-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("HTTP_CLIENT_IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("HTTP_X_FORWARDED_FOR");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        // 处理多个IP的情况（X-Forwarded-For可能包含多个IP）
+        if (ip != null && ip.contains(",")) {
+            ip = ip.split(",")[0].trim();
+        }
+        return ip;
     }
 }

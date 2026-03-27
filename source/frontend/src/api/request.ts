@@ -5,7 +5,7 @@ import { ElMessage } from 'element-plus'
 
 // 创建axios实例
 const request: AxiosInstance = axios.create({
-  baseURL: '/api',
+  baseURL: '/api/v1',
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json'

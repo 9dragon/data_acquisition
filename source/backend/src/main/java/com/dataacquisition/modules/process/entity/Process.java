@@ -1,6 +1,7 @@
 package com.dataacquisition.modules.process.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.dataacquisition.common.entity.BaseEntity;
@@ -29,12 +30,20 @@ public class Process extends BaseEntity {
     /**
      * 所属项目ID
      */
+    @TableField("project_id")
     private Long projectId;
 
     /**
-     * 所属项目名称
+     * 所属项目名称（非数据库字段，用于展示）
      */
+    @TableField(exist = false)
     private String projectName;
+
+    /**
+     * 所属车间ID
+     */
+    @TableField("workshop_id")
+    private Long workshopId;
 
     /**
      * 工序编号
@@ -49,5 +58,6 @@ public class Process extends BaseEntity {
     /**
      * 排序序号
      */
+    @TableField("sequence_no")
     private Integer sortOrder;
 }

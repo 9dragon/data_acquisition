@@ -1,17 +1,17 @@
 package com.dataacquisition.modules.process.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dataacquisition.common.response.Result;
 import com.dataacquisition.modules.process.entity.Process;
-import com.dataacquisition.modules.process.mapper.ProcessMapper;
+import com.dataacquisition.modules.process.service.ProcessService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * 工序Controller
@@ -22,36 +22,22 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ProcessController {
 
-    private final ProcessMapper processMapper;
+    private final ProcessService processService;
 
     /**
      * 分页查询工序列表
      */
     @Operation(summary = "分页查询工序列表")
     @GetMapping
-    public Result<Page<Process>> pageProcesses(
-            @Parameter(description = "页码") @RequestParam(defaultValue = "1") Integer pageNum,
-            @Parameter(description = "每页条数") @RequestParam(defaultValue = "10") Integer pageSize,
-            @Parameter(description = "关键词") @RequestParam(required = false) String keyword,
-            @Parameter(description = "项目ID") @RequestParam(required = false) Long projectId) {
-        Page<Process> page = new Page<>(pageNum, pageSize);
-        LambdaQueryWrapper<Process> wrapper = new LambdaQueryWrapper<>();
-
-        if (StringUtils.isNotBlank(keyword)) {
-            wrapper.and(w -> w.like(Process::getName, keyword)
-                    .or()
-                    .like(Process::getCode, keyword));
-        }
-
-        if (projectId != null) {
-            wrapper.eq(Process::getProjectId, projectId);
-        }
-
-        wrapper.orderByAsc(Process::getSortOrder)
-                .orderByDesc(Process::getCreatedAt);
-
-        processMapper.selectPage(page, wrapper);
-        return Result.success(page);
+    public Result<IPage<Process>> pageProcesses(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(required = false) Long projectId,
+            @RequestParam(required = false) String keyword
+    ) {
+        Page<Process> pageParam = new Page<>(page, pageSize);
+        IPage<Process> pageResult = processService.page(pageParam);
+        return Result.success(pageResult);
     }
 
     /**
@@ -60,11 +46,21 @@ public class ProcessController {
     @Operation(summary = "根据ID获取工序详情")
     @GetMapping("/{id}")
     public Result<Process> getProcess(@PathVariable Long id) {
-        Process process = processMapper.selectById(id);
+        Process process = processService.getById(id);
         if (process == null) {
-            return Result.error("工序不存在");
+            return Result.error(4004, "工序不存在");
         }
         return Result.success(process);
+    }
+
+    /**
+     * 根据项目ID获取工序列表
+     */
+    @Operation(summary = "根据项目ID获取工序列表")
+    @GetMapping("/project/{projectId}")
+    public Result<List<Process>> getProcessesByProject(@PathVariable Long projectId) {
+        List<Process> processes = processService.getByProjectId(projectId);
+        return Result.success(processes);
     }
 
     /**
@@ -72,9 +68,9 @@ public class ProcessController {
      */
     @Operation(summary = "新增工序")
     @PostMapping
-    public Result<Void> createProcess(@Validated @RequestBody Process process) {
-        processMapper.insert(process);
-        return Result.success();
+    public Result<Process> createProcess(@RequestBody Process process) {
+        Boolean success = processService.createProcess(process);
+        return success ? Result.success(process) : Result.error(2001, "创建失败");
     }
 
     /**
@@ -82,10 +78,21 @@ public class ProcessController {
      */
     @Operation(summary = "更新工序")
     @PutMapping("/{id}")
-    public Result<Void> updateProcess(@PathVariable Long id, @Validated @RequestBody Process process) {
+    public Result<Void> updateProcess(@PathVariable Long id, @RequestBody Process process) {
         process.setId(id);
-        processMapper.updateById(process);
-        return Result.success();
+        Boolean success = processService.updateProcess(process);
+        return success ? Result.success() : Result.error(2002, "更新失败");
+    }
+
+    /**
+     * 批量更新工序排序
+     */
+    @Operation(summary = "批量更新工序排序")
+    @PutMapping("/reorder")
+    public Result<Void> updateSortOrder(@RequestBody Map<String, List<Process>> request) {
+        List<Process> processes = request.get("processes");
+        Boolean success = processService.updateSortOrder(processes);
+        return success ? Result.success() : Result.error(2003, "排序失败");
     }
 
     /**
@@ -94,7 +101,7 @@ public class ProcessController {
     @Operation(summary = "删除工序")
     @DeleteMapping("/{id}")
     public Result<Void> deleteProcess(@PathVariable Long id) {
-        processMapper.deleteById(id);
-        return Result.success();
+        Boolean success = processService.deleteProcess(id);
+        return success ? Result.success() : Result.error(2004, "删除失败");
     }
 }
