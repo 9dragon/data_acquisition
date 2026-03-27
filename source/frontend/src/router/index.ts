@@ -34,6 +34,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '设备列表', icon: 'Monitor' }
       },
       {
+        path: 'device-types',
+        name: 'DeviceTypes',
+        component: () => import('@/views/DeviceType/index.vue'),
+        meta: { title: '设备类型', icon: 'SetUp' }
+      },
+      {
         path: 'processes',
         name: 'Processes',
         component: () => import('@/views/Process/index.vue'),

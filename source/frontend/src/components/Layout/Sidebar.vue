@@ -24,6 +24,10 @@
         <el-icon><Monitor /></el-icon>
         <span>设备列表</span>
       </el-menu-item>
+      <el-menu-item index="/device-types">
+        <el-icon><SetUp /></el-icon>
+        <span>设备类型</span>
+      </el-menu-item>
       <el-menu-item index="/processes">
         <el-icon><Operation /></el-icon>
         <span>工序管理</span>
@@ -48,6 +52,7 @@ import {
   DataBoard,
   FolderOpened,
   Monitor,
+  SetUp,
   Operation,
   OfficeBuilding,
   User
