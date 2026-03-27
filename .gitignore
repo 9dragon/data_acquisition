@@ -114,6 +114,9 @@ Desktop.ini
 # 项目特定
 # ====================
 
+# Git Worktrees
+.worktrees/
+
 # 部署相关敏感信息
 deployment/config/*.secret
 deployment/config/*.local
