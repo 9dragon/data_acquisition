@@ -19,73 +19,43 @@ const routes: RouteRecordRaw[] = [
         path: 'dashboard',
         name: 'Dashboard',
         component: () => import('@/views/Dashboard/index.vue'),
-        meta: { title: '工作台', icon: 'DataBoard' }
+        meta: { title: '工作台', icon: 'Dashboard' }
       },
       {
-        path: 'system',
-        name: 'System',
-        meta: { title: '系统管理', icon: 'Setting' },
-        redirect: '/system/users',
-        children: [
-          {
-            path: 'users',
-            name: 'Users',
-            component: () => import('@/views/User/index.vue'),
-            meta: { title: '用户管理', icon: 'User' }
-          },
-          {
-            path: 'roles',
-            name: 'Roles',
-            component: () => import('@/views/System/RoleList.vue'),
-            meta: { title: '角色管理', icon: 'UserFilled' }
-          }
-        ]
+        path: 'projects',
+        name: 'Projects',
+        component: () => import('@/views/Project/index.vue'),
+        meta: { title: '项目列表', icon: 'FolderOpened' }
       },
       {
-        path: 'project',
-        name: 'Project',
-        meta: { title: '项目管理', icon: 'FolderOpened' },
-        redirect: '/project/list',
-        children: [
-          {
-            path: 'list',
-            name: 'ProjectList',
-            component: () => import('@/views/Project/index.vue'),
-            meta: { title: '项目列表', icon: 'Document' }
-          },
-          {
-            path: 'stages',
-            name: 'ProjectStages',
-            component: () => import('@/views/System/StageList.vue'),
-            meta: { title: '项目阶段', icon: 'Flag' }
-          }
-        ]
+        path: 'devices',
+        name: 'Devices',
+        component: () => import('@/views/Device/index.vue'),
+        meta: { title: '设备列表', icon: 'Monitor' }
       },
       {
-        path: 'device',
-        name: 'Device',
-        meta: { title: '设备管理', icon: 'Monitor' },
-        redirect: '/device/list',
-        children: [
-          {
-            path: 'list',
-            name: 'DeviceList',
-            component: () => import('@/views/Device/index.vue'),
-            meta: { title: '设备列表', icon: 'Monitor' }
-          },
-          {
-            path: 'processes',
-            name: 'Processes',
-            component: () => import('@/views/Process/index.vue'),
-            meta: { title: '工序管理', icon: 'Operation' }
-          },
-          {
-            path: 'workshops',
-            name: 'Workshops',
-            component: () => import('@/views/Workshop/index.vue'),
-            meta: { title: '车间管理', icon: 'OfficeBuilding' }
-          }
-        ]
+        path: 'device-types',
+        name: 'DeviceTypes',
+        component: () => import('@/views/DeviceType/index.vue'),
+        meta: { title: '设备类型', icon: 'SetUp' }
+      },
+      {
+        path: 'processes',
+        name: 'Processes',
+        component: () => import('@/views/Process/index.vue'),
+        meta: { title: '工序管理', icon: 'Operation' }
+      },
+      {
+        path: 'workshops',
+        name: 'Workshops',
+        component: () => import('@/views/Workshop/index.vue'),
+        meta: { title: '车间管理', icon: 'OfficeBuilding' }
+      },
+      {
+        path: 'users',
+        name: 'Users',
+        component: () => import('@/views/User/index.vue'),
+        meta: { title: '用户管理', icon: 'User' }
       }
     ]
   }
