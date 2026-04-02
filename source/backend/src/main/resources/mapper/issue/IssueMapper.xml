@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dataacquisition.modules.issue.mapper.IssueMapper">
+
+    <select id="selectIssueList" resultType="com.dataacquisition.modules.issue.entity.Issue">
+        SELECT
+            i.id,
+            i.code,
+            i.title,
+            i.type,
+            i.priority,
+            i.status,
+            i.description,
+            i.project_id,
+            i.device_id,
+            i.reporter_id,
+            i.assignee_id,
+            i.cc_users,
+            i.due_date,
+            i.resolved_at,
+            i.closed_at,
+            i.closed_reason,
+            i.create_time,
+            i.update_time,
+            p.name AS project_name,
+            d.name AS device_name,
+            r.name AS reporter_name,
+            a.name AS assignee_name
+        FROM t_issue i
+        LEFT JOIN t_project p ON i.project_id = p.id AND p.deleted = 0
+        LEFT JOIN t_device d ON i.device_id = d.id AND d.deleted = 0
+        LEFT JOIN t_user r ON i.reporter_id = r.id AND r.deleted = 0
+        LEFT JOIN t_user a ON i.assignee_id = a.id AND a.deleted = 0
+        WHERE i.deleted = 0
+        <if test="query.keyword != null and query.keyword != ''">
+            AND (i.code LIKE CONCAT('%', #{query.keyword}, '%') OR i.title LIKE CONCAT('%', #{query.keyword}, '%'))
+        </if>
+        <if test="query.projectId != null">
+            AND i.project_id = #{query.projectId}
+        </if>
+        <if test="query.deviceId != null">
+            AND i.device_id = #{query.deviceId}
+        </if>
+        <if test="query.type != null and query.type != ''">
+            AND i.type = #{query.type}
+        </if>
+        <if test="query.priority != null and query.priority != ''">
+            AND i.priority = #{query.priority}
+        </if>
+        <if test="query.status != null and query.status != ''">
+            AND i.status = #{query.status}
+        </if>
+        <if test="query.reporterId != null">
+            AND i.reporter_id = #{query.reporterId}
+        </if>
+        <if test="query.assigneeId != null">
+            AND i.assignee_id = #{query.assigneeId}
+        </if>
+        <if test="query.startDate != null">
+            AND i.create_time &gt;= #{query.startDate}
+        </if>
+        <if test="query.endDate != null">
+            AND i.create_time &lt;= #{query.endDate}
+        </if>
+        ORDER BY 
+            CASE WHEN #{query.sortOrder} = 'asc' THEN 
+                CASE #{query.sortField}
+                    WHEN 'priority' THEN CASE i.priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 ELSE 4 END
+                    WHEN 'create_time' THEN i.create_time
+                    ELSE i.create_time
+                END
+            END ASC,
+            CASE WHEN #{query.sortOrder} = 'desc' OR #{query.sortOrder} IS NULL OR #{query.sortOrder} = '' THEN 
+                CASE #{query.sortField}
+                    WHEN 'priority' THEN CASE i.priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 ELSE 4 END
+                    WHEN 'create_time' THEN i.create_time
+                    ELSE i.create_time
+                END
+            END DESC
+    </select>
+
+    <select id="countIssueList" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM t_issue i
+        WHERE i.deleted = 0
+        <if test="query.keyword != null and query.keyword != ''">
+            AND (i.code LIKE CONCAT('%', #{query.keyword}, '%') OR i.title LIKE CONCAT('%', #{query.keyword}, '%'))
+        </if>
+        <if test="query.projectId != null">
+            AND i.project_id = #{query.projectId}
+        </if>
+        <if test="query.deviceId != null">
+            AND i.device_id = #{query.deviceId}
+        </if>
+        <if test="query.type != null and query.type != ''">
+            AND i.type = #{query.type}
+        </if>
+        <if test="query.priority != null and query.priority != ''">
+            AND i.priority = #{query.priority}
+        </if>
+        <if test="query.status != null and query.status != ''">
+            AND i.status = #{query.status}
+        </if>
+        <if test="query.reporterId != null">
+            AND i.reporter_id = #{query.reporterId}
+        </if>
+        <if test="query.assigneeId != null">
+            AND i.assignee_id = #{query.assigneeId}
+        </if>
+    </select>
+
+</mapper>

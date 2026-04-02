@@ -75,6 +75,26 @@
         </el-menu-item>
       </el-sub-menu>
 
+      <!-- 问题管理 -->
+      <el-sub-menu index="issue">
+        <template #title>
+          <el-icon><Warning /></el-icon>
+          <span>问题管理</span>
+        </template>
+        <el-menu-item index="/issue">
+          <el-icon><Document /></el-icon>
+          <span>问题列表</span>
+        </el-menu-item>
+        <el-menu-item index="/issue/my">
+          <el-icon><User /></el-icon>
+          <span>我的问题</span>
+        </el-menu-item>
+        <el-menu-item index="/issue/stats">
+          <el-icon><DataAnalysis /></el-icon>
+          <span>问题统计</span>
+        </el-menu-item>
+      </el-sub-menu>
+
       <!-- 系统管理 -->
       <el-sub-menu index="system">
         <template #title>
@@ -111,7 +131,9 @@ import {
   Document,
   Flag,
   Calendar,
-  List
+  List,
+  Warning,
+  DataAnalysis
 } from '@element-plus/icons-vue'
 
 const route = useRoute()

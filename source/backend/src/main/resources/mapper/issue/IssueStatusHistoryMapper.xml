@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dataacquisition.modules.issue.mapper.IssueStatusHistoryMapper">
+
+    <select id="selectByIssueId" resultType="com.dataacquisition.modules.issue.entity.IssueStatusHistory">
+        SELECT
+            h.id,
+            h.issue_id,
+            h.from_status,
+            h.to_status,
+            h.operator_id,
+            h.remark,
+            h.create_time,
+            u.name AS operator_name
+        FROM t_issue_status_history h
+        LEFT JOIN t_user u ON h.operator_id = u.id AND u.deleted = 0
+        WHERE h.issue_id = #{issueId}
+        ORDER BY h.create_time ASC
+    </select>
+
+</mapper>

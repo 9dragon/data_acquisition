@@ -67,6 +67,8 @@ public class SecurityConfig {
                         // 公开接口
                         .requestMatchers(
                                 "/auth/**",
+                                "/api/auth/**",
+                                "/api/dingtalk/auth",
                                 "/doc.html",
                                 "/webjars/**",
                                 "/swagger-resources/**",

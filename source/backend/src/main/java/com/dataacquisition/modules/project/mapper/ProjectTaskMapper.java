@@ -38,4 +38,9 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTask> {
      */
     Page<ProjectTask> selectPageWithProjectName(Page<ProjectTask> page, @Param("projectId") Long projectId,
                                                  @Param("status") String status, @Param("keyword") String keyword);
+
+    /**
+     * 分页查询我的任务（带项目名称）
+     */
+    Page<ProjectTask> selectMyTasksPage(Page<ProjectTask> page, @Param("managerId") Long managerId, @Param("status") String status);
 }

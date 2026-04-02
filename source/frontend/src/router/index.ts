@@ -88,6 +88,36 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '调研详情', hidden: true }
       },
       {
+        path: 'issue',
+        name: 'Issues',
+        component: () => import('@/views/Issue/index.vue'),
+        meta: { title: '问题列表', icon: 'Warning' }
+      },
+      {
+        path: 'issue/:id',
+        name: 'IssueDetail',
+        component: () => import('@/views/Issue/IssueDetail.vue'),
+        meta: { title: '问题详情', hidden: true }
+      },
+      {
+        path: 'issue/edit/:id',
+        name: 'IssueEdit',
+        component: () => import('@/views/Issue/IssueDetail.vue'),
+        meta: { title: '编辑问题', hidden: true }
+      },
+      {
+        path: 'issue/my',
+        name: 'MyIssues',
+        component: () => import('@/views/Issue/MyIssues.vue'),
+        meta: { title: '我的问题', icon: 'WarningFilled' }
+      },
+      {
+        path: 'issue/stats',
+        name: 'IssueStats',
+        component: () => import('@/views/Issue/IssueStats.vue'),
+        meta: { title: '问题统计', icon: 'DataAnalysis' }
+      },
+      {
         path: 'users',
         name: 'Users',
         component: () => import('@/views/User/index.vue'),
@@ -98,6 +128,92 @@ const routes: RouteRecordRaw[] = [
         name: 'Roles',
         component: () => import('@/views/System/RoleList.vue'),
         meta: { title: '角色管理', icon: 'UserFilled' }
+      }
+    ]
+  },
+  // 移动端路由
+  {
+    path: '/mobile',
+    component: () => import('@/views/Mobile/Layout/MobileLayout.vue'),
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'MobileHome',
+        component: () => import('@/views/Mobile/Home/index.vue'),
+        meta: { title: '首页', keepAlive: true }
+      },
+      {
+        path: 'attendance/check-in',
+        name: 'AttendanceCheckIn',
+        component: () => import('@/views/Mobile/Attendance/CheckIn.vue'),
+        meta: { title: '打卡签到', hideTabBar: true }
+      },
+      {
+        path: 'attendance/records',
+        name: 'AttendanceRecords',
+        component: () => import('@/views/Mobile/Attendance/Records.vue'),
+        meta: { title: '签到记录', keepAlive: true }
+      },
+      {
+        path: 'task/list',
+        name: 'TaskList',
+        component: () => import('@/views/Mobile/Task/List.vue'),
+        meta: { title: '我的任务' }
+      },
+      {
+        path: 'task/detail/:id',
+        name: 'TaskDetail',
+        component: () => import('@/views/Mobile/Task/Detail.vue'),
+        meta: { title: '任务详情', hideTabBar: true }
+      },
+      {
+        path: 'task/report/:id',
+        name: 'TaskReport',
+        component: () => import('@/views/Mobile/Task/Report.vue'),
+        meta: { title: '任务填报', hideTabBar: true }
+      },
+      {
+        path: 'issue/list',
+        name: 'IssueList',
+        component: () => import('@/views/Mobile/Issue/List.vue'),
+        meta: { title: '问题管理' }
+      },
+      {
+        path: 'issue/report',
+        name: 'IssueReport',
+        component: () => import('@/views/Mobile/Issue/Report.vue'),
+        meta: { title: '问题上报', hideTabBar: true }
+      },
+      {
+        path: 'issue/detail/:id',
+        name: 'MobileIssueDetail',
+        component: () => import('@/views/Mobile/Issue/Detail.vue'),
+        meta: { title: '问题详情', hideTabBar: true }
+      },
+      {
+        path: 'profile',
+        name: 'Profile',
+        component: () => import('@/views/Mobile/Profile/index.vue'),
+        meta: { title: '我的' }
+      },
+      {
+        path: 'profile/info',
+        name: 'ProfileInfo',
+        component: () => import('@/views/Mobile/Profile/Info.vue'),
+        meta: { title: '个人信息', hideTabBar: true }
+      },
+      {
+        path: 'profile/settings',
+        name: 'ProfileSettings',
+        component: () => import('@/views/Mobile/Profile/Settings.vue'),
+        meta: { title: '系统设置', hideTabBar: true }
+      },
+      {
+        path: 'profile/about',
+        name: 'ProfileAbout',
+        component: () => import('@/views/Mobile/Profile/About.vue'),
+        meta: { title: '关于', hideTabBar: true }
       }
     ]
   }

@@ -157,3 +157,93 @@ export const taskApi = {
     return http.post('/device-tasks/initialize', null, { params: { deviceId, projectId } })
   }
 }
+
+// ==================== 移动端任务API ====================
+
+/**
+ * 任务状态
+ */
+export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled'
+
+/**
+ * 任务优先级
+ */
+export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent'
+
+/**
+ * 移动端任务
+ */
+export interface MobileTask {
+  id: number
+  code: string
+  title: string
+  description?: string
+  type?: string
+  status: TaskStatus
+  priority: TaskPriority
+  projectId: number
+  projectName?: string
+  deviceId?: number
+  deviceName?: string
+  assigneeId?: number
+  assigneeName?: string
+  creatorId?: number
+  creatorName?: string
+  plannedStartDate?: string
+  plannedEndDate?: string
+  actualStartDate?: string
+  actualEndDate?: string
+  progress: number
+  remarks?: string
+  createdAt: string
+  updatedAt?: string
+}
+
+/**
+ * 任务填报请求
+ */
+export interface TaskReportRequest {
+  actualHours?: number
+  progress: number
+  status?: TaskStatus
+  remarks?: string
+  attachments?: string[]
+}
+
+/**
+ * 移动端任务API
+ */
+export const mobileTaskApi = {
+  /**
+   * 获取我的任务列表
+   */
+  myTasks: (params: { status?: TaskStatus; pageNum: number; pageSize: number }): Promise<{ records: MobileTask[]; total: number }> => {
+    return http.get('/mobile/tasks/my', { params })
+  },
+
+  /**
+   * 获取任务详情
+   */
+  detail: (id: number): Promise<MobileTask> => {
+    return http.get(`/mobile/tasks/${id}`)
+  },
+
+  /**
+   * 填报任务
+   */
+  report: (id: number, data: TaskReportRequest): Promise<MobileTask> => {
+    return http.post(`/mobile/tasks/${id}/report`, data)
+  },
+
+  /**
+   * 上传任务附件
+   */
+  uploadAttachment: (file: File): Promise<{ url: string }> => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return http.post('/mobile/tasks/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  }
+}
+

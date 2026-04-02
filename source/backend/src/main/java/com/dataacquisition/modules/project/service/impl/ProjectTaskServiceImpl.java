@@ -101,6 +101,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     }
 
     @Override
+    public Page<ProjectTask> pageMyTasks(Page<ProjectTask> page, Long managerId, String status) {
+        // 使用自定义JOIN查询获取项目名称，并按负责人ID和状态筛选
+        return baseMapper.selectMyTasksPage(page, managerId, status);
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean updateTaskProgress(Long id, ProjectTaskUpdateDTO updateDTO) {
         ProjectTask task = this.getById(id);

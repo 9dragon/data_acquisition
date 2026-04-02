@@ -4,6 +4,11 @@ import ElementPlus from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+
+// Vant 移动端组件库
+import Vant from 'vant'
+import 'vant/lib/index.css'
+
 import App from './App.vue'
 import router from './router'
 import '@/styles/action-buttons.css'
@@ -21,5 +26,6 @@ app.use(router)
 app.use(ElementPlus, {
   locale: zhCn,
 })
+app.use(Vant)
 
 app.mount('#app')

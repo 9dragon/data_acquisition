@@ -61,4 +61,9 @@ public interface ProjectTaskService extends IService<ProjectTask> {
      * 分页查询所有项目的任务列表（跨项目查询）
      */
     Page<ProjectTask> pageAllProjectTasks(Page<ProjectTask> page, String keyword, String status, Long projectId);
+
+    /**
+     * 获取我的任务列表（分页）
+     */
+    Page<ProjectTask> pageMyTasks(Page<ProjectTask> page, Long managerId, String status);
 }

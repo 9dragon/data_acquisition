@@ -24,6 +24,8 @@
         <jwt.version>0.12.3</jwt.version>
         <knife4j.version>4.3.0</knife4j.version>
         <minio.version>8.5.7</minio.version>
+        <dingtalk.version>1.0.0</dingtalk.version>
+        <hutool.version>5.8.23</hutool.version>
     </properties>
 
     <dependencies>
@@ -96,6 +98,20 @@
             <groupId>io.minio</groupId>
             <artifactId>minio</artifactId>
             <version>${minio.version}</version>
+        </dependency>
+
+        <!-- 钉钉SDK -->
+        <dependency>
+            <groupId>com.aliyun</groupId>
+            <artifactId>dingtalk</artifactId>
+            <version>${dingtalk.version}</version>
+        </dependency>
+
+        <!-- Hutool工具类 -->
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+            <version>${hutool.version}</version>
         </dependency>
 
         <!-- Lombok -->
