@@ -35,18 +35,6 @@ public class DeviceType extends BaseEntity {
     private String projectName;
 
     /**
-     * 所属工序ID
-     */
-    @TableField("process_id")
-    private Long processId;
-
-    /**
-     * 所属工序名称（冗余）
-     */
-    @TableField("process_name")
-    private String processName;
-
-    /**
      * 类型编码
      */
     private String code;

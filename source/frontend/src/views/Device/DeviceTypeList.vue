@@ -15,28 +15,13 @@
             v-model="queryParams.projectId"
             placeholder="请选择项目"
             clearable
-            @change="handleProjectChange"
+            @change="handleQuery"
           >
             <el-option
               v-for="project in deviceTypeStore.projectList"
               :key="project.id"
               :label="project.name"
               :value="project.id"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="所属工序">
-          <el-select
-            v-model="queryParams.processId"
-            placeholder="请选择工序"
-            clearable
-            :disabled="!queryParams.projectId"
-          >
-            <el-option
-              v-for="process in deviceTypeStore.processList"
-              :key="process.id"
-              :label="process.name"
-              :value="process.id"
             />
           </el-select>
         </el-form-item>
@@ -54,7 +39,6 @@
         <el-table-column prop="code" label="设备类型编号" width="150" />
         <el-table-column prop="name" label="设备类型名称" min-width="150" />
         <el-table-column prop="projectName" label="所属项目" width="150" />
-        <el-table-column prop="processName" label="所属工序" width="150" />
         <el-table-column prop="manufacturer" label="制造商" width="150" />
         <el-table-column prop="model" label="型号" width="150" />
         <el-table-column prop="specifications" label="规格参数" min-width="150" />
@@ -66,13 +50,29 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" @click="handleEdit(row)">编辑</el-button>
-            <el-button link type="warning" @click="handleToggleEnabled(row)">
-              {{ row.enabled ? '禁用' : '启用' }}
-            </el-button>
-            <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
+            <div class="action-buttons">
+              <el-button link type="primary" :icon="Edit" @click="handleEdit(row)">
+                编辑
+              </el-button>
+              <el-button link type="warning" :icon="RefreshRight" @click="handleToggleEnabled(row)">
+                {{ row.enabled ? '禁用' : '启用' }}
+              </el-button>
+              <el-popconfirm
+                title="确认删除"
+                confirm-button-text="确定"
+                cancel-button-text="取消"
+                width="200"
+                @confirm="handleDelete(row)"
+              >
+                <template #reference>
+                  <el-button link type="danger">
+                    删除
+                  </el-button>
+                </template>
+              </el-popconfirm>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -112,27 +112,12 @@
           <el-select
             v-model="formData.projectId"
             placeholder="请选择项目"
-            @change="handleFormProjectChange"
           >
             <el-option
               v-for="project in deviceTypeStore.projectList"
               :key="project.id"
               :label="project.name"
               :value="project.id"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="所属工序" prop="processId">
-          <el-select
-            v-model="formData.processId"
-            placeholder="请选择工序"
-            :disabled="!formData.projectId"
-          >
-            <el-option
-              v-for="process in deviceTypeStore.processList"
-              :key="process.id"
-              :label="process.name"
-              :value="process.id"
             />
           </el-select>
         </el-form-item>
@@ -173,6 +158,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
+import { Edit, RefreshRight } from '@element-plus/icons-vue'
 import { deviceTypeApi, type DeviceType } from '@/api/deviceType'
 import { useDeviceTypeStore } from '@/stores/deviceType'
 
@@ -189,7 +175,6 @@ const queryParams = reactive({
   pageNum: 1,
   pageSize: 10,
   projectId: undefined as number | undefined,
-  processId: undefined as number | undefined,
   keyword: ''
 })
 
@@ -197,7 +182,6 @@ const formData = reactive<Partial<DeviceType>>({
   code: '',
   name: '',
   projectId: undefined,
-  processId: undefined,
   manufacturer: '',
   model: '',
   specifications: '',
@@ -208,8 +192,7 @@ const formData = reactive<Partial<DeviceType>>({
 const formRules: FormRules = {
   code: [{ required: true, message: '请输入设备类型编号', trigger: 'blur' }],
   name: [{ required: true, message: '请输入设备类型名称', trigger: 'blur' }],
-  projectId: [{ required: true, message: '请选择所属项目', trigger: 'change' }],
-  processId: [{ required: true, message: '请选择所属工序', trigger: 'change' }]
+  projectId: [{ required: true, message: '请选择所属项目', trigger: 'change' }]
 }
 
 async function handleQuery() {
@@ -225,20 +208,8 @@ async function handleQuery() {
 
 function handleReset() {
   queryParams.projectId = undefined
-  queryParams.processId = undefined
   queryParams.keyword = ''
   queryParams.pageNum = 1
-  deviceTypeStore.clearProcessList()
-  handleQuery()
-}
-
-function handleProjectChange() {
-  queryParams.processId = undefined
-  if (queryParams.projectId) {
-    deviceTypeStore.fetchProcessListByProject(queryParams.projectId)
-  } else {
-    deviceTypeStore.clearProcessList()
-  }
   handleQuery()
 }
 
@@ -248,7 +219,6 @@ function handleCreate() {
     code: '',
     name: '',
     projectId: undefined,
-    processId: undefined,
     manufacturer: '',
     model: '',
     specifications: '',
@@ -260,19 +230,7 @@ function handleCreate() {
 
 function handleEdit(row: DeviceType) {
   Object.assign(formData, row)
-  if (formData.projectId) {
-    deviceTypeStore.fetchProcessListByProject(formData.projectId)
-  }
   dialogVisible.value = true
-}
-
-function handleFormProjectChange() {
-  formData.processId = undefined
-  if (formData.projectId) {
-    deviceTypeStore.fetchProcessListByProject(formData.projectId)
-  } else {
-    deviceTypeStore.clearProcessList()
-  }
 }
 
 async function handleSubmit() {

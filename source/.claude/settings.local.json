@@ -30,7 +30,18 @@
       "Bash(done)",
       "Bash(do echo:*)",
       "Read(//d/work/projects/data_acquisition/source/**)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(xargs grep:*)",
+      "Bash(find D:/work/projects/data_acquisition/requirement/prototype/frontend/src -type f \\\\\\(-name *.jsx -o -name *.tsx -o -name *.js -o -name *.ts \\\\\\))",
+      "Bash(xargs ls:*)",
+      "Bash(grep -r \"甘特图\\\\|gantt\\\\|Gantt\" D:/work/projects/data_acquisition/requirement/prototype/frontend/src --include=*.tsx --include=*.ts --include=*.jsx --include=*.js)",
+      "WebSearch",
+      "Bash(mvn compile:*)",
+      "Read(//c/Program Files/apache-maven-3.9.9/**)",
+      "Read(//c/apache-maven-3.9.9/**)",
+      "Bash(\"/c/Program Files/JetBrains/IntelliJ IDEA 2023.1/plugins/maven/lib/maven3/bin/mvn.cmd\" compile -q)",
+      "Bash(find /d/work/projects/data_acquisition -name *.sql -type f)",
+      "Bash(npx vue-tsc:*)"
     ]
   }
 }

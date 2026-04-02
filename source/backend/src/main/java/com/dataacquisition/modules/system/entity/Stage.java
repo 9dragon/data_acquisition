@@ -71,7 +71,7 @@ public class Stage extends BaseEntity {
     /**
      * 任务模板（JSON字段）
      */
-    @TableField(value = "task_templates", typeHandler = com.dataacquisition.common.handler.JsonTypeHandler.class)
+    @TableField(value = "task_templates", typeHandler = com.dataacquisition.common.handler.StageTaskTemplateListTypeHandler.class)
     private java.util.List<StageTaskTemplate> taskTemplates;
 
     /**

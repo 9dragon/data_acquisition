@@ -11,35 +11,85 @@
       background-color="#304156"
       text-color="#bfcbd9"
       active-text-color="#409EFF"
+      :unique-opened="true"
     >
+      <!-- 工作台 -->
       <el-menu-item index="/dashboard">
         <el-icon><DataBoard /></el-icon>
         <span>工作台</span>
       </el-menu-item>
-      <el-menu-item index="/projects">
-        <el-icon><FolderOpened /></el-icon>
-        <span>项目列表</span>
-      </el-menu-item>
-      <el-menu-item index="/devices">
-        <el-icon><Monitor /></el-icon>
-        <span>设备列表</span>
-      </el-menu-item>
-      <el-menu-item index="/device-types">
-        <el-icon><SetUp /></el-icon>
-        <span>设备类型</span>
-      </el-menu-item>
-      <el-menu-item index="/processes">
-        <el-icon><Operation /></el-icon>
-        <span>工序管理</span>
-      </el-menu-item>
-      <el-menu-item index="/workshops">
-        <el-icon><OfficeBuilding /></el-icon>
-        <span>车间管理</span>
-      </el-menu-item>
-      <el-menu-item index="/users">
-        <el-icon><User /></el-icon>
-        <span>用户管理</span>
-      </el-menu-item>
+
+      <!-- 进度管理 -->
+      <el-sub-menu index="progress">
+        <template #title>
+          <el-icon><DataLine /></el-icon>
+          <span>进度管理</span>
+        </template>
+        <el-menu-item index="/plan">
+          <el-icon><Calendar /></el-icon>
+          <span>项目计划</span>
+        </el-menu-item>
+        <el-menu-item index="/tasks">
+          <el-icon><List /></el-icon>
+          <span>任务列表</span>
+        </el-menu-item>
+      </el-sub-menu>
+
+      <!-- 项目管理 -->
+      <el-sub-menu index="project">
+        <template #title>
+          <el-icon><FolderOpened /></el-icon>
+          <span>项目管理</span>
+        </template>
+        <el-menu-item index="/projects">
+          <el-icon><Document /></el-icon>
+          <span>项目列表</span>
+        </el-menu-item>
+        <el-menu-item index="/stages">
+          <el-icon><Flag /></el-icon>
+          <span>项目阶段</span>
+        </el-menu-item>
+      </el-sub-menu>
+
+      <!-- 设备管理 -->
+      <el-sub-menu index="device">
+        <template #title>
+          <el-icon><Monitor /></el-icon>
+          <span>设备管理</span>
+        </template>
+        <el-menu-item index="/devices">
+          <el-icon><Monitor /></el-icon>
+          <span>设备列表</span>
+        </el-menu-item>
+        <el-menu-item index="/device-research">
+          <el-icon><Document /></el-icon>
+          <span>设备调研</span>
+        </el-menu-item>
+        <el-menu-item index="/device-types">
+          <el-icon><SetUp /></el-icon>
+          <span>设备类型</span>
+        </el-menu-item>
+        <el-menu-item index="/workshops">
+          <el-icon><OfficeBuilding /></el-icon>
+          <span>车间管理</span>
+        </el-menu-item>
+      </el-sub-menu>
+
+      <!-- 系统管理 -->
+      <el-sub-menu index="system">
+        <template #title>
+          <el-icon><Setting /></el-icon>
+          <span>系统管理</span>
+        </template>
+        <el-menu-item index="/users">
+          <el-icon><User /></el-icon>
+          <span>用户管理</span>
+        </el-menu-item>
+        <el-menu-item index="/roles">
+          <el-icon><UserFilled /></el-icon>
+          <span>角色管理</span>
+        </el-menu-item>
+      </el-sub-menu>
     </el-menu>
   </div>
 </template>
@@ -50,12 +100,18 @@ import { useRoute } from 'vue-router'
 import { useLayoutStore } from '@/stores/layout'
 import {
   DataBoard,
+  DataLine,
   FolderOpened,
   Monitor,
   SetUp,
-  Operation,
   OfficeBuilding,
-  User
+  User,
+  UserFilled,
+  Setting,
+  Document,
+  Flag,
+  Calendar,
+  List
 } from '@element-plus/icons-vue'
 
 const route = useRoute()

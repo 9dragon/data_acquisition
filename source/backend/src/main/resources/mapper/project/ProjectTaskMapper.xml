@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dataacquisition.modules.project.mapper.ProjectTaskMapper">
+
+    <!-- 分页查询所有项目任务（带项目名称、阶段名称、负责人姓名） -->
+    <select id="selectPageWithProjectName" resultType="com.dataacquisition.modules.project.entity.ProjectTask">
+        SELECT
+            pt.id,
+            pt.project_id,
+            pt.stage_key,
+            pt.task_key,
+            pt.name,
+            pt.description,
+            pt.status,
+            pt.start_date,
+            pt.end_date,
+            pt.progress,
+            pt.manager_id,
+            pt.participant_ids,
+            pt.created_by,
+            pt.created_at,
+            pt.updated_by,
+            pt.updated_at,
+            pt.deleted,
+            p.name AS project_name,
+            s.name AS stage_name,
+            u.name AS manager_name,
+            (
+                SELECT GROUP_CONCAT(u2.name SEPARATOR ', ')
+                FROM t_user u2
+                WHERE FIND_IN_SET(u2.id, pt.participant_ids)
+            ) AS participant_names
+        FROM t_project_task pt
+        LEFT JOIN t_project p ON pt.project_id = p.id AND p.deleted = 0
+        LEFT JOIN t_stage s ON pt.stage_key = s.`key` AND s.deleted = 0
+        LEFT JOIN t_user u ON pt.manager_id = u.id AND u.deleted = 0
+        WHERE pt.deleted = 0
+        <if test="projectId != null">
+            AND pt.project_id = #{projectId}
+        </if>
+        <if test="status != null and status != ''">
+            AND pt.status = #{status}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND pt.name LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        ORDER BY pt.start_date ASC
+    </select>
+
+</mapper>

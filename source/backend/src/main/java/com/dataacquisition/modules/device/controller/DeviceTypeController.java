@@ -1,20 +1,15 @@
 package com.dataacquisition.modules.device.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.dataacquisition.common.response.Result;
 import com.dataacquisition.modules.device.entity.DeviceType;
 import com.dataacquisition.modules.device.service.DeviceTypeService;
-import com.dataacquisition.modules.process.entity.Process;
-import com.dataacquisition.modules.process.mapper.ProcessMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * 设备类型Controller
@@ -26,7 +21,6 @@ import java.util.List;
 public class DeviceTypeController {
 
     private final DeviceTypeService deviceTypeService;
-    private final ProcessMapper processMapper;
 
     /**
      * 分页查询设备类型列表
@@ -37,11 +31,10 @@ public class DeviceTypeController {
             @Parameter(description = "页码") @RequestParam(defaultValue = "1") Integer page,
             @Parameter(description = "每页条数") @RequestParam(defaultValue = "10") Integer pageSize,
             @Parameter(description = "项目ID") @RequestParam(required = false) Long projectId,
-            @Parameter(description = "工序ID") @RequestParam(required = false) Long processId,
             @Parameter(description = "关键词") @RequestParam(required = false) String keyword,
             @Parameter(description = "排序字段") @RequestParam(required = false) String sortBy,
             @Parameter(description = "排序方向") @RequestParam(required = false) String sortOrder) {
-        IPage<DeviceType> result = deviceTypeService.getDeviceTypePage(page, pageSize, projectId, processId, keyword, sortBy, sortOrder);
+        IPage<DeviceType> result = deviceTypeService.getDeviceTypePage(page, pageSize, projectId, keyword, sortBy, sortOrder);
         return Result.success(result);
     }
 
@@ -87,18 +80,5 @@ public class DeviceTypeController {
     public Result<Void> deleteDeviceType(@PathVariable Long id) {
         deviceTypeService.deleteDeviceType(id);
         return Result.success();
-    }
-
-    /**
-     * 根据项目ID获取工序列表
-     */
-    @Operation(summary = "根据项目ID获取工序列表")
-    @GetMapping("/processes/by-project/{projectId}")
-    public Result<List<Process>> getProcessesByProjectId(@PathVariable Long projectId) {
-        LambdaQueryWrapper<Process> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Process::getProjectId, projectId);
-        wrapper.orderByAsc(Process::getSortOrder);
-        List<Process> processes = processMapper.selectList(wrapper);
-        return Result.success(processes);
     }
 }

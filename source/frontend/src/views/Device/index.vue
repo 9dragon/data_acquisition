@@ -13,13 +13,6 @@
         <el-form-item label="关键词">
           <el-input v-model="queryParams.keyword" placeholder="设备名称/编号" clearable />
         </el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model="queryParams.status" placeholder="请选择" clearable>
-            <el-option label="离线" :value="0" />
-            <el-option label="在线" :value="1" />
-            <el-option label="维护中" :value="2" />
-          </el-select>
-        </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleQuery">查询</el-button>
           <el-button @click="handleReset">重置</el-button>
@@ -33,22 +26,26 @@
         <el-table-column prop="projectName" label="所属项目" width="150" />
         <el-table-column prop="typeName" label="设备类型" width="120" />
         <el-table-column prop="workshopName" label="所属车间" width="120" />
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)">{{ getStatusName(row.status) }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="progress" label="进度" width="120">
-          <template #default="{ row }">
-            <el-progress :percentage="row.progress || 0" />
-          </template>
-        </el-table-column>
-        <el-table-column prop="responsiblePersonName" label="负责人" width="120" />
-        <el-table-column label="操作" width="180" fixed="right">
-          <template #default="{ row }">
-            <el-button link type="primary" @click="handleView(row)">查看</el-button>
-            <el-button link type="primary" @click="handleEdit(row)">编辑</el-button>
-            <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
+            <div class="action-buttons">
+              <el-button link type="primary" :icon="Edit" @click="handleEdit(row)">
+                编辑
+              </el-button>
+              <el-popconfirm
+                title="确认删除"
+                confirm-button-text="确定"
+                cancel-button-text="取消"
+                width="200"
+                @confirm="handleDelete(row)"
+              >
+                <template #reference>
+                  <el-button link type="danger" :icon="Delete">
+                    删除
+                  </el-button>
+                </template>
+              </el-popconfirm>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -64,12 +61,96 @@
         @current-change="handleQuery"
       />
     </el-card>
+
+    <!-- 新增/编辑对话框 -->
+    <el-dialog
+      v-model="dialogVisible"
+      :title="dialogTitle"
+      width="600px"
+      @close="handleDialogClose"
+    >
+      <el-form
+        ref="deviceFormRef"
+        :model="deviceForm"
+        :rules="formRules"
+        label-width="100px"
+      >
+        <el-form-item label="设备编码" prop="code">
+          <el-input v-model="deviceForm.code" placeholder="请输入设备编码" />
+        </el-form-item>
+        <el-form-item label="设备名称" prop="name">
+          <el-input v-model="deviceForm.name" placeholder="请输入设备名称" />
+        </el-form-item>
+        <el-form-item label="所属项目" prop="projectId">
+          <el-select
+            v-model="deviceForm.projectId"
+            placeholder="请选择项目"
+            style="width: 100%"
+            clearable
+            @change="handleProjectChange"
+          >
+            <el-option
+              v-for="project in projectList"
+              :key="project.id"
+              :label="project.name"
+              :value="project.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="设备类型">
+          <el-select
+            v-model="deviceForm.typeId"
+            placeholder="请选择设备类型"
+            style="width: 100%"
+            clearable
+          >
+            <el-option
+              v-for="type in deviceTypeList"
+              :key="type.id"
+              :label="type.name"
+              :value="type.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="所属车间">
+          <el-select
+            v-model="deviceForm.workshopId"
+            placeholder="请选择车间"
+            style="width: 100%"
+            clearable
+          >
+            <el-option
+              v-for="workshop in workshopList"
+              :key="workshop.id"
+              :label="workshop.name"
+              :value="workshop.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="设备描述">
+          <el-input
+            v-model="deviceForm.description"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入设备描述"
+          />
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="submitLoading" @click="handleSubmit">
+          确定
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
+import { Edit, Delete } from '@element-plus/icons-vue'
 import { http } from '@/api/request'
 
 const loading = ref(false)
@@ -79,30 +160,47 @@ const total = ref(0)
 const queryParams = reactive({
   pageNum: 1,
   pageSize: 10,
-  keyword: '',
-  status: undefined as number | undefined
+  keyword: ''
 })
 
-const statusMap: Record<number, string> = {
-  0: '离线',
-  1: '在线',
-  2: '维护中'
+// 对话框相关
+const dialogVisible = ref(false)
+const dialogTitle = ref('')
+const isEdit = ref(false)
+const submitLoading = ref(false)
+const deviceFormRef = ref<FormInstance>()
+
+const deviceForm = reactive({
+  id: 0,
+  code: '',
+  name: '',
+  projectId: undefined as number | undefined,
+  projectName: '',
+  typeId: undefined as number | undefined,
+  typeName: '',
+  workshopId: undefined as number | undefined,
+  workshopName: '',
+  description: ''
+})
+
+// 下拉选项数据
+const projectList = ref<any[]>([])
+const deviceTypeList = ref<any[]>([])
+const workshopList = ref<any[]>([])
+
+const formRules: FormRules = {
+  code: [
+    { required: true, message: '请输入设备编码', trigger: 'blur' }
+  ],
+  name: [
+    { required: true, message: '请输入设备名称', trigger: 'blur' }
+  ],
+  projectId: [
+    { required: true, message: '请选择所属项目', trigger: 'change' }
+  ]
 }
 
-const statusTypeMap: Record<number, string> = {
-  0: 'info',
-  1: 'success',
-  2: 'warning'
-}
-
-function getStatusName(status: number) {
-  return statusMap[status] || '未知'
-}
-
-function getStatusType(status: number) {
-  return statusTypeMap[status] || 'info'
-}
-
+// 获取列表数据
 async function handleQuery() {
   loading.value = true
   try {
@@ -116,35 +214,141 @@ async function handleQuery() {
 
 function handleReset() {
   queryParams.keyword = ''
-  queryParams.status = undefined
   queryParams.pageNum = 1
   handleQuery()
 }
 
+// 获取项目列表
+async function getProjectList() {
+  try {
+    const response = await http.get<any>('/projects')
+    projectList.value = response.records || response || []
+  } catch (error) {
+    console.error('获取项目列表失败', error)
+  }
+}
+
+// 获取设备类型列表
+async function getDeviceTypeList() {
+  try {
+    const response = await http.get<any>('/device-types')
+    deviceTypeList.value = response.records || response || []
+  } catch (error) {
+    console.error('获取设备类型列表失败', error)
+  }
+}
+
+// 获取车间列表
+async function getWorkshopList() {
+  try {
+    const response = await http.get<any>('/workshops')
+    workshopList.value = response.records || response || []
+  } catch (error) {
+    console.error('获取车间列表失败', error)
+  }
+}
+
+// 项目选择变化，自动填充项目名称
+function handleProjectChange(value: number) {
+  const project = projectList.value.find(p => p.id === value)
+  if (project) {
+    deviceForm.projectName = project.name
+  }
+}
+
+// 新增
 function handleCreate() {
-  ElMessage.info('新增设备功能开发中')
+  dialogTitle.value = '新增设备'
+  isEdit.value = false
+  Object.assign(deviceForm, {
+    id: 0,
+    code: '',
+    name: '',
+    projectId: undefined,
+    projectName: '',
+    typeId: undefined,
+    typeName: '',
+    workshopId: undefined,
+    workshopName: '',
+    description: ''
+  })
+  dialogVisible.value = true
 }
 
-function handleView(row: any) {
-  ElMessage.info(`查看设备：${row.name}`)
-}
-
+// 编辑
 function handleEdit(row: any) {
-  ElMessage.info(`编辑设备：${row.name}`)
+  dialogTitle.value = '编辑设备'
+  isEdit.value = true
+  Object.assign(deviceForm, row)
+  dialogVisible.value = true
 }
 
+// 删除
 function handleDelete(row: any) {
   ElMessageBox.confirm(`确定要删除设备"${row.name}"吗？`, '提示', {
     type: 'warning'
   }).then(async () => {
-    await http.delete(`/devices/${row.id}`)
-    ElMessage.success('删除成功')
-    handleQuery()
+    try {
+      await http.delete(`/devices/${row.id}`)
+      ElMessage.success('删除成功')
+      handleQuery()
+    } catch (error: any) {
+      ElMessage.error(error.message || '删除失败')
+    }
   }).catch(() => {})
+}
+
+// 提交表单
+async function handleSubmit() {
+  if (!deviceFormRef.value) return
+
+  try {
+    await deviceFormRef.value.validate()
+    submitLoading.value = true
+
+    // 自动填充名称
+    if (deviceForm.projectId) {
+      const project = projectList.value.find(p => p.id === deviceForm.projectId)
+      deviceForm.projectName = project?.name || ''
+    }
+    if (deviceForm.typeId) {
+      const type = deviceTypeList.value.find(t => t.id === deviceForm.typeId)
+      deviceForm.typeName = type?.name || ''
+    }
+    if (deviceForm.workshopId) {
+      const workshop = workshopList.value.find(w => w.id === deviceForm.workshopId)
+      deviceForm.workshopName = workshop?.name || ''
+    }
+
+    if (isEdit.value) {
+      await http.put(`/devices/${deviceForm.id}`, deviceForm)
+      ElMessage.success('更新成功')
+    } else {
+      await http.post('/devices', deviceForm)
+      ElMessage.success('新增成功')
+    }
+
+    dialogVisible.value = false
+    handleQuery()
+  } catch (error: any) {
+    if (error?.message) {
+      ElMessage.error(error.message)
+    }
+  } finally {
+    submitLoading.value = false
+  }
+}
+
+// 对话框关闭
+function handleDialogClose() {
+  deviceFormRef.value?.resetFields()
 }
 
 onMounted(() => {
   handleQuery()
+  getProjectList()
+  getDeviceTypeList()
+  getWorkshopList()
 })
 </script>
 

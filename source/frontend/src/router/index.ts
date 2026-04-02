@@ -28,6 +28,30 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '项目列表', icon: 'FolderOpened' }
       },
       {
+        path: 'plan',
+        name: 'Plan',
+        component: () => import('@/views/Plan/PlanList.vue'),
+        meta: { title: '项目计划', icon: 'Calendar' }
+      },
+      {
+        path: 'plan/:projectId',
+        name: 'PlanDetail',
+        component: () => import('@/views/Plan/ProjectPlanDetail.vue'),
+        meta: { title: '项目计划详情', hidden: true }
+      },
+      {
+        path: 'tasks',
+        name: 'Tasks',
+        component: () => import('@/views/Task/index.vue'),
+        meta: { title: '任务列表', icon: 'List' }
+      },
+      {
+        path: 'stages',
+        name: 'Stages',
+        component: () => import('@/views/System/StageList.vue'),
+        meta: { title: '项目阶段', icon: 'Flag' }
+      },
+      {
         path: 'devices',
         name: 'Devices',
         component: () => import('@/views/Device/index.vue'),
@@ -40,22 +64,40 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '设备类型', icon: 'SetUp' }
       },
       {
-        path: 'processes',
-        name: 'Processes',
-        component: () => import('@/views/Process/index.vue'),
-        meta: { title: '工序管理', icon: 'Operation' }
-      },
-      {
         path: 'workshops',
         name: 'Workshops',
         component: () => import('@/views/Workshop/index.vue'),
         meta: { title: '车间管理', icon: 'OfficeBuilding' }
       },
       {
+        path: 'device-research',
+        name: 'DeviceResearch',
+        component: () => import('@/views/DeviceResearch/index.vue'),
+        meta: { title: '设备调研', icon: 'Document' }
+      },
+      {
+        path: 'device-research/create',
+        name: 'DeviceResearchCreate',
+        component: () => import('@/views/DeviceResearch/Form.vue'),
+        meta: { title: '新建调研', hidden: true }
+      },
+      {
+        path: 'device-research/:id',
+        name: 'DeviceResearchDetail',
+        component: () => import('@/views/DeviceResearch/Form.vue'),
+        meta: { title: '调研详情', hidden: true }
+      },
+      {
         path: 'users',
         name: 'Users',
         component: () => import('@/views/User/index.vue'),
         meta: { title: '用户管理', icon: 'User' }
+      },
+      {
+        path: 'roles',
+        name: 'Roles',
+        component: () => import('@/views/System/RoleList.vue'),
+        meta: { title: '角色管理', icon: 'UserFilled' }
       }
     ]
   }

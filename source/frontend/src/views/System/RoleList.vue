@@ -67,16 +67,28 @@
         <el-table-column prop="createdAt" label="创建时间" width="180" />
         <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" @click="handleView(row)">查看</el-button>
-            <el-button size="small" type="primary" @click="handleEdit(row)">编辑</el-button>
-            <el-button
-              v-if="row.isSystem !== 1"
-              size="small"
-              type="danger"
-              @click="handleDelete(row)"
-            >
-              删除
-            </el-button>
+            <div class="action-buttons">
+              <el-button link type="primary" @click="handleView(row)">
+                查看
+              </el-button>
+              <el-button link type="primary" @click="handleEdit(row)">
+                编辑
+              </el-button>
+              <el-popconfirm
+                v-if="row.isSystem !== 1"
+                title="确认删除"
+                confirm-button-text="确定"
+                cancel-button-text="取消"
+                width="200"
+                @confirm="handleDelete(row)"
+              >
+                <template #reference>
+                  <el-button link type="danger">
+                    删除
+                  </el-button>
+                </template>
+              </el-popconfirm>
+            </div>
           </template>
         </el-table-column>
       </el-table>

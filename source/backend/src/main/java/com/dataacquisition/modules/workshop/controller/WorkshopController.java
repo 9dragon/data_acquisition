@@ -47,8 +47,7 @@ public class WorkshopController {
             wrapper.eq(Workshop::getProjectId, projectId);
         }
 
-        wrapper.orderByAsc(Workshop::getSortOrder)
-                .orderByDesc(Workshop::getCreatedAt);
+        wrapper.orderByDesc(Workshop::getCreatedAt);
 
         workshopMapper.selectPage(page, wrapper);
         return Result.success(page);

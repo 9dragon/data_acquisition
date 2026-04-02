@@ -1,4 +1,4 @@
-import { BaseEntity } from './common';
+import type { BaseEntity } from './common';
 
 // 问题类型
 export type IssueType = 'device' | 'plan' | 'technical' | 'resource' | 'other';
@@ -16,13 +16,13 @@ export interface Issue extends BaseEntity {
   priority: IssuePriority;
   status: IssueStatus;
   description?: string;
-  projectId: string;
+  projectId: number;
   projectName?: string;
-  deviceId?: string;
+  deviceId?: number;
   deviceName?: string;
-  reporterId: string;
+  reporterId: number;
   reporter?: string;
-  assigneeId?: string;
+  assigneeId?: number;
   assignee?: string;
   ccUsers?: string[]; // 抄送人ID列表
   dueDate?: string;
@@ -43,10 +43,10 @@ export interface IssueAttachment {
 }
 
 export interface IssueComment {
-  id: string;
-  issueId: string;
+  id: number;
+  issueId: number;
   content: string;
-  authorId: string;
+  authorId: number;
   author?: string;
   attachments?: IssueAttachment[];
   createTime: string;
@@ -54,11 +54,11 @@ export interface IssueComment {
 }
 
 export interface IssueStatusHistory {
-  id: string;
-  issueId: string;
+  id: number;
+  issueId: number;
   fromStatus: IssueStatus;
   toStatus: IssueStatus;
-  operatorId: string;
+  operatorId: number;
   operator?: string;
   remark?: string;
   createTime: string;

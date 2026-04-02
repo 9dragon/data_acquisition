@@ -2,7 +2,9 @@ package com.dataacquisition.modules.project.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dataacquisition.common.response.Result;
+import com.dataacquisition.modules.project.dto.ProjectPlanResponseDto;
 import com.dataacquisition.modules.project.entity.Project;
+import com.dataacquisition.modules.project.service.ProjectPlanService;
 import com.dataacquisition.modules.project.service.ProjectService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 public class ProjectController {
 
     private final ProjectService projectService;
+    private final ProjectPlanService projectPlanService;
 
     /**
      * 分页查询项目列表
@@ -80,5 +83,18 @@ public class ProjectController {
     public Result<Void> deleteProject(@PathVariable Long id) {
         projectService.removeById(id);
         return Result.success();
+    }
+
+    /**
+     * 获取项目完整计划（含阶段、任务）
+     */
+    @Operation(summary = "获取项目完整计划")
+    @GetMapping("/{id}/plan")
+    public Result<ProjectPlanResponseDto> getProjectPlan(@PathVariable Long id) {
+        ProjectPlanResponseDto plan = projectPlanService.getProjectPlanWithStages(id);
+        if (plan == null) {
+            return Result.error("项目不存在");
+        }
+        return Result.success(plan);
     }
 }

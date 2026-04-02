@@ -1,6 +1,7 @@
 package com.dataacquisition.modules.workshop.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.dataacquisition.common.entity.BaseEntity;
@@ -27,19 +28,22 @@ public class Workshop extends BaseEntity {
     private String name;
 
     /**
+     * 车间编号
+     */
+    private String code;
+
+    /**
      * 所属项目ID
      */
+    @TableField("project_id")
     private Long projectId;
 
     /**
      * 所属项目名称
+     * 注意：数据库表中无此字段，使用 @TableField(exist = false) 标记
      */
+    @TableField(exist = false)
     private String projectName;
-
-    /**
-     * 车间编号
-     */
-    private String code;
 
     /**
      * 车间描述
@@ -48,6 +52,8 @@ public class Workshop extends BaseEntity {
 
     /**
      * 排序序号
+     * 注意：数据库表中无此字段，使用 @TableField(exist = false) 标记
      */
+    @TableField(exist = false)
     private Integer sortOrder;
 }

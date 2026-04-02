@@ -115,7 +115,19 @@
       "Bash(find /d/work/projects/data_acquisition/.worktrees/device-type/source/backend/src/main/java/com/dataacquisition/modules/device -type f -name *.java)",
       "Bash(/c/Users/Administrator/.m2/wrapper/dists/apache-maven-3.8.7-bin/1ktonn2lleg549uah6ngl1r74r/apache-maven-3.8.7/bin/mvn.cmd compile:*)",
       "Bash(npx vue-tsc:*)",
-      "Bash(node -e \"console.log\\(''Node.js is working''\\)\")"
+      "Bash(node -e \"console.log\\(''Node.js is working''\\)\")",
+      "Bash(findstr \":3000.*LISTENING\")",
+      "Bash(findstr \":8080.*LISTENING\")",
+      "Bash(find /d/work/projects/data_acquisition/source/frontend/src -name *device* -type f)",
+      "Bash(find /d/work/projects/data_acquisition/source/backend -name *Device* -type f)",
+      "Bash(find /d/work/projects/data_acquisition/source/frontend/src/api -type f -name *.ts)",
+      "Bash(find D:/work/projects/data_acquisition -name \"*.sql\" -exec grep -l \"ALTER TABLE.*t_project\\\\|CREATE TABLE.*t_project\" {})",
+      "Bash(./mvnw clean:*)",
+      "Bash(dir /s /b mvnw*)",
+      "Bash(cmd /c \"start /B mvn spring-boot:run -Dspring-boot.run.profiles=dev\")",
+      "Bash(find /d/work/projects/data_acquisition/source/backend/src/main/java/com/dataacquisition/modules/workshop -type f -name *.java)",
+      "Bash(find D:/work/projects/data_acquisition/source/backend/src/main/java/com/dataacquisition/modules/process -type f -name *.java)",
+      "Bash(bash start.sh backend)"
     ]
   }
 }

@@ -9,13 +9,7 @@ export interface DeviceType {
   name: string
   projectId?: number
   projectName?: string
-  processId?: number
-  processName?: string
   description?: string
-  specifications?: string
-  manufacturer?: string
-  model?: string
-  enabled: boolean
   createdAt?: string
   updatedAt?: string
 }
@@ -34,10 +28,9 @@ export interface PageResponse<T> {
  * 设备类型查询参数
  */
 export interface DeviceTypeQueryParams {
-  pageNum: number
+  page: number
   pageSize: number
   projectId?: number
-  processId?: number
   keyword?: string
 }
 
@@ -78,12 +71,5 @@ export const deviceTypeApi = {
    */
   delete: (id: number): Promise<void> => {
     return http.delete(`/device-types/${id}`)
-  },
-
-  /**
-   * 启用/禁用设备类型
-   */
-  toggleEnabled: (id: number, enabled: boolean): Promise<void> => {
-    return http.patch(`/device-types/${id}/enabled`, { enabled })
   }
 }

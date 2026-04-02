@@ -1,6 +1,7 @@
 package com.dataacquisition.modules.device.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.dataacquisition.common.entity.BaseEntity;
@@ -37,19 +38,9 @@ public class Device extends BaseEntity {
     private Long projectId;
 
     /**
-     * 所属项目名称
-     */
-    private String projectName;
-
-    /**
      * 设备类型ID
      */
     private Long typeId;
-
-    /**
-     * 设备类型名称
-     */
-    private String typeName;
 
     /**
      * 所属车间ID
@@ -57,32 +48,25 @@ public class Device extends BaseEntity {
     private Long workshopId;
 
     /**
-     * 所属车间名称
-     */
-    private String workshopName;
-
-    /**
      * 设备描述
      */
     private String description;
 
     /**
-     * 负责人ID
+     * 所属项目名称（非数据库字段）
      */
-    private Long responsiblePersonId;
+    @TableField(exist = false)
+    private String projectName;
 
     /**
-     * 负责人姓名
+     * 设备类型名称（非数据库字段）
      */
-    private String responsiblePersonName;
+    @TableField(exist = false)
+    private String typeName;
 
     /**
-     * 设备状态：0=离线, 1=在线, 2=维护中
+     * 所属车间名称（非数据库字段）
      */
-    private Integer status;
-
-    /**
-     * 总体进度 0-100
-     */
-    private Integer progress;
+    @TableField(exist = false)
+    private String workshopName;
 }

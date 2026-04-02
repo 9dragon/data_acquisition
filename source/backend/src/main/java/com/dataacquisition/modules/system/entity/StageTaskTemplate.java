@@ -41,6 +41,6 @@ public class StageTaskTemplate {
     /**
      * 资料需求列表
      */
-    @TableField(typeHandler = com.dataacquisition.common.handler.JsonTypeHandler.class)
+    @TableField(typeHandler = com.dataacquisition.common.handler.MaterialRequirementListTypeHandler.class)
     private java.util.List<MaterialRequirement> materialRequirements;
 }

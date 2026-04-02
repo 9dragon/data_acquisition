@@ -1,4 +1,5 @@
-import { BaseEntity, StatusType } from './common';
+import type { BaseEntity } from './common';
+import type { StatusType } from './common';
 
 // 设备状态
 export type DeviceStatus = 'not_started' | 'in_progress' | 'completed' | 'abnormal';
@@ -12,12 +13,11 @@ export type CollectionMethod = 'OPC_UA' | 'Modbus_TCP' | 'Modbus_RTU' | 'MQTT' |
 export interface Device extends BaseEntity {
   name: string;
   code: string;
-  projectId: string;
+  projectId: number;
   projectName?: string;
-  typeId: string;
+  typeId: number;
   typeName?: string;
   category: DeviceCategory;
-  status: DeviceStatus;
   ip?: string;
   port?: number;
   location?: string;
@@ -31,10 +31,6 @@ export interface Device extends BaseEntity {
   connectionConfig?: Record<string, any>;
   pointCount: number; // 采集点数
   collectedPointCount: number; // 已采集点数
-  progress: number; // 0-100
-  responsiblePersonId: string;
-  responsiblePerson?: string;
-  responsiblePersonName?: string; // 负责人姓名
   startDate?: string;
   completedDate?: string;
   tags?: string[];
@@ -43,10 +39,8 @@ export interface Device extends BaseEntity {
 }
 
 export interface DeviceType extends BaseEntity {
-  projectId: string;           // 所属项目ID
+  projectId: number;           // 所属项目ID
   projectName?: string;        // 所属项目名称
-  processId?: string;          // 所属工序ID
-  processName?: string;        // 所属工序名称
   name: string;
   code: string;
   category: DeviceCategory;
@@ -66,7 +60,7 @@ export interface DataPointTemplate {
 }
 
 export interface DeviceProgress {
-  deviceId: string;
+  deviceId: number;
   projectName: string;
   deviceName: string;
   stage: string;
@@ -87,9 +81,8 @@ export interface DeviceResearchBasic {
   deviceName?: string;          // 设备名称
   deviceType?: string;          // 设备类型
   projectName?: string;         // 项目名称
+  projectId?: number;           // 项目ID
   workshop?: string;            // 所属车间
-  processId?: string;           // 工序ID
-  processName?: string;         // 工序名称
   quantity?: number;            // 数量
   deviceManufacturer?: string;  // 设备厂商（区别于控制器厂商）
 
@@ -112,7 +105,7 @@ export interface MediaAttachment {
 // 调研控制器信息
 export interface DeviceResearchController {
   isInterfaceOccupied?: boolean;              // 接口是否被占用
-  interfaceType?: 'serial' | 'network';       // 控制器接口类型
+  interfaceType?: 'RJ45' | 'RJ232';           // 控制器接口类型
   hasTouchScreen?: boolean;                   // 是否连接触摸屏
   controllerBrand?: string;                   // 控制器品牌
   controllerModel?: string;                   // 控制器型号
@@ -121,20 +114,20 @@ export interface DeviceResearchController {
   hasPlcSource?: boolean;                     // 是否提供PLC源程序
   hasTouchScreenSource?: boolean;             // 是否提供触摸屏源程序
 
-  // 新增多媒体附件
-  controllerPhotos?: MediaAttachment[];      // 控制器照片
-  controllerVideos?: MediaAttachment[];      // 控制器视频
-  touchscreenPhotos?: MediaAttachment[];     // 触摸屏照片
-  touchscreenVideos?: MediaAttachment[];     // 触摸屏视频
-  cabinetPhotos?: MediaAttachment[];         // 控制柜照片
-  cabinetVideos?: MediaAttachment[];         // 控制柜视频
+  // 新增多媒体附件（JSON字符串）
+  controllerPhotos?: string;                  // 控制器照片（JSON字符串）
+  controllerVideos?: string;                  // 控制器视频（JSON字符串）
+  touchscreenPhotos?: string;                 // 触摸屏照片（JSON字符串）
+  touchscreenVideos?: string;                 // 触摸屏视频（JSON字符串）
+  cabinetPhotos?: string;                     // 控制柜照片（JSON字符串）
+  cabinetVideos?: string;                     // 控制柜视频（JSON字符串）
 }
 
 // 调研采集信息
 export interface DeviceResearchCollection {
   collectDeviceStatus?: boolean;      // 采集设备状态
   collectProcessParams?: boolean;     // 采集工艺参数
-  dataItems?: string[];               // 需采集数据项
+  dataItems?: string;                 // 需采集数据项（JSON字符串）
   dataItemsDetail?: string;           // 需采集数据项明细
   collectProduction?: boolean;        // 采集产量/节拍
   collectEnergy?: boolean;            // 采集能耗
@@ -142,9 +135,9 @@ export interface DeviceResearchCollection {
 
 // 设备调研完整记录
 export interface DeviceResearch extends BaseEntity {
-  deviceId?: string;                  // 关联设备ID（可选，用于后续关联）
+  deviceId?: number;                  // 关联设备ID（可选，用于后续关联）
   deviceName?: string;                // 设备名称
-  projectId?: string;                 // 所属项目ID（可选）
+  projectId?: number;                 // 所属项目ID（可选）
   projectName?: string;               // 项目名称
 
   // 设备基本信息（从零创建时必填）
@@ -153,8 +146,6 @@ export interface DeviceResearch extends BaseEntity {
   workshop?: string;                  // 所属车间
 
   // 新增字段
-  processId?: string;                 // 工序ID
-  processName?: string;               // 工序名称
   quantity?: number;                  // 数量
   deviceManufacturer?: string;        // 设备厂商（区别于控制器厂商）
 
@@ -170,7 +161,7 @@ export interface DeviceResearch extends BaseEntity {
   researchProgress?: number;          // 调研进度（0-100）
 
   // 调研人员信息
-  researcherId?: string;              // 调研人员ID
+  researcherId?: number;              // 调研人员ID
   researcherName?: string;            // 调研人员姓名
   researchDate?: string;              // 调研日期
 }

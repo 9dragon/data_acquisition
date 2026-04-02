@@ -3,7 +3,7 @@
 export type StatusType = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 
 export interface BaseEntity {
-  id: string;
+  id: number;
   createTime: string;
   updateTime: string;
   creator?: string;
@@ -58,3 +58,6 @@ export interface ApiResponse<T = any> {
   message: string;
   data: T;
 }
+
+// 确保文件有运行时导出，避免 Vite 将纯类型文件转换为空 export {}
+export const COMMON_TYPES_VERSION = 1;

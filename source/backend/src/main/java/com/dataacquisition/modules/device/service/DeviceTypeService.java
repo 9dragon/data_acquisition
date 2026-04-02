@@ -15,13 +15,12 @@ public interface DeviceTypeService extends IService<DeviceType> {
      * @param page      页码
      * @param pageSize  每页条数
      * @param projectId 项目ID
-     * @param processId 工序ID
      * @param keyword   关键词
      * @param sortBy    排序字段
      * @param sortOrder 排序方向
      * @return 分页结果
      */
-    IPage<DeviceType> getDeviceTypePage(Integer page, Integer pageSize, Long projectId, Long processId, String keyword, String sortBy, String sortOrder);
+    IPage<DeviceType> getDeviceTypePage(Integer page, Integer pageSize, Long projectId, String keyword, String sortBy, String sortOrder);
 
     /**
      * 创建设备类型

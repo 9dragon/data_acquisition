@@ -1,0 +1,17 @@
+/* 统一的操作按钮样式 */
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.action-buttons .el-button {
+  margin: 0;
+  white-space: nowrap;
+  padding: 0;
+}
+
+.action-buttons .el-button + .el-button {
+  margin-left: 0;
+}

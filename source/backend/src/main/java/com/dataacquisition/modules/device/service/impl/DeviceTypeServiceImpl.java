@@ -10,8 +10,6 @@ import com.dataacquisition.modules.device.entity.DeviceType;
 import com.dataacquisition.modules.device.mapper.DeviceMapper;
 import com.dataacquisition.modules.device.mapper.DeviceTypeMapper;
 import com.dataacquisition.modules.device.service.DeviceTypeService;
-import com.dataacquisition.modules.process.entity.Process;
-import com.dataacquisition.modules.process.mapper.ProcessMapper;
 import com.dataacquisition.modules.project.entity.Project;
 import com.dataacquisition.modules.project.mapper.ProjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -29,21 +27,15 @@ public class DeviceTypeServiceImpl extends ServiceImpl<DeviceTypeMapper, DeviceT
     private final DeviceTypeMapper deviceTypeMapper;
     private final DeviceMapper deviceMapper;
     private final ProjectMapper projectMapper;
-    private final ProcessMapper processMapper;
 
     @Override
-    public IPage<DeviceType> getDeviceTypePage(Integer page, Integer pageSize, Long projectId, Long processId, String keyword, String sortBy, String sortOrder) {
+    public IPage<DeviceType> getDeviceTypePage(Integer page, Integer pageSize, Long projectId, String keyword, String sortBy, String sortOrder) {
         Page<DeviceType> pageParam = new Page<>(page, pageSize);
         LambdaQueryWrapper<DeviceType> wrapper = new LambdaQueryWrapper<>();
 
         // 项目筛选
         if (projectId != null) {
             wrapper.eq(DeviceType::getProjectId, projectId);
-        }
-
-        // 工序筛选
-        if (processId != null) {
-            wrapper.eq(DeviceType::getProcessId, processId);
         }
 
         // 关键词搜索
@@ -77,13 +69,13 @@ public class DeviceTypeServiceImpl extends ServiceImpl<DeviceTypeMapper, DeviceT
 
         IPage<DeviceType> result = deviceTypeMapper.selectPage(pageParam, wrapper);
 
-        // 填充设备数量
-        result.getRecords().forEach(deviceType -> {
-            LambdaQueryWrapper<Device> deviceWrapper = new LambdaQueryWrapper<>();
-            deviceWrapper.eq(Device::getTypeId, deviceType.getId());
-            Integer count = deviceMapper.selectCount(deviceWrapper).intValue();
-            deviceType.setDeviceCount(count);
-        });
+        // TODO: 填充设备数量（暂时注释，避免查询t_device表导致的错误）
+        // result.getRecords().forEach(deviceType -> {
+        //     LambdaQueryWrapper<Device> deviceWrapper = new LambdaQueryWrapper<>();
+        //     deviceWrapper.eq(Device::getTypeId, deviceType.getId());
+        //     Integer count = deviceMapper.selectCount(deviceWrapper).intValue();
+        //     deviceType.setDeviceCount(count);
+        // });
 
         return result;
     }
@@ -104,14 +96,6 @@ public class DeviceTypeServiceImpl extends ServiceImpl<DeviceTypeMapper, DeviceT
             }
         }
 
-        // 自动填充工序名称
-        if (deviceType.getProcessId() != null) {
-            Process process = processMapper.selectById(deviceType.getProcessId());
-            if (process != null) {
-                deviceType.setProcessName(process.getName());
-            }
-        }
-
         return deviceTypeMapper.insert(deviceType) > 0;
     }
 
@@ -128,14 +112,6 @@ public class DeviceTypeServiceImpl extends ServiceImpl<DeviceTypeMapper, DeviceT
             Project project = projectMapper.selectById(deviceType.getProjectId());
             if (project != null) {
                 deviceType.setProjectName(project.getName());
-            }
-        }
-
-        // 自动填充工序名称
-        if (deviceType.getProcessId() != null) {
-            Process process = processMapper.selectById(deviceType.getProcessId());
-            if (process != null) {
-                deviceType.setProcessName(process.getName());
             }
         }
 
@@ -159,7 +135,13 @@ public class DeviceTypeServiceImpl extends ServiceImpl<DeviceTypeMapper, DeviceT
     @Override
     public Boolean checkCodeUnique(Long projectId, String code, Long excludeId) {
         LambdaQueryWrapper<DeviceType> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(DeviceType::getProjectId, projectId);
+        // 当 projectId 为 null 时，只检查 code 的唯一性（全局设备类型）
+        // 当 projectId 不为 null 时，检查该 project 下 code 的唯一性
+        if (projectId != null) {
+            wrapper.eq(DeviceType::getProjectId, projectId);
+        } else {
+            wrapper.isNull(DeviceType::getProjectId);
+        }
         wrapper.eq(DeviceType::getCode, code);
         if (excludeId != null) {
             wrapper.ne(DeviceType::getId, excludeId);

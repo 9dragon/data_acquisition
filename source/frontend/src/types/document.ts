@@ -1,4 +1,4 @@
-import { BaseEntity } from './common';
+import type { BaseEntity } from './common';
 
 // 文档类型
 export type DocumentCategory = 'requirement' | 'design' | 'manual' | 'test' | 'acceptance' | 'other';

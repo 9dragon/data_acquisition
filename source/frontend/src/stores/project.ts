@@ -5,6 +5,7 @@ import type { Project } from '@/types/project'
 
 export const useProjectStore = defineStore('project', () => {
   const projects = ref<Project[]>([])
+  const projectList = ref<Project[]>([])
   const currentProject = ref<Project | null>(null)
   const loading = ref(false)
 
@@ -13,6 +14,19 @@ export const useProjectStore = defineStore('project', () => {
     try {
       const response = await http.get<any>('/projects', { params })
       projects.value = response.records
+      return response
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function fetchProjectList() {
+    loading.value = true
+    try {
+      const response = await http.get<any>('/projects', {
+        params: { pageNum: 1, pageSize: 1000 }
+      })
+      projectList.value = response.records || []
       return response
     } finally {
       loading.value = false
@@ -47,9 +61,11 @@ export const useProjectStore = defineStore('project', () => {
 
   return {
     projects,
+    projectList,
     currentProject,
     loading,
     fetchProjects,
+    fetchProjectList,
     fetchProjectDetail,
     createProject,
     updateProject,

@@ -39,11 +39,29 @@
           </template>
         </el-table-column>
         <el-table-column prop="lastLoginTime" label="最后登录" width="160" />
-        <el-table-column label="操作" width="250" fixed="right">
+        <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" @click="handleEdit(row)">编辑</el-button>
-            <el-button link type="warning" @click="handleResetPassword(row)">重置密码</el-button>
-            <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
+            <div class="action-buttons">
+              <el-button link type="primary" :icon="Edit" @click="handleEdit(row)">
+                编辑
+              </el-button>
+              <el-button link type="warning" :icon="RefreshRight" @click="handleResetPassword(row)">
+                重置密码
+              </el-button>
+              <el-popconfirm
+                title="确认删除"
+                confirm-button-text="确定"
+                cancel-button-text="取消"
+                width="200"
+                @confirm="handleDelete(row)"
+              >
+                <template #reference>
+                  <el-button link type="danger" :icon="Delete">
+                    删除
+                  </el-button>
+                </template>
+              </el-popconfirm>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -65,6 +83,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Edit, Delete, RefreshRight } from '@element-plus/icons-vue'
 import { http } from '@/api/request'
 
 const loading = ref(false)

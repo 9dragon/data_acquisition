@@ -3,6 +3,20 @@ import { ref } from 'vue'
 import { http } from '@/api/request'
 
 /**
+ * 设备类型接口
+ */
+export interface DeviceType {
+  id: number
+  name: string
+  code: string
+  projectId?: number
+  projectName?: string
+  description?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+/**
  * 项目选项接口
  */
 export interface ProjectOption {
@@ -11,24 +25,30 @@ export interface ProjectOption {
   code: string
 }
 
-/**
- * 工序选项接口
- */
-export interface ProcessOption {
-  id: number
-  name: string
-  code: string
-  projectId: number
-}
-
 export const useDeviceTypeStore = defineStore('deviceType', () => {
+  // 设备类型列表
+  const deviceTypeList = ref<DeviceType[]>([])
+  const loading = ref(false)
+
   // 项目列表
   const projectList = ref<ProjectOption[]>([])
   const projectListLoading = ref(false)
 
-  // 工序列表
-  const processList = ref<ProcessOption[]>([])
-  const processListLoading = ref(false)
+  /**
+   * 获取设备类型列表
+   */
+  async function fetchList(params?: any) {
+    loading.value = true
+    try {
+      const response = await http.get<any>('/device-types', {
+        params: { page: 1, pageSize: 1000, ...params }
+      })
+      deviceTypeList.value = response.records || response.data || []
+      return response
+    } finally {
+      loading.value = false
+    }
+  }
 
   /**
    * 获取项目列表
@@ -46,41 +66,12 @@ export const useDeviceTypeStore = defineStore('deviceType', () => {
     }
   }
 
-  /**
-   * 根据项目ID获取工序列表
-   */
-  async function fetchProcessListByProject(projectId: number | undefined) {
-    if (!projectId) {
-      processList.value = []
-      return
-    }
-
-    processListLoading.value = true
-    try {
-      const response = await http.get<any>('/processes', {
-        params: { pageNum: 1, pageSize: 1000, projectId, enabled: true }
-      })
-      processList.value = response.records || []
-      return response
-    } finally {
-      processListLoading.value = false
-    }
-  }
-
-  /**
-   * 清空工序列表
-   */
-  function clearProcessList() {
-    processList.value = []
-  }
-
   return {
+    deviceTypeList,
+    loading,
+    fetchList,
     projectList,
     projectListLoading,
-    processList,
-    processListLoading,
-    fetchProjectList,
-    fetchProcessListByProject,
-    clearProcessList
+    fetchProjectList
   }
 })

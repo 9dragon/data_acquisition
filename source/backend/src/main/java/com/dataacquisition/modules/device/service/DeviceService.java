@@ -12,5 +12,5 @@ public interface DeviceService extends IService<Device> {
     /**
      * 分页查询设备列表
      */
-    Page<Device> pageDevices(Page<Device> page, String keyword, Long projectId, Long typeId, Integer status);
+    Page<Device> pageDevices(Page<Device> page, String keyword, Long projectId, Long typeId);
 }

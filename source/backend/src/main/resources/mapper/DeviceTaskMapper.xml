@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dataacquisition.modules.device.mapper.DeviceTaskMapper">
+
+    <select id="selectPageWithNames" resultType="com.dataacquisition.modules.device.entity.DeviceTask">
+        SELECT
+            dt.id, dt.device_id, dt.project_id, dt.stage_key, dt.task_key, dt.task_name,
+            dt.completed, dt.start_date, dt.end_date, dt.remark, dt.materials,
+            dt.manager_id, dt.participant_ids,
+            s.name AS stage_name,
+            d.name AS device_name,
+            p.name AS project_name,
+            u.name AS manager_name,
+            (SELECT GROUP_CONCAT(u2.name ORDER BY u2.id) FROM t_user u2 WHERE FIND_IN_SET(u2.id, dt.participant_ids) > 0) AS participant_names
+        FROM t_device_task dt
+        LEFT JOIN t_device d ON dt.device_id = d.id AND d.deleted = 0
+        LEFT JOIN t_project p ON dt.project_id = p.id AND p.deleted = 0
+        LEFT JOIN t_user u ON dt.manager_id = u.id AND u.deleted = 0
+        LEFT JOIN t_stage s ON dt.stage_key = s.`key` AND s.deleted = 0
+        WHERE dt.deleted = 0
+        <if test="queryDTO.projectId != null">
+            AND dt.project_id = #{queryDTO.projectId}
+        </if>
+        <if test="queryDTO.stageKey != null and queryDTO.stageKey != ''">
+            AND dt.stage_key = #{queryDTO.stageKey}
+        </if>
+        <if test="queryDTO.deviceId != null">
+            AND dt.device_id = #{queryDTO.deviceId}
+        </if>
+        <if test="queryDTO.completed != null">
+            AND dt.completed = #{queryDTO.completed}
+        </if>
+        <if test="queryDTO.keyword != null and queryDTO.keyword != ''">
+            AND (d.name LIKE CONCAT('%', #{queryDTO.keyword}, '%')
+                 OR p.name LIKE CONCAT('%', #{queryDTO.keyword}, '%')
+                 OR dt.task_name LIKE CONCAT('%', #{queryDTO.keyword}, '%'))
+        </if>
+        ORDER BY dt.id DESC
+    </select>
+
+</mapper>

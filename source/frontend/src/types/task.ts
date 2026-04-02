@@ -1,5 +1,15 @@
-import { MaterialRequirement } from './project';
-import { TaskMaterial } from './project';
+import type { MaterialRequirement } from '@/api/stage';
+
+/**
+ * 任务资料
+ */
+export interface TaskMaterial {
+  key: string;
+  name: string;
+  url?: string;
+  type?: string;
+  uploadTime?: string;
+}
 
 /**
  * 任务卡片数据结构
@@ -107,4 +117,234 @@ export interface ProjectTaskListItem {
   materials?: TaskMaterial[];
   // 用于填报的额外数据
   materialRequirements?: MaterialRequirement[];
+}
+
+// ==================== 项目计划任务相关类型 ====================
+
+/**
+ * 任务状态
+ */
+export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled'
+
+/**
+ * 任务状态映射
+ */
+export const TaskStatusMap: Record<TaskStatus, { label: string; type: string }> = {
+  pending: { label: '未开始', type: 'info' },
+  in_progress: { label: '进行中', type: 'warning' },
+  completed: { label: '已完成', type: 'success' },
+  cancelled: { label: '已取消', type: 'danger' }
+}
+
+/**
+ * 项目实施阶段
+ */
+export type ImplementationStage = 'preparation' | 'construction' | 'configuration' | 'verification'
+
+/**
+ * 实施阶段映射
+ */
+export const ImplementationStageMap: Record<ImplementationStage, { label: string; color: string }> = {
+  preparation: { label: '准备阶段', color: '#409EFF' },
+  construction: { label: '施工阶段', color: '#67C23A' },
+  configuration: { label: '配置阶段', color: '#E6A23C' },
+  verification: { label: '核对阶段', color: '#909399' }
+}
+
+/**
+ * 项目计划任务实体
+ */
+export interface ProjectPlanTask {
+  id: number
+  projectId: number
+  projectName?: string
+  stageKey: ImplementationStage
+  stageName?: string
+  taskKey: string
+  name: string
+  description?: string
+  status: TaskStatus
+  startDate: string
+  endDate: string
+  actualStartDate?: string
+  actualEndDate?: string
+  progress: number
+  assigneeIds?: string
+  assigneeNames?: string
+  dependencyIds?: string
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * 任务表单数据
+ */
+export interface ProjectPlanTaskFormData {
+  id?: number
+  projectId: number
+  stageKey: ImplementationStage
+  taskKey: string
+  name: string
+  description?: string
+  status: TaskStatus
+  startDate: string
+  endDate: string
+  progress: number
+  assigneeIds?: number[]
+  dependencyIds?: number[]
+}
+
+/**
+ * 任务查询参数
+ */
+export interface ProjectPlanTaskQueryParams {
+  pageNum: number
+  pageSize: number
+  projectId?: number
+  stageKey?: ImplementationStage
+  status?: TaskStatus
+}
+
+// ==================== 设备任务相关类型 ====================
+
+/**
+ * 多媒体附件
+ */
+export interface MediaAttachment {
+  id: string
+  name: string
+  url: string
+  type: 'image' | 'video'
+  size?: number
+  uploadTime?: string
+}
+
+/**
+ * 任务资料收集项
+ */
+export interface TaskMaterialItem {
+  requirementKey: string
+  requirementName: string
+  files: MediaAttachment[]
+  completed: boolean
+  completedDate?: string
+}
+
+/**
+ * 设备任务实体
+ */
+export interface DeviceTask {
+  id: number
+  deviceId: number
+  deviceName: string
+  projectId: number
+  projectName: string
+  stageKey: string
+  stageName: string
+  taskKey: string
+  taskName: string
+  completed: boolean
+  startDate?: string
+  completedDate?: string
+  remark?: string
+  materials?: string  // JSON字符串
+  materialsList?: TaskMaterialItem[]  // 解析后的资料列表
+  managerId?: number
+  managerName?: string
+  participantIds?: string
+  participantNames?: string
+  createdBy?: number
+  createdAt: string
+  updatedBy?: number
+  updatedAt: string
+}
+
+/**
+ * 设备任务列表项（用于列表展示）
+ */
+export interface DeviceTaskListItem {
+  key: string
+  id: number
+  projectId: number
+  projectName: string
+  stageKey: string
+  stageName: string
+  deviceId: number
+  deviceName: string
+  taskKey: string
+  taskName: string
+  completed: boolean
+  completedDate?: string
+  remark?: string
+}
+
+/**
+ * 设备任务查询参数
+ */
+export interface DeviceTaskQueryParams {
+  pageNum: number
+  pageSize: number
+  keyword?: string
+  projectId?: number
+  stageKey?: string
+  completed?: boolean
+  deviceId?: number
+}
+
+/**
+ * 设备任务更新数据
+ */
+export interface DeviceTaskUpdateDTO {
+  completed?: boolean
+  startDate?: string
+  completedDate?: string
+  remark?: string
+  materials?: TaskMaterialItem[]
+}
+
+/**
+ * 项目任务更新数据
+ */
+export interface ProjectTaskUpdateDTO {
+  status?: TaskStatus
+  progress?: number
+  actualStartDate?: string
+  actualEndDate?: string
+  remark?: string
+}
+
+/**
+ * 项目级任务列表项（跨项目查询）
+ */
+export interface ProjectTaskListItem {
+  key: string
+  id: number
+  projectId: number
+  projectName?: string
+  stageKey: string
+  stageName?: string
+  taskKey: string
+  name: string
+  status: TaskStatus
+  startDate: string
+  endDate: string
+  progress: number
+  completed: boolean
+  actualStartDate?: string
+  actualEndDate?: string
+  managerId?: number
+  managerName?: string
+  participantIds?: string
+  participantNames?: string
+}
+
+/**
+ * 项目级任务查询参数（跨项目）
+ */
+export interface ProjectTaskQueryParams {
+  pageNum: number
+  pageSize: number
+  keyword?: string
+  status?: TaskStatus
+  projectId?: number
 }

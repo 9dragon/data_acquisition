@@ -32,10 +32,9 @@ public class DeviceController {
             @Parameter(description = "每页条数") @RequestParam(defaultValue = "10") Integer pageSize,
             @Parameter(description = "关键词") @RequestParam(required = false) String keyword,
             @Parameter(description = "项目ID") @RequestParam(required = false) Long projectId,
-            @Parameter(description = "类型ID") @RequestParam(required = false) Long typeId,
-            @Parameter(description = "状态") @RequestParam(required = false) Integer status) {
+            @Parameter(description = "类型ID") @RequestParam(required = false) Long typeId) {
         Page<Device> page = new Page<>(pageNum, pageSize);
-        Page<Device> result = deviceService.pageDevices(page, keyword, projectId, typeId, status);
+        Page<Device> result = deviceService.pageDevices(page, keyword, projectId, typeId);
         return Result.success(result);
     }
 

@@ -59,12 +59,9 @@ cd D:\work\projects/data_acquisition\source
 export JAVA_HOME="/c/Program Files/Java/jdk-17"
 export PATH="$JAVA_HOME/bin:$PATH"
 
-# 启动后端（开发环境，连接本地MySQL/Redis）
+# 启动后端（开发环境，连接远程MySQL/Redis）
 /d/devtools/apache-maven-3.6.0/bin/mvn -f backend/pom.xml \
   spring-boot:run -Dspring-boot.run.profiles=dev
-
-# 或者启动生产环境（连接远程MySQL/Redis）
-/d/devtools/apache-maven-3.6.0/bin/mvn -f backend/pom.xml spring-boot:run -Dspring-boot.run.profiles=prod
 ```
 
 **PowerShell启动命令：**
@@ -117,7 +114,7 @@ npm run dev
 | **Node.js** | 18+ | - |
 | **npm** | 9.0+ | 随Node.js安装 |
 
-### 依赖服务（生产环境）
+### 依赖服务（开发环境）
 
 | 服务 | 地址 | 用途 |
 |------|------|------|
@@ -204,10 +201,10 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/doc.html
   - Redis: 10.1.2.230:6379
   - MinIO: 10.1.2.230:9000
 
-- **dev（开发环境）**：连接本地服务
-  - MySQL: localhost:3306
-  - Redis: localhost:6379
-  - MinIO: localhost:9000
+- **dev（开发环境）**：连接远程服务（10.1.2.230）
+  - MySQL: 10.1.2.230:3306
+  - Redis: 10.1.2.230:6379
+  - MinIO: 10.1.2.230:9000
 
 ### 环境变量
 
@@ -251,10 +248,9 @@ java -version  # 应显示Java 17
 ```bash
 # 确认启动的是正确的项目
 # 正确：source/frontend（端口3000）
-# 错误：requirement/prototype/frontend（端口5173）
 
 # 查看实际端口
-netstat -ano | findstr "LISTENING" | findstr "3000\|5173"
+netstat -ano | findstr "LISTENING" | findstr "3000"
 ```
 
 ### 3. 后端连接数据库失败
