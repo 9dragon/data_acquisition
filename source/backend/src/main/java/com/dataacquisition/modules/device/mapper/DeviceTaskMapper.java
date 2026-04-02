@@ -47,4 +47,10 @@ public interface DeviceTaskMapper extends BaseMapper<DeviceTask> {
             @Param("page") Page<DeviceTask> page,
             @Param("queryDTO") DeviceTaskQueryDTO queryDTO
     );
+
+    /**
+     * 根据项目任务ID查询关联的设备任务列表
+     */
+    @Select("SELECT * FROM t_device_task WHERE project_task_id = #{projectTaskId} AND deleted = 0 ORDER BY device_id ASC")
+    List<DeviceTask> selectByProjectTaskId(@Param("projectTaskId") Long projectTaskId);
 }

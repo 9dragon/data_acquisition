@@ -8,11 +8,15 @@ import com.dataacquisition.modules.device.dto.DeviceTaskUpdateDTO;
 import com.dataacquisition.modules.device.entity.DeviceTask;
 import com.dataacquisition.modules.device.mapper.DeviceTaskMapper;
 import com.dataacquisition.modules.device.service.DeviceTaskService;
+import com.dataacquisition.modules.project.entity.ProjectTask;
+import com.dataacquisition.modules.project.service.ProjectTaskService;
 import com.dataacquisition.modules.system.entity.Stage;
 import com.dataacquisition.modules.system.entity.StageTaskTemplate;
 import com.dataacquisition.modules.system.service.StageService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -24,11 +28,13 @@ import java.util.List;
 /**
  * 设备任务Service实现
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DeviceTaskServiceImpl extends ServiceImpl<DeviceTaskMapper, DeviceTask> implements DeviceTaskService {
 
     private final StageService stageService;
+    private final ObjectProvider<ProjectTaskService> projectTaskServiceProvider;
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
@@ -133,7 +139,46 @@ public class DeviceTaskServiceImpl extends ServiceImpl<DeviceTaskMapper, DeviceT
             }
         }
 
-        return this.updateById(deviceTask);
+        boolean result = this.updateById(deviceTask);
+
+        // 更新关联的项目任务进度
+        if (result && deviceTask.getProjectTaskId() != null) {
+            syncProjectTaskProgress(deviceTask.getProjectTaskId());
+        }
+
+        return result;
+    }
+
+    /**
+     * 根据设备任务自动计算并同步项目任务进度
+     */
+    private void syncProjectTaskProgress(Long projectTaskId) {
+        List<DeviceTask> deviceTasks = baseMapper.selectByProjectTaskId(projectTaskId);
+
+        if (deviceTasks == null || deviceTasks.isEmpty()) {
+            return;
+        }
+
+        long total = deviceTasks.size();
+        long completed = deviceTasks.stream().filter(t -> Boolean.TRUE.equals(t.getCompleted())).count();
+        int progress = (int) ((completed * 100) / total);
+
+        String status;
+        if (completed == 0) {
+            status = "pending";
+        } else if (completed == total) {
+            status = "completed";
+        } else {
+            status = "in_progress";
+        }
+
+        ProjectTask projectTask = projectTaskServiceProvider.getObject().getById(projectTaskId);
+        if (projectTask != null) {
+            projectTask.setProgress(progress);
+            projectTask.setStatus(status);
+            projectTaskServiceProvider.getObject().updateTask(projectTask);
+            log.info("同步项目任务进度: projectTaskId={}, progress={}%, status={}", projectTaskId, progress, status);
+        }
     }
 
     @Override
@@ -177,5 +222,11 @@ public class DeviceTaskServiceImpl extends ServiceImpl<DeviceTaskMapper, DeviceT
             }
         }
         return true;
+    }
+
+    @Override
+    public long countByProjectTaskId(Long projectTaskId) {
+        return baseMapper.selectCount(new LambdaQueryWrapper<DeviceTask>()
+                .eq(DeviceTask::getProjectTaskId, projectTaskId));
     }
 }

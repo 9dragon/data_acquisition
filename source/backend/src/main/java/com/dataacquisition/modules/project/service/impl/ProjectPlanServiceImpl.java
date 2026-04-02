@@ -123,40 +123,41 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
                     // 创建项目级任务
                     ProjectTask task = buildProjectTaskFromConfig(projectId, config, taskConfig);
                     projectTaskService.createTask(task);
-                    log.info("创建任务成功: projectId={}, stageKey={}, taskName={}",
-                            projectId, config.getStageKey(), taskConfig.getName());
-                }
+                    Long projectTaskId = task.getId();
+                    log.info("创建任务成功: projectId={}, stageKey={}, taskName={}, taskId={}",
+                            projectId, config.getStageKey(), taskConfig.getName(), projectTaskId);
 
-                // 如果是按设备推进的阶段，需要为每个设备创建设备任务
-                if (config.getDeviceIds() != null && !config.getDeviceIds().isEmpty()) {
-                    for (Long deviceId : config.getDeviceIds()) {
-                        for (StageTaskConfigDTO taskConfig : taskConfigs) {
-                            if (!taskConfig.getEnabled()) {
-                                continue;
+                    // 如果是按设备推进的阶段，需要为每个设备创建设备任务
+                    if (config.getDeviceIds() != null && !config.getDeviceIds().isEmpty()) {
+                        for (Long deviceId : config.getDeviceIds()) {
+                            for (StageTaskConfigDTO taskCfg : taskConfigs) {
+                                if (!taskCfg.getEnabled()) {
+                                    continue;
+                                }
+
+                                // 检查设备任务是否已存在
+                                if (isDeviceTaskExists(projectId, config.getStageKey(), deviceId, taskCfg.getKey())) {
+                                    log.debug("设备任务已存在，跳过: projectId={}, stageKey={}, deviceId={}, taskKey={}",
+                                            projectId, config.getStageKey(), deviceId, taskCfg.getKey());
+                                    continue;
+                                }
+
+                                // 创建设备任务，关联项目任务ID
+                                DeviceTask deviceTask = buildDeviceTask(projectId, config, taskCfg, deviceId, projectTaskId);
+                                deviceTaskService.createDeviceTask(deviceTask);
+                                log.info("创建设备任务成功: projectId={}, stageKey={}, deviceId={}, taskName={}",
+                                        projectId, config.getStageKey(), deviceId, taskCfg.getName());
                             }
-
-                            // 检查设备任务是否已存在
-                            if (isDeviceTaskExists(projectId, config.getStageKey(), deviceId, taskConfig.getKey())) {
-                                log.debug("设备任务已存在，跳过: projectId={}, stageKey={}, deviceId={}, taskKey={}",
-                                        projectId, config.getStageKey(), deviceId, taskConfig.getKey());
-                                continue;
-                            }
-
-                            // 创建设备任务
-                            DeviceTask deviceTask = buildDeviceTask(projectId, config, taskConfig, deviceId);
-                            deviceTaskService.createDeviceTask(deviceTask);
-                            log.info("创建设备任务成功: projectId={}, stageKey={}, deviceId={}, taskName={}",
-                                    projectId, config.getStageKey(), deviceId, taskConfig.getName());
                         }
                     }
                 }
+
+                log.info("项目任务初始化完成: projectId={}", projectId);
 
             } catch (Exception e) {
                 log.error("处理阶段任务失败: stageKey={}, 跳过", config.getStageKey(), e);
             }
         }
-
-        log.info("项目任务初始化完成: projectId={}", projectId);
     }
 
     /**
@@ -264,13 +265,14 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
      * 构建设备任务对象
      */
     private DeviceTask buildDeviceTask(Long projectId, StageConfig stageConfig,
-                                       StageTaskConfigDTO taskConfig, Long deviceId) {
+                                       StageTaskConfigDTO taskConfig, Long deviceId, Long projectTaskId) {
         DeviceTask deviceTask = new DeviceTask();
         deviceTask.setDeviceId(deviceId);
         deviceTask.setProjectId(projectId);
         deviceTask.setStageKey(stageConfig.getStageKey());
         deviceTask.setTaskKey(taskConfig.getKey());
         deviceTask.setTaskName(taskConfig.getName());
+        deviceTask.setProjectTaskId(projectTaskId);
         deviceTask.setCompleted(false);
 
         // 使用任务配置中的负责人（如果有的话），否则使用阶段负责人

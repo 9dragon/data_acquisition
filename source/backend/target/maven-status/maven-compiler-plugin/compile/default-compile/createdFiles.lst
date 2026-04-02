@@ -8,6 +8,7 @@ com\dataacquisition\modules\workshop\controller\WorkshopController.class
 com\dataacquisition\modules\workshop\entity\Workshop.class
 com\dataacquisition\modules\system\controller\PermissionController.class
 com\dataacquisition\modules\project\service\ProjectService.class
+com\dataacquisition\modules\project\dto\ProjectTaskUpdateDTO.class
 com\dataacquisition\modules\project\mapper\ProjectPlanMapper.class
 com\dataacquisition\modules\project\controller\ProjectController.class
 com\dataacquisition\modules\system\controller\StageController.class
@@ -90,6 +91,7 @@ com\dataacquisition\common\exception\GlobalExceptionHandler.class
 com\dataacquisition\modules\device\dto\BasicInfoRequest.class
 com\dataacquisition\modules\system\mapper\StageMapper.class
 com\dataacquisition\config\MinioConfig.class
+com\dataacquisition\modules\project\dto\ProjectPlanSummaryDto.class
 com\dataacquisition\modules\device\dto\DeviceResearchRequest.class
 com\dataacquisition\modules\device\dto\CollectionInfoRequest.class
 com\dataacquisition\modules\device\dto\MediaAttachment.class

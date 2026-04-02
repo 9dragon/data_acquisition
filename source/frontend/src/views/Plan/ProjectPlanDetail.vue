@@ -20,15 +20,14 @@
         @warning-click="handleWarningClick"
       />
 
-      <!-- 视图切换和主内容区 -->
+      <!-- 上方：时间线/甘特图切换 -->
       <el-card class="view-card" shadow="never">
         <template #header>
           <div class="card-header">
-            <span>阶段计划</span>
+            <span>阶段视图</span>
             <el-radio-group v-model="viewMode" size="small">
-              <el-radio-button value="timeline">时间线</el-radio-button>
               <el-radio-button value="gantt">甘特图</el-radio-button>
-              <el-radio-button value="list">列表</el-radio-button>
+              <el-radio-button value="timeline">时间线</el-radio-button>
             </el-radio-group>
           </div>
         </template>
@@ -49,14 +48,19 @@
             :plan-end-date="plan?.endDate"
           />
         </div>
+      </el-card>
 
-        <!-- 列表视图 -->
-        <div v-if="viewMode === 'list'" class="view-content">
-          <TaskListView
-            :tasks="ganttData"
-            @view="handleViewTask"
-          />
-        </div>
+      <!-- 下方：任务列表 -->
+      <el-card class="view-card" shadow="never">
+        <template #header>
+          <div class="card-header">
+            <span>任务列表</span>
+          </div>
+        </template>
+        <TaskListView
+          :tasks="ganttData"
+          @view="handleViewTask"
+        />
       </el-card>
 
     </div>
@@ -125,7 +129,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Refresh } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
@@ -144,10 +148,10 @@ const planStore = usePlanStore()
 
 const projectId = Number(route.params.projectId)
 const projectName = ref('')
-const viewMode = ref<PlanViewMode>('timeline')
+const viewMode = ref<PlanViewMode>('gantt')
 const taskDialogVisible = ref(false)
 const currentTask = ref<GanttTaskItem | null>(null)
-const ganttHeight = ref('400px')
+const ganttHeight = ref('350px')
 
 // 从 store 获取数据
 const plan = computed(() => planStore.currentPlan)
@@ -156,11 +160,6 @@ const stageComparisons = computed(() => planStore.stageComparisons)
 const ganttData = computed(() => planStore.ganttData)
 const statistics = computed(() => planStore.statistics)
 const warnings = computed(() => planStore.warnings)
-
-// 监听任务数量变化，动态调整甘特图高度
-watch(() => ganttData.value.length, (count) => {
-  ganttHeight.value = `${Math.max(400, count * 50 + 100)}px`
-}, { immediate: true })
 
 // 获取阶段标签类型
 function getStageTagType(stageKey: string): 'primary' | 'success' | 'warning' | 'info' {

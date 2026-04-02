@@ -75,6 +75,12 @@ public class DeviceTask extends BaseEntity {
     private String taskKey;
 
     /**
+     * 关联的项目级任务ID
+     */
+    @TableField("project_task_id")
+    private Long projectTaskId;
+
+    /**
      * 任务名称
      */
     @TableField("task_name")

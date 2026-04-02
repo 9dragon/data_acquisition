@@ -63,4 +63,9 @@ public interface DeviceTaskService extends IService<DeviceTask> {
      * 根据项目阶段配置为设备创建初始任务
      */
     boolean initializeDeviceTasks(Long deviceId, Long projectId);
+
+    /**
+     * 统计项目任务关联的设备任务数量
+     */
+    long countByProjectTaskId(Long projectTaskId);
 }

@@ -3,11 +3,14 @@ package com.dataacquisition.modules.project.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.dataacquisition.modules.device.service.DeviceTaskService;
 import com.dataacquisition.modules.project.dto.ProjectTaskUpdateDTO;
 import com.dataacquisition.modules.project.entity.ProjectTask;
 import com.dataacquisition.modules.project.mapper.ProjectTaskMapper;
 import com.dataacquisition.modules.project.service.ProjectTaskService;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,7 +21,10 @@ import java.util.List;
  * 项目任务Service实现
  */
 @Service
+@RequiredArgsConstructor
 public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, ProjectTask> implements ProjectTaskService {
+
+    private final ObjectProvider<DeviceTaskService> deviceTaskServiceProvider;
 
     @Override
     public Page<ProjectTask> pageTasks(Page<ProjectTask> page, Long projectId, String stageKey, String status) {
@@ -100,6 +106,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         ProjectTask task = this.getById(id);
         if (task == null) {
             throw new RuntimeException("任务不存在");
+        }
+
+        // 检查是否有关联的设备任务，如果有则不允许手动更新
+        long deviceTaskCount = deviceTaskServiceProvider.getObject().countByProjectTaskId(id);
+        if (deviceTaskCount > 0) {
+            throw new RuntimeException("该任务有关联的设备任务，进度将自动根据设备任务计算，不能手动更新");
         }
 
         // 记录旧状态

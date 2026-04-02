@@ -89,7 +89,7 @@ export interface ProjectPlanStage {
 /**
  * 项目计划视图模式
  */
-export type PlanViewMode = 'timeline' | 'gantt' | 'list'
+export type PlanViewMode = 'timeline' | 'gantt'
 
 /**
  * 阶段任务统计
