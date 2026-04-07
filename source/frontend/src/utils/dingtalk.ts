@@ -31,13 +31,33 @@ export function loadDingTalkJSAPI(): Promise<boolean> {
     readyResolve = resolve
 
     const script = document.createElement('script')
-    script.src = 'https://g.alicdn.com/dingding/h5-dingtalk-login/0.21.0/ddlogin.js'
+    // 使用钉钉官方JSAPI，支持客户端内免登
+    script.src = 'https://g.alicdn.com/dingding/dingtalk-jsapi/2.10.3/dingtalk.open.js'
     script.onload = () => {
-      isDingTalkReady = true
-      readyResolve?.(true)
-      readyResolve = null
+      // JSAPI加载后需要等待ready
+      // @ts-ignore
+      if (window.dd && window.dd.ready) {
+        // @ts-ignore
+        window.dd.ready(() => {
+          console.log('钉钉JSAPI已就绪')
+          isDingTalkReady = true
+          readyResolve?.(true)
+          readyResolve = null
+        })
+        // @ts-ignore
+        window.dd.error((err: any) => {
+          console.error('钉钉JSAPI错误:', err)
+          readyResolve?.(false)
+          readyResolve = null
+        })
+      } else {
+        isDingTalkReady = true
+        readyResolve?.(true)
+        readyResolve = null
+      }
     }
     script.onerror = () => {
+      console.error('钉钉JSAPI加载失败')
       readyResolve?.(false)
       readyResolve = null
     }

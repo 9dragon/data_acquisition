@@ -64,11 +64,10 @@ public class SecurityConfig {
 
                 // 配置请求授权
                 .authorizeHttpRequests(auth -> auth
-                        // 公开接口
+                        // 公开接口（路径相对于context-path）
                         .requestMatchers(
                                 "/auth/**",
-                                "/api/auth/**",
-                                "/api/dingtalk/auth",
+                                "/dingtalk/**",
                                 "/doc.html",
                                 "/webjars/**",
                                 "/swagger-resources/**",

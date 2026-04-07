@@ -3,6 +3,8 @@ package com.dataacquisition.modules.dingtalk.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
+import java.util.List;
+
 /**
  * 钉钉用户信息DTO
  */
@@ -43,6 +45,7 @@ public class DingTalkUserInfoDto {
     /**
      * 工号
      */
+    @JsonProperty("job_number")
     private String jobNumber;
 
     /**
@@ -54,13 +57,13 @@ public class DingTalkUserInfoDto {
      * 部门ID列表
      */
     @JsonProperty("dept_id_list")
-    private Long[] deptIdList;
+    private List<Long> deptIdList;
 
     /**
-     * 部门顺序
+     * 部门顺序列表（对象数组，包含dept_id和order）
      */
     @JsonProperty("dept_order_list")
-    private Long[] deptOrderList;
+    private List<DeptOrder> deptOrderList;
 
     /**
      * 激活状态
@@ -71,4 +74,13 @@ public class DingTalkUserInfoDto {
      * 是否是管理员
      */
     private Boolean admin;
+
+    /**
+     * 部门顺序对象
+     */
+    @Data
+    public static class DeptOrder {
+        private Long deptId;
+        private Long order;
+    }
 }

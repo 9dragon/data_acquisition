@@ -119,6 +119,7 @@ public class DingTalkServiceImpl implements DingTalkService {
         // 先从缓存获取
         String cachedToken = redisTemplate.opsForValue().get(ACCESS_TOKEN_CACHE_KEY);
         if (cachedToken != null) {
+            log.info("使用缓存的access_token");
             return cachedToken;
         }
 
@@ -128,19 +129,26 @@ public class DingTalkServiceImpl implements DingTalkService {
         params.put("appkey", dingTalkConfig.getAppKey());
         params.put("appsecret", dingTalkConfig.getAppSecret());
 
+        log.info("获取钉钉access_token: appKey={}", dingTalkConfig.getAppKey());
+
         String response = HttpUtil.get(url, params);
         JSONObject json = JSONUtil.parseObj(response);
+
+        log.info("钉钉API响应 - 获取access_token: errcode={}, errmsg={}",
+            json.getInt("errcode"), json.getStr("errmsg"));
 
         if (json.getInt("errcode") == 0) {
             String accessToken = json.getStr("access_token");
             // 缓存access_token
             redisTemplate.opsForValue().set(ACCESS_TOKEN_CACHE_KEY, accessToken,
                 ACCESS_TOKEN_CACHE_EXPIRE, TimeUnit.SECONDS);
+            log.info("成功获取并缓存access_token");
             return accessToken;
         }
 
-        log.error("获取钉钉access_token失败: {}", json.getStr("errmsg"));
-        throw new RuntimeException("获取钉钉access_token失败");
+        log.error("获取钉钉access_token失败: errcode={}, errmsg={}",
+            json.getInt("errcode"), json.getStr("errmsg"));
+        throw new RuntimeException("获取钉钉access_token失败: " + json.getStr("errmsg"));
     }
 
     @Override
@@ -155,11 +163,16 @@ public class DingTalkServiceImpl implements DingTalkService {
         String response = HttpUtil.get(url, params);
         JSONObject json = JSONUtil.parseObj(response);
 
+        log.info("钉钉API响应 - 通过authCode获取userId: code={}, errcode={}, errmsg={}, response={}",
+            authCode, json.getInt("errcode"), json.getStr("errmsg"), response);
+
         if (json.getInt("errcode") == 0) {
-            return json.getStr("userid");
+            // userid在result对象中
+            JSONObject result = json.getJSONObject("result");
+            return result.getStr("userid");
         }
 
-        log.error("通过authCode获取userId失败: {}", json.getStr("errmsg"));
+        log.error("通过authCode获取userId失败: errcode={}, errmsg={}", json.getInt("errcode"), json.getStr("errmsg"));
         return null;
     }
 
@@ -250,9 +263,9 @@ public class DingTalkServiceImpl implements DingTalkService {
         user.setJobNumber(dingTalkUser.getJobNumber());
 
         // 部门ID列表
-        if (dingTalkUser.getDeptIdList() != null && dingTalkUser.getDeptIdList().length > 0) {
+        if (dingTalkUser.getDeptIdList() != null && !dingTalkUser.getDeptIdList().isEmpty()) {
             user.setDingtalkDeptIdList(String.join(",",
-                java.util.Arrays.stream(dingTalkUser.getDeptIdList())
+                dingTalkUser.getDeptIdList().stream()
                     .map(String::valueOf)
                     .toArray(String[]::new)));
         }

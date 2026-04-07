@@ -37,11 +37,21 @@ export const useDingTalkStore = defineStore('dingtalk', () => {
       }
 
       const script = document.createElement('script')
-      script.src = 'https://g.alicdn.com/dingding/h5-dingtalk-login/0.21.0/ddlogin.js'
+      // 使用钉钉官方JSAPI，支持客户端内免登
+      script.src = 'https://g.alicdn.com/dingding/dingtalk-jsapi/2.10.3/dingtalk.open.js'
       script.onload = () => {
-        resolve(true)
+        // JSAPI加载后需要等待ready
+        ;(window as any).dd.ready(() => {
+          console.log('钉钉JSAPI已就绪')
+          resolve(true)
+        })
+        ;(window as any).dd.error((err: any) => {
+          console.error('钉钉JSAPI错误:', err)
+          resolve(false)
+        })
       }
       script.onerror = () => {
+        console.error('钉钉JSAPI加载失败')
         resolve(false)
       }
       document.head.appendChild(script)
