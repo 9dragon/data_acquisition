@@ -3,7 +3,6 @@ import { ref } from 'vue'
 import { dingtalkApi, type DingTalkAuthResponse } from '@/api/dingtalk'
 import { useUserStore } from './user'
 import { showToast, showLoadingToast, closeToast } from 'vant'
-import type { LocationInfo } from '@/utils/dingtalk'
 
 export const useDingTalkStore = defineStore('dingtalk', () => {
   const isDingTalkEnv = ref(false)
@@ -124,200 +123,6 @@ export const useDingTalkStore = defineStore('dingtalk', () => {
     })
   }
 
-  /**
-   * 获取地理位置
-   * 支持多种API版本，自动降级
-   */
-  function getLocation(): Promise<{ latitude: number; longitude: number; address?: string; province?: string; city?: string; district?: string; street?: string }> {
-    return new Promise((resolve, reject) => {
-      if (!isDingTalkEnv.value) {
-        // 非钉钉环境，使用浏览器定位
-        useBrowserGeolocation(resolve, reject)
-        return
-      }
-
-      const dd = (window as any).dd
-      if (!dd) {
-        reject(new Error('钉钉SDK未加载'))
-        return
-      }
-
-      // 确保dd已就绪
-      if (dd.ready) {
-        dd.ready(() => {
-          attemptDingTalkLocation(dd, resolve, reject)
-        })
-        dd.error((err: any) => {
-          console.error('钉钉JSAPI错误:', err)
-          reject(new Error('钉钉JSAPI错误'))
-        })
-      } else {
-        attemptDingTalkLocation(dd, resolve, reject)
-      }
-    })
-  }
-
-  /**
-   * 配置钉钉JSAPI权限
-   * 必须在调用需要权限的API之前配置
-   */
-  function configDingTalk(): Promise<boolean> {
-    return new Promise((resolve) => {
-      // 获取当前页面URL
-      const url = window.location.href.split('#')[0]
-
-      // 调用后端获取签名
-      dingtalkApi.getJsApiSignature(url)
-        .then(config => {
-          const dd = (window as any).dd
-          if (dd && dd.config) {
-            dd.config({
-              agentId: config.agentId,
-              corpId: config.corpId,
-              timeStamp: config.timeStamp,
-              nonceStr: config.nonceStr,
-              signature: config.signature,
-              type: 0,
-              jsApiList: ['getLocation', 'device.geolocation.get'] // 需要使用的API列表
-            })
-
-            dd.ready(() => {
-              console.log('✓ 钉钉JSAPI配置成功')
-              resolve(true)
-            })
-
-            dd.error((err: any) => {
-              console.error('✗ 钉钉JSAPI配置失败:', err)
-              resolve(false)
-            })
-          } else {
-            console.warn('dd.config不存在')
-            resolve(false)
-          }
-        })
-        .catch(err => {
-          console.error('获取签名配置失败:', err)
-          resolve(false)
-        })
-    })
-  }
-
-  /**
-   * 尝试使用钉钉定位API
-   */
-  function attemptDingTalkLocation(
-    dd: any,
-    resolve: any,
-    reject: any
-  ) {
-    console.log('尝试获取位置，可用的dd对象属性:', Object.keys(dd))
-
-    // 方法1: 尝试新的 dd.getLocation API
-    if (typeof dd.getLocation === 'function') {
-      console.log('使用 dd.getLocation API')
-      dd.getLocation({
-        targetAccuracy: '200',
-        cacheTimeout: 20,
-        coordinate: '1',
-        useCache: true,
-        withReGeocode: true,
-        type: 1,
-        success: (result: any) => {
-          console.log('钉钉定位成功:', result)
-          resolve({
-            latitude: parseFloat(result.latitude) || 0,
-            longitude: parseFloat(result.longitude) || 0,
-            address: result.address,
-            province: result.province,
-            city: result.city,
-            district: result.district,
-            street: result.street
-          })
-        },
-        fail: (error: any) => {
-          console.error('钉钉定位失败:', error)
-          reject(new Error(error?.errorMessage || '定位失败'))
-        },
-        complete: () => {
-          console.log('定位请求完成')
-        }
-      })
-      return
-    }
-
-    // 方法2: 尝试 dd.device.geolocation.getLocation
-    if (dd.device?.geolocation?.getLocation) {
-      console.log('使用 dd.device.geolocation.getLocation API')
-      dd.device.geolocation.getLocation({
-        targetAccuracy: '200',
-        cacheTimeout: 20,
-        coordinate: '1',
-        useCache: true,
-        withReGeocode: true,
-        type: 1,
-        success: (result: any) => {
-          console.log('钉钉定位成功:', result)
-          resolve({
-            latitude: parseFloat(result.latitude) || 0,
-            longitude: parseFloat(result.longitude) || 0,
-            address: result.address,
-            province: result.province,
-            city: result.city,
-            district: result.district,
-            street: result.street
-          })
-        },
-        fail: (error: any) => {
-          console.error('钉钉定位失败:', error)
-          reject(new Error(error?.errorMessage || '定位失败'))
-        }
-      })
-      return
-    }
-
-    // 方法3: 尝试旧的 dd.device.geolocation.get API
-    if (dd.device?.geolocation?.get) {
-      console.log('使用 dd.device.geolocation.get API (旧版)')
-      dd.device.geolocation.get({
-        onSuccess: (result: any) => {
-          console.log('钉钉定位成功:', result)
-          resolve({
-            latitude: parseFloat(result.latitude) || 0,
-            longitude: parseFloat(result.longitude) || 0,
-            address: result.address || result.formattedAddress
-          })
-        },
-        onFail: (error: any) => {
-          console.error('钉钉定位失败:', error)
-          reject(new Error(error?.errorMessage || '定位失败'))
-        }
-      })
-      return
-    }
-
-    reject(new Error('找不到可用的定位API，请确认钉钉应用已授予定位权限'))
-  }
-
-  /**
-   * 使用浏览器定位（降级方案）
-   */
-  function useBrowserGeolocation(resolve: any, reject: any) {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          resolve({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude
-          })
-        },
-        (error) => {
-          reject(new Error('获取位置失败: ' + error.message))
-        }
-      )
-    } else {
-      reject(new Error('浏览器不支持定位，请在钉钉中打开应用'))
-    }
-  }
 
   /**
    * 拍照或选择图片
@@ -377,9 +182,7 @@ export const useDingTalkStore = defineStore('dingtalk', () => {
     isReady,
     init,
     auth,
-    getLocation,
     chooseImage,
-    previewImage,
-    configDingTalk
+    previewImage
   }
 })

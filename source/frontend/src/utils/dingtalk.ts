@@ -136,34 +136,6 @@ export function loadDingTalkJSAPI(): Promise<boolean> {
 }
 
 /**
- * 获取钉钉免登授权码
- */
-export function getDingTalkAuthCode(): Promise<string> {
-  return new Promise((resolve, reject) => {
-    if (!isDingTalk()) {
-      reject(new Error('不在钉钉环境中'))
-      return
-    }
-
-    // @ts-ignore
-    if (window.dd && window.dd.runtime) {
-      // @ts-ignore
-      window.dd.runtime.permission.requestAuthCode({
-        corpId: import.meta.env.VITE_DINGTALK_CORP_ID || '',
-        onSuccess: (result: any) => {
-          resolve(result.code)
-        },
-        onFail: (error: any) => {
-          reject(new Error(error.errorMessage))
-        }
-      })
-    } else {
-      reject(new Error('钉钉JSAPI未加载'))
-    }
-  })
-}
-
-/**
  * 位置信息接口
  */
 export interface LocationInfo {
