@@ -1,5 +1,5 @@
 <template>
-  <div class="mobile-layout">
+  <div class="mobile-layout" :class="{ 'dingtalk-fullscreen': isDingTalkFullscreen }">
     <!-- 顶部导航栏 -->
     <van-nav-bar
       :title="pageTitle"
@@ -29,13 +29,21 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { isDingTalk } from '@/utils/dingtalk'
+import { navigateWithFullScreen } from '@/utils/routerHelper'
 
 const route = useRoute()
 const router = useRouter()
 
 const activeTab = ref(0)
 
-// 是否显示顶部导航栏
+// 检测是否在钉钉全屏模式（用于布局适配，不影响导航显示）
+const isDingTalkFullscreen = computed(() => {
+  const urlParams = new URLSearchParams(window.location.search)
+  return urlParams.has('dd_full_screen') && urlParams.get('dd_full_screen') === 'true'
+})
+
+// 是否显示顶部导航栏（始终显示H5导航，因为钉钉全屏时钉钉导航被隐藏）
 const showNavBar = computed(() => {
   return !route.meta?.hideNavBar
 })
@@ -55,14 +63,14 @@ const handleBack = () => {
   if (window.history.length > 1) {
     router.back()
   } else {
-    router.push('/mobile')
+    navigateWithFullScreen(router, '/mobile')
   }
 }
 
 // Tab点击跳转
 const handleTabChange = (index: number) => {
   const routes = ['/mobile', '/mobile/research/list', '/mobile/task/list', '/mobile/issue/list', '/mobile/profile']
-  router.push(routes[index])
+  navigateWithFullScreen(router, routes[index])
 }
 
 // 监听路由变化更新activeTab
@@ -95,10 +103,18 @@ watch(() => route.path, (newPath) => {
 </script>
 
 <style scoped>
+/* CSS变量定义 */
+.mobile-layout {
+  --nav-bar-height: 46px;
+  --tab-bar-height: 50px;
+}
+
 .mobile-layout {
   display: flex;
   flex-direction: column;
+  /* 使用动态视口高度，兼容钉钉全屏 */
   height: 100vh;
+  height: 100dvh;
   background-color: #f5f5f5;
 }
 
@@ -109,15 +125,22 @@ watch(() => route.path, (newPath) => {
 }
 
 .mobile-content.has-nav {
-  padding-top: 46px;
+  /* 为固定导航栏留出空间 */
+  padding-top: var(--nav-bar-height);
 }
 
 .mobile-content.has-tab {
-  padding-bottom: 50px;
+  /* 为固定标签栏留出空间 */
+  padding-bottom: var(--tab-bar-height);
 }
 
 :deep(.van-nav-bar) {
   background-color: #1989fa;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
 }
 
 :deep(.van-nav-bar__title) {

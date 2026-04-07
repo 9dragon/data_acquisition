@@ -86,6 +86,7 @@ import { useDingTalkStore } from '@/stores/dingtalk'
 import { useUserStore } from '@/stores/user'
 import { authApi } from '@/api/auth'
 import { getDefaultRoute } from '@/utils/device'
+import { navigateWithFullScreen } from '@/utils/routerHelper'
 
 const router = useRouter()
 const route = useRoute()
@@ -108,7 +109,7 @@ const handleDingTalkLogin = async () => {
       // 登录成功，跳转到默认路由
       const redirectPath = route.query.redirect as string
       const targetPath = redirectPath || getDefaultRoute()
-      router.push(targetPath)
+      navigateWithFullScreen(router, targetPath)
     }
   } catch (error: any) {
     showToast(error.message || '钉钉登录失败')
@@ -135,7 +136,7 @@ const handlePasswordLogin = async () => {
     // 跳转到默认路由
     const redirectPath = route.query.redirect as string
     const targetPath = redirectPath || getDefaultRoute()
-    router.push(targetPath)
+    navigateWithFullScreen(router, targetPath)
   } catch (error: any) {
     showToast(error.message || '登录失败')
   } finally {

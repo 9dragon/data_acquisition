@@ -5,8 +5,8 @@
       <div class="user-avatar" @click="handleClick('avatar')">
         <van-image
           round
-          width="70"
-          height="70"
+          width="40"
+          height="40"
           :src="userInfo.avatar || defaultAvatar"
         />
         <van-icon name="photograph" class="avatar-edit" />
@@ -36,34 +36,14 @@
 
     <!-- 功能菜单 -->
     <van-cell-group title="账户设置" inset>
-      <van-cell title="个人信息" is-link @click="handleClick('info')">
-        <template #icon>
-          <van-icon name="user-o" color="#1989fa" />
-        </template>
-      </van-cell>
-      <van-cell title="修改密码" is-link @click="handleClick('password')">
-        <template #icon>
-          <van-icon name="lock" color="#ff976a" />
-        </template>
-      </van-cell>
+      <van-cell title="个人信息" is-link icon="user-o" class="icon-blue" @click="handleClick('info')" />
+      <van-cell title="修改密码" is-link icon="lock" class="icon-orange" @click="handleClick('password')" />
     </van-cell-group>
 
     <van-cell-group title="其他" inset>
-      <van-cell title="系统设置" is-link @click="handleClick('settings')">
-        <template #icon>
-          <van-icon name="setting-o" color="#07c160" />
-        </template>
-      </van-cell>
-      <van-cell title="关于我们" is-link @click="handleClick('about')">
-        <template #icon>
-          <van-icon name="info-o" color="#969799" />
-        </template>
-      </van-cell>
-      <van-cell title="版本信息" :value="appVersion">
-        <template #icon>
-          <van-icon name="label-o" color="#ee0a24" />
-        </template>
-      </van-cell>
+      <van-cell title="系统设置" is-link icon="setting-o" class="icon-green" @click="handleClick('settings')" />
+      <van-cell title="关于我们" is-link icon="info-o" class="icon-gray" @click="handleClick('about')" />
+      <van-cell title="版本信息" :value="appVersion" icon="label-o" class="icon-red" />
     </van-cell-group>
 
     <!-- 退出登录 -->
@@ -80,6 +60,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showConfirmDialog, showToast } from 'vant'
 import { useUserStore } from '@/stores/user'
+import { navigateWithFullScreen } from '@/utils/routerHelper'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -108,26 +89,26 @@ const stats = ref({
 
 // 跳转路径
 const goToPath = (path: string) => {
-  router.push(path)
+  navigateWithFullScreen(router, path)
 }
 
 // 菜单点击
 const handleClick = (type: string) => {
   switch (type) {
     case 'info':
-      router.push('/profile/info')
+      navigateWithFullScreen(router, '/profile/info')
       break
     case 'avatar':
       showToast('头像功能开发中...')
       break
     case 'password':
-      router.push('/profile/password')
+      navigateWithFullScreen(router, '/profile/password')
       break
     case 'settings':
-      router.push('/profile/settings')
+      navigateWithFullScreen(router, '/profile/settings')
       break
     case 'about':
-      router.push('/profile/about')
+      navigateWithFullScreen(router, '/profile/about')
       break
     default:
       showToast('功能开发中...')
@@ -189,10 +170,11 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 40px 20px;
+  padding: 12px 16px;
   background: linear-gradient(135deg, #1989fa 0%, #40a9ff 100%);
   color: #fff;
-  margin-bottom: 16px;
+  margin-top: 12px;
+  margin-bottom: 12px;
 }
 
 .user-avatar {
@@ -206,20 +188,21 @@ onMounted(async () => {
   right: 0;
   background: rgba(0, 0, 0, 0.3);
   border-radius: 50%;
-  padding: 4px;
+  padding: 2px;
+  font-size: 12px;
 }
 
 .user-name {
-  font-size: 20px;
+  font-size: 15px;
   font-weight: bold;
-  margin-top: 12px;
+  margin-top: 6px;
 }
 
 .user-meta {
   display: flex;
-  gap: 16px;
-  margin-top: 8px;
-  font-size: 13px;
+  gap: 10px;
+  margin-top: 3px;
+  font-size: 11px;
   opacity: 0.9;
 }
 
@@ -255,9 +238,35 @@ onMounted(async () => {
   margin-bottom: 12px;
 }
 
-:deep(.van-cell__left-icon) {
+:deep(.van-cell__left-icon),
+:deep(.van-cell__icon) {
   margin-right: 12px;
   font-size: 18px;
+}
+
+:deep(.icon-blue) .van-cell__left-icon,
+:deep(.icon-blue) .van-cell__icon {
+  color: #1989fa;
+}
+
+:deep(.icon-orange) .van-cell__left-icon,
+:deep(.icon-orange) .van-cell__icon {
+  color: #ff976a;
+}
+
+:deep(.icon-green) .van-cell__left-icon,
+:deep(.icon-green) .van-cell__icon {
+  color: #07c160;
+}
+
+:deep(.icon-gray) .van-cell__left-icon,
+:deep(.icon-gray) .van-cell__icon {
+  color: #969799;
+}
+
+:deep(.icon-red) .van-cell__left-icon,
+:deep(.icon-red) .van-cell__icon {
+  color: #ee0a24;
 }
 
 .logout-section {

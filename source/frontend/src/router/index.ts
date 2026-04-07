@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { getDefaultRoute } from '@/utils/device'
+import { isDingTalkFullScreen } from '@/utils/routerHelper'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -264,7 +265,11 @@ router.beforeEach((to, from, next) => {
   if (to.meta.requiresAuth !== false && !token) {
     // 移动端跳转到移动登录页
     if (to.path.startsWith('/mobile')) {
-      next('/mobile/login')
+      // 保持全屏参数
+      const query = isDingTalkFullScreen()
+        ? { dd_full_screen: 'true', redirect: to.fullPath }
+        : { redirect: to.fullPath }
+      next({ path: '/mobile/login', query })
     } else {
       next('/login')
     }
@@ -277,7 +282,12 @@ router.beforeEach((to, from, next) => {
     // 移动端已登录用户访问登录页，跳转到移动端首页
     next('/mobile')
   } else {
-    next()
+    // 正常路由，自动保持全屏参数
+    if (isDingTalkFullScreen() && !to.query.dd_full_screen) {
+      next({ ...to, query: { ...to.query, dd_full_screen: 'true' } })
+    } else {
+      next()
+    }
   }
 })
 

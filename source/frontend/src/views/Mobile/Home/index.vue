@@ -1,21 +1,5 @@
 <template>
   <div class="mobile-home">
-    <!-- 用户信息卡片 -->
-    <div class="user-card">
-      <div class="user-avatar">
-        <van-image
-          round
-          width="60"
-          height="60"
-          :src="userInfo.avatar || 'https://fastly.jsdelivr.net/npm/@vant/assets/user-active.png'"
-        />
-      </div>
-      <div class="user-info">
-        <div class="user-name">{{ userInfo.name || '未登录' }}</div>
-        <div class="user-role">{{ userInfo.role || '项目成员' }}</div>
-      </div>
-    </div>
-
     <!-- 今日签到状态 -->
     <div class="today-status">
       <div class="status-card" :class="{ checked: todayChecked }">
@@ -82,15 +66,9 @@ import { showToast, showLoadingToast, closeToast } from 'vant'
 import { attendanceApi } from '@/api/attendance'
 import { mobileTaskApi } from '@/api/task'
 import { mobileIssueApi } from '@/api/issue'
+import { navigateWithFullScreen } from '@/utils/routerHelper'
 
 const router = useRouter()
-
-// 用户信息
-const userInfo = ref({
-  name: '',
-  avatar: '',
-  role: ''
-})
 
 // 今日签到状态
 const todayChecked = ref(false)
@@ -130,12 +108,12 @@ const quickActions = ref([
 
 // 跳转路径
 const goToPath = (path: string) => {
-  router.push(path)
+  navigateWithFullScreen(router, path)
 }
 
 // 去签到
 const goToCheckIn = () => {
-  router.push('/mobile/attendance/check-in')
+  navigateWithFullScreen(router, '/mobile/attendance/check-in')
 }
 
 // 检查今日签到
@@ -192,13 +170,6 @@ onMounted(async () => {
   })
 
   try {
-    // TODO: 从store获取用户信息
-    userInfo.value = {
-      name: '项目成员',
-      avatar: '',
-      role: '项目成员'
-    }
-
     // 检查今日签到
     await checkTodayAttendance()
 
@@ -215,31 +186,6 @@ onMounted(async () => {
 <style scoped>
 .mobile-home {
   padding: 16px;
-}
-
-.user-card {
-  display: flex;
-  align-items: center;
-  background: linear-gradient(135deg, #1989fa 0%, #40a9ff 100%);
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 16px;
-  color: #fff;
-}
-
-.user-avatar {
-  margin-right: 16px;
-}
-
-.user-name {
-  font-size: 18px;
-  font-weight: bold;
-  margin-bottom: 4px;
-}
-
-.user-role {
-  font-size: 14px;
-  opacity: 0.9;
 }
 
 .today-status {
