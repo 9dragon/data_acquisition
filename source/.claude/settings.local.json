@@ -42,7 +42,21 @@
       "Bash(\"/c/Program Files/JetBrains/IntelliJ IDEA 2023.1/plugins/maven/lib/maven3/bin/mvn.cmd\" compile -q)",
       "Bash(find /d/work/projects/data_acquisition -name *.sql -type f)",
       "Bash(npx vue-tsc:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(powershell -ExecutionPolicy Bypass -File \"D:\\\\work\\\\projects\\\\data_acquisition\\\\source\\\\start.ps1\")",
+      "Bash(java -version)",
+      "Bash(/d/devtools/apache-maven-3.6.0/bin/mvn spring-boot:run -Dspring-boot.run.profiles=dev)",
+      "Bash(JAVA_HOME=\"C:\\\\Program Files\\\\Java\\\\jdk-17\")",
+      "Bash(/d/devtools/apache-maven-3.6.0/bin/mvn spring-boot:run -Dspring-boot.run.profiles=dev -Dmaven.compiler.release=17 -Djava.home=\"C:\\\\Program Files\\\\Java\\\\jdk-17\")",
+      "Bash(powershell -ExecutionPolicy Bypass -File \"D:\\\\work\\\\projects\\\\data_acquisition\\\\source\\\\start.ps1\" status)",
+      "Bash(powershell -Command \"[System.IO.File]::ReadAllText\\('D:\\\\work\\\\projects\\\\data_acquisition\\\\source\\\\start.ps1', [System.Text.Encoding]::UTF8\\) | Out-File -FilePath 'D:\\\\work\\\\projects\\\\data_acquisition\\\\source\\\\start.ps1.tmp' -Encoding UTF8\")",
+      "Bash(powershell -ExecutionPolicy Bypass -Command \"cd 'D:\\\\work\\\\projects\\\\data_acquisition\\\\source'; .\\\\start.ps1 status\")",
+      "Bash(powershell -ExecutionPolicy Bypass -File \"D:\\\\work\\\\projects\\\\data_acquisition\\\\source\\\\fix_encoding.ps1\")",
+      "Bash(bash start.sh status)",
+      "Bash(python:*)",
+      "Bash(powershell -ExecutionPolicy Bypass -Command \"[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; & 'D:\\\\work\\\\projects\\\\data_acquisition\\\\source\\\\start.ps1' stop frontend\")",
+      "Bash(powershell -ExecutionPolicy Bypass -Command \"[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; & 'D:\\\\work\\\\projects\\\\data_acquisition\\\\source\\\\start.ps1' status\")",
+      "Bash(powershell -ExecutionPolicy Bypass -Command \"[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; & 'D:\\\\work\\\\projects\\\\data_acquisition\\\\source\\\\start.ps1' stop backend\")"
     ]
   }
 }

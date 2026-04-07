@@ -40,21 +40,14 @@
 
     <!-- 功能菜单 -->
     <div class="menu-grid">
-      <div class="menu-item" @click="goToPath('/mobile/attendance/check-in')">
-        <van-icon name="location-o" color="#1989fa" size="32" />
-        <span>打卡签到</span>
-      </div>
-      <div class="menu-item" @click="goToPath('/mobile/task/list')">
-        <van-icon name="apps-o" color="#07c160" size="32" />
-        <span>我的任务</span>
-      </div>
-      <div class="menu-item" @click="goToPath('/mobile/issue/list')">
-        <van-icon name="chat-o" color="#ff976a" size="32" />
-        <span>问题管理</span>
-      </div>
-      <div class="menu-item" @click="goToPath('/mobile/attendance/records')">
-        <van-icon name="records" color="#ee0a24" size="32" />
-        <span>签到记录</span>
+      <div
+        v-for="action in quickActions"
+        :key="action.label"
+        class="menu-item"
+        @click="goToPath(action.path)"
+      >
+        <van-icon :name="action.icon" :color="action.color" size="32" />
+        <span>{{ action.label }}</span>
       </div>
     </div>
 
@@ -106,6 +99,34 @@ const todayCheckTime = ref('')
 // 待办数量
 const todoCount = ref(0)
 const issueCount = ref(0)
+
+// 快捷入口配置
+const quickActions = ref([
+  {
+    icon: 'location-o',
+    color: '#1989fa',
+    label: '签到',
+    path: '/mobile/attendance/check-in'
+  },
+  {
+    icon: 'notes-o',
+    color: '#ff976a',
+    label: '调研',
+    path: '/mobile/research/list'
+  },
+  {
+    icon: 'apps-o',
+    color: '#07c160',
+    label: '任务',
+    path: '/mobile/task/list'
+  },
+  {
+    icon: 'chat-o',
+    color: '#ee0a24',
+    label: '问题',
+    path: '/mobile/issue/list'
+  }
+])
 
 // 跳转路径
 const goToPath = (path: string) => {

@@ -61,14 +61,16 @@
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { User, Lock, Monitor } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { authApi } from '@/api/auth'
+import { getDefaultRoute } from '@/utils/device'
 import type { FormInstance, FormRules } from 'element-plus'
 
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
 
 const loginFormRef = ref<FormInstance>()
@@ -108,8 +110,10 @@ const handleLogin = async () => {
 
     ElMessage.success('登录成功')
 
-    // 跳转到工作台
-    router.push('/dashboard')
+    // 优先使用URL参数，否则根据设备类型跳转
+    const redirectPath = route.query.redirect as string
+    const targetPath = redirectPath || getDefaultRoute()
+    router.push(targetPath)
   } catch (error: any) {
     if (error?.message) {
       ElMessage.error(error.message)

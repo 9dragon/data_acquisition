@@ -1,4 +1,7 @@
-﻿# 数据采集系统 - 服务管理脚本 (PowerShell)
+# -*- coding: utf-8 -*-
+import codecs
+
+content = r"""# 数据采集系统 - 服务管理脚本 (PowerShell)
 # 用途：启动/停止/重启前后端服务
 # 使用：powershell -ExecutionPolicy Bypass -File start.ps1 [start|stop|restart|status] [backend|frontend|all]
 
@@ -348,3 +351,10 @@ function Main {
 }
 
 try { Main } catch { Log-Error "启动过程中发生错误：$_"; exit 1 }
+"""
+
+# Write with UTF-8 BOM encoding
+with codecs.open(r'D:\work\projects\data_acquisition\source\start.ps1', 'w', 'utf-8-sig') as f:
+    f.write(content)
+
+print('PowerShell script written with UTF-8 BOM encoding')

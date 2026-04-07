@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { getDefaultRoute } from '@/utils/device'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -131,6 +132,13 @@ const routes: RouteRecordRaw[] = [
       }
     ]
   },
+  // 移动端登录（独立路由，不需要认证）
+  {
+    path: '/mobile/login',
+    name: 'MobileLogin',
+    component: () => import('@/views/Mobile/Login/index.vue'),
+    meta: { title: '登录', requiresAuth: false }
+  },
   // 移动端路由
   {
     path: '/mobile',
@@ -214,6 +222,24 @@ const routes: RouteRecordRaw[] = [
         name: 'ProfileAbout',
         component: () => import('@/views/Mobile/Profile/About.vue'),
         meta: { title: '关于', hideTabBar: true }
+      },
+      {
+        path: 'research/list',
+        name: 'ResearchList',
+        component: () => import('@/views/Mobile/Research/List.vue'),
+        meta: { title: '设备调研', keepAlive: true }
+      },
+      {
+        path: 'research/create',
+        name: 'ResearchCreate',
+        component: () => import('@/views/Mobile/Research/Form.vue'),
+        meta: { title: '新建调研', hideTabBar: true }
+      },
+      {
+        path: 'research/detail/:id',
+        name: 'ResearchDetail',
+        component: () => import('@/views/Mobile/Research/Detail.vue'),
+        meta: { title: '调研详情', hideTabBar: true }
       }
     ]
   }
@@ -236,9 +262,20 @@ router.beforeEach((to, from, next) => {
 
   // 检查是否需要登录
   if (to.meta.requiresAuth !== false && !token) {
-    next('/login')
+    // 移动端跳转到移动登录页
+    if (to.path.startsWith('/mobile')) {
+      next('/mobile/login')
+    } else {
+      next('/login')
+    }
   } else if (to.path === '/login' && token) {
-    next('/dashboard')
+    // PC端已登录用户访问登录页，根据设备类型跳转
+    const redirectPath = to.query.redirect as string
+    const targetPath = redirectPath || getDefaultRoute()
+    next(targetPath)
+  } else if (to.path === '/mobile/login' && token) {
+    // 移动端已登录用户访问登录页，跳转到移动端首页
+    next('/mobile')
   } else {
     next()
   }
