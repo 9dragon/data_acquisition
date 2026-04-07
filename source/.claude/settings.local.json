@@ -56,7 +56,9 @@
       "Bash(python:*)",
       "Bash(powershell -ExecutionPolicy Bypass -Command \"[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; & 'D:\\\\work\\\\projects\\\\data_acquisition\\\\source\\\\start.ps1' stop frontend\")",
       "Bash(powershell -ExecutionPolicy Bypass -Command \"[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; & 'D:\\\\work\\\\projects\\\\data_acquisition\\\\source\\\\start.ps1' status\")",
-      "Bash(powershell -ExecutionPolicy Bypass -Command \"[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; & 'D:\\\\work\\\\projects\\\\data_acquisition\\\\source\\\\start.ps1' stop backend\")"
+      "Bash(powershell -ExecutionPolicy Bypass -Command \"[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; & 'D:\\\\work\\\\projects\\\\data_acquisition\\\\source\\\\start.ps1' stop backend\")",
+      "Bash(find /d/work/projects/data_acquisition/source/frontend/src -type d -name *mobile* -o -name *m*)",
+      "Bash(find D:/work/projects/data_acquisition/source/backend/src/main/resources/mapper -name *.xml)"
     ]
   }
 }

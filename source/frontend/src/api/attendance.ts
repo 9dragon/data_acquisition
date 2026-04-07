@@ -30,6 +30,55 @@ export interface AttendanceRecord {
   status: 'NORMAL' | 'LATE'
   remark?: string
   createTime: string
+  shiftIndex?: number
+  shiftName?: string
+  isLate?: number
+  originalPhotoUrl?: string
+  watermarkPhotoUrl?: string
+}
+
+/**
+ * 时段信息
+ */
+export interface ShiftInfo {
+  index: number
+  name: string
+  startTime: string
+  endTime: string
+  lateTime: string
+  checked?: boolean
+  checkInTime?: string
+  isCurrent?: boolean
+}
+
+/**
+ * 今日签到统计
+ */
+export interface TodayCheckInStats {
+  totalShifts: number
+  checkedShifts: number
+  remainingShifts: number
+  records: AttendanceRecord[]
+  pendingShifts: ShiftInfo[]
+  currentShift: ShiftInfo | null
+}
+
+/**
+ * 签到配置
+ */
+export interface AttendanceConfig {
+  dailyTimes: number
+  shifts: ShiftConfig[]
+}
+
+/**
+ * 时段配置
+ */
+export interface ShiftConfig {
+  name: string
+  startTime: string
+  endTime: string
+  lateTime: string
 }
 
 /**
@@ -99,5 +148,19 @@ export const attendanceApi = {
    */
   export: (params: AttendanceQueryParams): Promise<Blob> => {
     return http.get('/attendance/export', { params, responseType: 'blob' })
+  },
+
+  /**
+   * 获取今日签到统计
+   */
+  getTodayStats: (): Promise<TodayCheckInStats> => {
+    return http.get('/attendance/today-stats')
+  },
+
+  /**
+   * 获取签到配置
+   */
+  getConfig: (): Promise<AttendanceConfig> => {
+    return http.get('/attendance/config')
   }
 }

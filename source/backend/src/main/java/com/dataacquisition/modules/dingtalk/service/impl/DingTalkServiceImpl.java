@@ -17,8 +17,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -36,6 +40,8 @@ public class DingTalkServiceImpl implements DingTalkService {
 
     private static final String ACCESS_TOKEN_CACHE_KEY = "dingtalk:access_token";
     private static final long ACCESS_TOKEN_CACHE_EXPIRE = 7200; // 2小时
+    private static final String JSAPI_TICKET_CACHE_KEY = "dingtalk:jsapi_ticket";
+    private static final long JSAPI_TICKET_CACHE_EXPIRE = 7200; // 2小时
 
     @Override
     public String auth(DingTalkAuthDto authDto) {
@@ -268,6 +274,106 @@ public class DingTalkServiceImpl implements DingTalkService {
                 dingTalkUser.getDeptIdList().stream()
                     .map(String::valueOf)
                     .toArray(String[]::new)));
+        }
+    }
+
+    @Override
+    public Map<String, String> getJsApiSignature(String url) {
+        // 1. 获取jsapi_ticket
+        String ticket = getJsApiTicket();
+
+        // 2. 生成随机字符串
+        String nonceStr = UUID.randomUUID().toString().replace("-", "");
+
+        // 3. 生成时间戳
+        long timeStamp = System.currentTimeMillis() / 1000;
+
+        // 4. 生成签名
+        String signature = generateSignature(ticket, nonceStr, timeStamp, url);
+
+        // 5. 返回配置信息
+        Map<String, String> config = new HashMap<>();
+        config.put("corpId", dingTalkConfig.getCorpId());
+        config.put("agentId", dingTalkConfig.getAgentId());
+        config.put("timeStamp", String.valueOf(timeStamp));
+        config.put("nonceStr", nonceStr);
+        config.put("signature", signature);
+
+        log.info("生成JSAPI签名配置: url={}, signature={}", url, signature);
+        return config;
+    }
+
+    /**
+     * 获取jsapi_ticket
+     */
+    private String getJsApiTicket() {
+        // 先从缓存获取
+        String cachedTicket = redisTemplate.opsForValue().get(JSAPI_TICKET_CACHE_KEY);
+        if (cachedTicket != null) {
+            log.info("使用缓存的jsapi_ticket");
+            return cachedTicket;
+        }
+
+        // 调用钉钉API获取jsapi_ticket
+        String accessToken = getAccessToken();
+        String url = DingTalkConstants.DINGTALK_API_URL + "/get_jsapi_ticket";
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("access_token", accessToken);
+        params.put("type", "jsapi");
+
+        log.info("获取钉钉jsapi_ticket");
+
+        String response = HttpUtil.get(url, params);
+        JSONObject json = JSONUtil.parseObj(response);
+
+        log.info("钉钉API响应 - 获取jsapi_ticket: errcode={}, errmsg={}",
+            json.getInt("errcode"), json.getStr("errmsg"));
+
+        if (json.getInt("errcode") == 0) {
+            String ticket = json.getStr("ticket");
+            // 缓存jsapi_ticket
+            redisTemplate.opsForValue().set(JSAPI_TICKET_CACHE_KEY, ticket,
+                JSAPI_TICKET_CACHE_EXPIRE, TimeUnit.SECONDS);
+            log.info("成功获取并缓存jsapi_ticket");
+            return ticket;
+        }
+
+        log.error("获取钉钉jsapi_ticket失败: errcode={}, errmsg={}",
+            json.getInt("errcode"), json.getStr("errmsg"));
+        throw new RuntimeException("获取钉钉jsapi_ticket失败: " + json.getStr("errmsg"));
+    }
+
+    /**
+     * 生成签名
+     * signature = sha1(stringToSign)
+     * stringToSign = "jsapi_ticket=" + ticket + "&noncestr=" + nonceStr + "&timestamp=" + timeStamp + "&url=" + url
+     */
+    private String generateSignature(String ticket, String nonceStr, long timeStamp, String url) {
+        String stringToSign = "jsapi_ticket=" + ticket +
+            "&noncestr=" + nonceStr +
+            "&timestamp=" + timeStamp +
+            "&url=" + url;
+
+        log.debug("签名字符串: {}", stringToSign);
+
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-1");
+            byte[] digest = md.digest(stringToSign.getBytes(StandardCharsets.UTF_8));
+
+            StringBuilder hexStr = new StringBuilder();
+            for (byte b : digest) {
+                String shaHex = Integer.toHexString(b & 0xFF);
+                if (shaHex.length() < 2) {
+                    hexStr.append(0);
+                }
+                hexStr.append(shaHex);
+            }
+
+            return hexStr.toString();
+        } catch (NoSuchAlgorithmException e) {
+            log.error("生成签名失败", e);
+            throw new RuntimeException("生成签名失败", e);
         }
     }
 }

@@ -3,6 +3,7 @@ package com.dataacquisition.modules.attendance.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dataacquisition.modules.attendance.dto.AttendanceQueryDto;
 import com.dataacquisition.modules.attendance.dto.CheckInRequestDto;
+import com.dataacquisition.modules.attendance.dto.TodayCheckInStats;
 import com.dataacquisition.modules.attendance.entity.AttendanceRecord;
 
 /**
@@ -51,4 +52,19 @@ public interface AttendanceService {
      * @return 是否成功
      */
     Boolean deleteById(Long id);
+
+    /**
+     * 获取今日签到统计
+     *
+     * @param userId 用户ID
+     * @return 今日统计
+     */
+    TodayCheckInStats getTodayStats(Long userId);
+
+    /**
+     * 获取签到配置
+     *
+     * @return 配置信息
+     */
+    Object getConfig();
 }

@@ -43,5 +43,18 @@ export const dingtalkApi = {
    */
   syncDepartments: (): Promise<number> => {
     return http.post('/dingtalk/sync-depts')
+  },
+
+  /**
+   * 获取JSAPI签名配置
+   */
+  getJsApiSignature: (url: string): Promise<{
+    corpId: string
+    agentId: string
+    timeStamp: string
+    nonceStr: string
+    signature: string
+  }> => {
+    return http.get('/dingtalk/jsapi-signature', { params: { url } })
   }
 }

@@ -22,7 +22,7 @@ minio:
 dingtalk:
   app-key: dingy7l8pfsax5fcpixx
   app-secret: tWLyh7H4qXDqFKCuyr43WYwYQlX0iTUnWNimPgvBRrd6xxR37C4WNKl4MGpRO2-e
-  agent-id: 3e7d5083-e1d4-47da-a166-c2e2ba715c12
+  agent-id: 4428808319
   corp-id: dinge1e6e6ade9b4593e35c2f4657eb6378f
   sync:
     enabled: ${DINGTALK_SYNC_ENABLED:true}

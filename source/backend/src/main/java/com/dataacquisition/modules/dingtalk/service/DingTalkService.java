@@ -72,4 +72,13 @@ public interface DingTalkService {
      * @return 本地用户
      */
     User syncUser(DingTalkUserInfoDto dingTalkUser);
+
+    /**
+     * 获取钉钉JSAPI签名配置
+     * 用于前端调用 dd.config 进行权限验证
+     *
+     * @param url 当前页面URL
+     * @return 签名配置信息
+     */
+    java.util.Map<String, String> getJsApiSignature(String url);
 }

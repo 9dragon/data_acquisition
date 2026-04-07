@@ -1,5 +1,43 @@
 <template>
   <div class="check-in-page">
+    <!-- 今日打卡状态 -->
+    <van-cell-group inset title="今日打卡">
+      <div class="today-status">
+        <div class="progress-ring">
+          <van-circle
+            v-model:current-rate="checkedRate"
+            :rate="100"
+            :speed="100"
+            :text="`${checkedCount}/${totalCount}`"
+            size="80px"
+            color="#07c160"
+            layer-color="#ebedf0"
+          />
+        </div>
+        <div class="shifts-list">
+          <div
+            v-for="shift in shifts"
+            :key="shift.index"
+            class="shift-item"
+            :class="{ 'checked': shift.checked, 'current': shift.isCurrent }"
+          >
+            <div class="shift-info">
+              <span class="shift-name">{{ shift.name }}</span>
+              <span v-if="shift.checked" class="shift-time">
+                {{ shift.checkInTime }}
+              </span>
+              <span v-else class="shift-pending">
+                {{ shift.startTime }} - {{ shift.endTime }}
+              </span>
+            </div>
+            <van-icon v-if="shift.checked" name="passed" color="#07c160" size="20" />
+            <van-icon v-else-if="shift.isCurrent" name="clock" color="#ff976a" size="20" />
+            <van-icon v-else name="clock-o" color="#c8c9cc" size="20" />
+          </div>
+        </div>
+      </div>
+    </van-cell-group>
+
     <!-- 项目选择 -->
     <van-cell-group inset title="选择项目">
       <van-cell
@@ -56,10 +94,14 @@
         size="large"
         round
         :loading="submitting"
+        :disabled="!canCheckIn"
         @click="handleCheckIn"
       >
-        确认签到
+        {{ checkInButtonText }}
       </van-button>
+      <div v-if="checkInHint" class="check-in-hint">
+        {{ checkInHint }}
+      </div>
     </div>
 
     <!-- 项目选择弹窗 -->
@@ -74,12 +116,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { showToast, showLoadingToast, closeToast } from 'vant'
 import { useRouter } from 'vue-router'
-import { attendanceApi } from '@/api/attendance'
-import { getLocation, chooseImage, previewImage as ddPreviewImage } from '@/utils/dingtalk'
-import type { AttendanceRecord } from '@/api/attendance'
+import { attendanceApi, type ShiftInfo } from '@/api/attendance'
+import { getLocation, type LocationInfo, chooseImage, previewImage as ddPreviewImage } from '@/utils/dingtalk'
 
 const router = useRouter()
 
@@ -95,7 +136,7 @@ const selectedProject = ref('')
 const selectedProjectId = ref<number>()
 
 // 位置信息
-const locationInfo = ref({
+const locationInfo = ref<LocationInfo>({
   latitude: 0,
   longitude: 0,
   address: ''
@@ -113,6 +154,44 @@ const currentTime = ref('')
 // 提交状态
 const submitting = ref(false)
 
+// 今日打卡状态
+const shifts = ref<ShiftInfo[]>([])
+const checkedCount = ref(0)
+const totalCount = ref(0)
+
+// 计算属性
+const checkedRate = computed(() => {
+  if (totalCount.value === 0) return 0
+  return (checkedCount.value / totalCount.value) * 100
+})
+
+const currentShift = computed(() => {
+  return shifts.value.find(s => s.isCurrent) || null
+})
+
+const canCheckIn = computed(() => {
+  if (!currentShift.value) return false
+  if (currentShift.value.checked) return false
+  return !!selectedProjectId.value
+})
+
+const checkInButtonText = computed(() => {
+  if (!currentShift.value) return '非打卡时段'
+  if (currentShift.value.checked) return '已打卡'
+  return `确认${currentShift.value.name}`
+})
+
+const checkInHint = computed(() => {
+  if (!currentShift.value) {
+    const nextShift = shifts.value.find(s => !s.checked)
+    if (nextShift) {
+      return `下一打卡时段: ${nextShift.startTime} - ${nextShift.name}`
+    }
+    return '今日所有时段已完成'
+  }
+  return null
+})
+
 // 定时器
 let timer: number | null = null
 
@@ -128,9 +207,29 @@ const fetchLocation = async () => {
   try {
     const location = await getLocation()
     locationInfo.value = location
-  } catch (error) {
+
+    // 如果有省市区信息，组合显示完整地址
+    if (location.province || location.city || location.district || location.street) {
+      const parts = []
+      if (location.province) parts.push(location.province)
+      if (location.city && location.city !== location.province) parts.push(location.city)
+      if (location.district) parts.push(location.district)
+      if (location.street) parts.push(location.street)
+      const formattedAddress = parts.join('')
+      // 如果没有返回address字段，使用组合的地址
+      if (!location.address && formattedAddress) {
+        locationInfo.value.address = formattedAddress
+      }
+    }
+
+    // 显示定位成功提示
+    if (location.address) {
+      console.log('定位成功:', location.address)
+    }
+  } catch (error: any) {
     console.error('获取位置失败:', error)
-    showToast('获取位置失败')
+    showToast(error.message || '获取位置失败，请确保在钉钉中打开并允许定位权限')
+    locationInfo.value = { latitude: 0, longitude: 0, address: '' }
   }
 }
 
@@ -170,6 +269,36 @@ const updateTime = () => {
   }).replace(/\//g, '-')
 }
 
+// 获取今日打卡统计
+const fetchTodayStats = async () => {
+  try {
+    const stats = await attendanceApi.getTodayStats()
+    totalCount.value = stats.totalShifts
+    checkedCount.value = stats.checkedShifts
+    shifts.value = stats.pendingShifts || []
+  } catch (error: any) {
+    console.error('获取今日统计失败:', error)
+    // 如果接口失败，使用默认配置
+    shifts.value = [
+      { index: 1, name: '上班打卡', startTime: '08:00', endTime: '09:30', checked: false, isCurrent: false },
+      { index: 2, name: '午间打卡', startTime: '12:00', endTime: '13:30', checked: false, isCurrent: false },
+      { index: 3, name: '下班打卡', startTime: '17:30', endTime: '19:00', checked: false, isCurrent: false }
+    ]
+    totalCount.value = 3
+    checkedCount.value = 0
+    updateCurrentShift()
+  }
+}
+
+// 更新当前时段状态
+const updateCurrentShift = () => {
+  const now = new Date()
+  const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+  shifts.value.forEach(shift => {
+    shift.isCurrent = currentTimeStr >= shift.startTime && currentTimeStr <= shift.endTime
+  })
+}
+
 // 签到
 const handleCheckIn = async () => {
   // 验证
@@ -178,8 +307,11 @@ const handleCheckIn = async () => {
     return
   }
 
-  if (!locationInfo.value.latitude) {
-    showToast('请获取位置信息')
+  // 位置信息必填
+  if (!locationInfo.value.latitude || locationInfo.value.latitude === 0) {
+    showToast('请先获取位置信息')
+    // 重新尝试获取位置
+    await fetchLocation()
     return
   }
 
@@ -191,7 +323,7 @@ const handleCheckIn = async () => {
   })
 
   try {
-    const record: AttendanceRecord = await attendanceApi.checkIn({
+    await attendanceApi.checkIn({
       projectId: selectedProjectId.value,
       photo: photo.value,
       latitude: locationInfo.value.latitude,
@@ -202,6 +334,9 @@ const handleCheckIn = async () => {
 
     closeToast()
     showToast('签到成功')
+
+    // 刷新今日统计
+    await fetchTodayStats()
 
     setTimeout(() => {
       router.back()
@@ -217,7 +352,12 @@ const handleCheckIn = async () => {
 onMounted(() => {
   fetchLocation()
   updateTime()
-  timer = setInterval(updateTime, 1000) as unknown as number
+  fetchTodayStats()
+  updateCurrentShift()
+  timer = setInterval(() => {
+    updateTime()
+    updateCurrentShift()
+  }, 60000) as unknown as number // 每分钟更新一次
 })
 
 onUnmounted(() => {
@@ -234,6 +374,64 @@ onUnmounted(() => {
 
 .check-in-page :deep(.van-cell-group) {
   margin-bottom: 16px;
+}
+
+.today-status {
+  padding: 16px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.progress-ring {
+  flex-shrink: 0;
+}
+
+.shifts-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.shift-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #f5f5f5;
+}
+
+.shift-item.checked {
+  background: #e8f7ef;
+}
+
+.shift-item.current {
+  background: #fff7e6;
+  border: 1px solid #ffd591;
+}
+
+.shift-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.shift-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.shift-time {
+  font-size: 12px;
+  color: #07c160;
+}
+
+.shift-pending {
+  font-size: 12px;
+  color: #999;
 }
 
 .photo-section {
@@ -285,5 +483,12 @@ onUnmounted(() => {
 
 .submit-section {
   margin-top: 24px;
+}
+
+.check-in-hint {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 13px;
+  color: #999;
 }
 </style>

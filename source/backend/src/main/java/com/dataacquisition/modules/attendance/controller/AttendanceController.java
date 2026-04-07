@@ -4,12 +4,15 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dataacquisition.common.response.Result;
 import com.dataacquisition.modules.attendance.dto.AttendanceQueryDto;
 import com.dataacquisition.modules.attendance.dto.CheckInRequestDto;
+import com.dataacquisition.modules.attendance.dto.TodayCheckInStats;
 import com.dataacquisition.modules.attendance.entity.AttendanceRecord;
+import com.dataacquisition.modules.attendance.service.AttendanceExportService;
 import com.dataacquisition.modules.attendance.service.AttendanceService;
 import com.dataacquisition.modules.system.entity.User;
 import com.dataacquisition.modules.system.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -27,6 +30,7 @@ public class AttendanceController {
 
     private final AttendanceService attendanceService;
     private final UserService userService;
+    private final AttendanceExportService attendanceExportService;
 
     /**
      * 获取当前登录用户
@@ -97,5 +101,35 @@ public class AttendanceController {
     public Result<Void> deleteById(@PathVariable Long id) {
         Boolean success = attendanceService.deleteById(id);
         return success ? Result.success() : Result.error("删除失败");
+    }
+
+    /**
+     * 获取今日签到统计
+     */
+    @Operation(summary = "获取今日签到统计")
+    @GetMapping("/today-stats")
+    public Result<TodayCheckInStats> getTodayStats(@AuthenticationPrincipal UserDetails userDetails) {
+        User user = getCurrentUser(userDetails);
+        TodayCheckInStats stats = attendanceService.getTodayStats(user.getId());
+        return Result.success(stats);
+    }
+
+    /**
+     * 获取签到配置
+     */
+    @Operation(summary = "获取签到配置")
+    @GetMapping("/config")
+    public Result<Object> getConfig() {
+        Object config = attendanceService.getConfig();
+        return Result.success(config);
+    }
+
+    /**
+     * 导出签到记录
+     */
+    @Operation(summary = "导出签到记录")
+    @GetMapping("/export")
+    public void exportRecords(AttendanceQueryDto query, HttpServletResponse response) {
+        attendanceExportService.exportToExcel(query, response);
     }
 }

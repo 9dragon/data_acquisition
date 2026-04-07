@@ -56,4 +56,15 @@ public class DingTalkController {
         int count = dingTalkService.syncDepartments();
         return Result.success(count);
     }
+
+    /**
+     * 获取JSAPI签名配置
+     * 用于前端调用 dd.config 进行权限验证
+     */
+    @Operation(summary = "获取JSAPI签名配置")
+    @GetMapping("/jsapi-signature")
+    public Result<Map<String, String>> getJsApiSignature(@RequestParam String url) {
+        Map<String, String> signature = dingTalkService.getJsApiSignature(url);
+        return Result.success(signature);
+    }
 }

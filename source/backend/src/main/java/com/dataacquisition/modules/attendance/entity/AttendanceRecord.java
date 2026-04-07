@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
  * 签到记录实体
  */
 @Data
-@TableName("attendance_record")
+@TableName("t_attendance_record")
 public class AttendanceRecord {
 
     /**
@@ -75,6 +75,31 @@ public class AttendanceRecord {
      * 备注
      */
     private String remark;
+
+    /**
+     * 时段索引: 1-第一次, 2-第二次, ...
+     */
+    private Integer shiftIndex;
+
+    /**
+     * 时段名称: 上班打卡、下班打卡等
+     */
+    private String shiftName;
+
+    /**
+     * 是否迟到: 0-否, 1-是
+     */
+    private Integer isLate;
+
+    /**
+     * 原始照片URL(无水印)
+     */
+    private String originalPhotoUrl;
+
+    /**
+     * 带水印照片URL
+     */
+    private String watermarkPhotoUrl;
 
     /**
      * 创建时间

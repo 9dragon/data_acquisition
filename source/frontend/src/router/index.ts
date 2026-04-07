@@ -130,6 +130,18 @@ const routes: RouteRecordRaw[] = [
         name: 'Roles',
         component: () => import('@/views/System/RoleList.vue'),
         meta: { title: '角色管理', icon: 'UserFilled' }
+      },
+      {
+        path: 'attendance-config',
+        name: 'AttendanceConfig',
+        component: () => import('@/views/System/AttendanceConfig.vue'),
+        meta: { title: '签到配置', icon: 'Setting' }
+      },
+      {
+        path: 'attendance-list',
+        name: 'AttendanceList',
+        component: () => import('@/views/System/AttendanceList.vue'),
+        meta: { title: '签到记录', icon: 'Calendar' }
       }
     ]
   },
