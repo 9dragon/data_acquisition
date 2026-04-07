@@ -282,12 +282,7 @@ router.beforeEach((to, from, next) => {
     // 移动端已登录用户访问登录页，跳转到移动端首页
     next('/mobile')
   } else {
-    // 正常路由，自动保持全屏参数
-    if (isDingTalkFullScreen() && !to.query.dd_full_screen) {
-      next({ ...to, query: { ...to.query, dd_full_screen: 'true' } })
-    } else {
-      next()
-    }
+    next()
   }
 })
 

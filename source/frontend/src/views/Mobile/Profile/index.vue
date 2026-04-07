@@ -125,8 +125,8 @@ const handleLogout = () => {
     localStorage.removeItem('token')
     userStore.logout()
     showToast('已退出登录')
-    // 跳转到登录页
-    router.push('/login')
+    // 跳转到移动端登录页
+    navigateWithFullScreen(router, '/mobile/login')
   }).catch(() => {
     // 取消
   })
