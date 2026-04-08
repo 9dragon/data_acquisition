@@ -19,7 +19,8 @@
             v-for="shift in shifts"
             :key="shift.index"
             class="shift-item"
-            :class="{ 'checked': shift.checked, 'current': shift.isCurrent }"
+            :class="{ 'checked': shift.checked, 'current': shift.isCurrent, 'selected': selectedShiftId === shift.index }"
+            @click="selectShift(shift)"
           >
             <div class="shift-info">
               <span class="shift-name">{{ shift.name }}</span>
@@ -49,16 +50,24 @@
 
     <!-- 签到信息 -->
     <van-cell-group inset title="签到信息">
-      <van-cell title="当前位置" :value="locationInfo.address || '获取中...'" />
+      <van-cell title="当前位置">
+        <template #value>
+          <span class="address-value">{{ locationInfo.address || '获取中...' }}</span>
+        </template>
+      </van-cell>
       <van-cell title="经纬度">
         <template #value>
-          <span v-if="locationInfo.latitude">
-            {{ locationInfo.latitude.toFixed(6) }}, {{ locationInfo.longitude.toFixed(6) }}
+          <span v-if="locationInfo.latitude" class="coordinate-value">
+            {{ locationInfo.latitude.toFixed(6) }},{{ locationInfo.longitude.toFixed(6) }}
           </span>
           <span v-else>--</span>
         </template>
       </van-cell>
-      <van-cell title="当前时间" :value="currentTime" />
+      <van-cell title="当前时间">
+        <template #value>
+          <span class="time-value">{{ currentTime }}</span>
+        </template>
+      </van-cell>
     </van-cell-group>
 
     <!-- 照片 -->
@@ -159,6 +168,14 @@ const shifts = ref<ShiftInfo[]>([])
 const checkedCount = ref(0)
 const totalCount = ref(0)
 
+// 选中的打卡时段
+const selectedShiftId = ref<number>()
+
+// 选中的时段对象
+const selectedShift = computed(() => {
+  return shifts.value.find(s => s.index === selectedShiftId.value)
+})
+
 // 计算属性
 const checkedRate = computed(() => {
   if (totalCount.value === 0) return 0
@@ -170,15 +187,15 @@ const currentShift = computed(() => {
 })
 
 const canCheckIn = computed(() => {
-  if (!currentShift.value) return false
-  if (currentShift.value.checked) return false
+  if (!selectedShift.value) return false
+  if (selectedShift.value.checked) return false
   return !!selectedProjectId.value
 })
 
 const checkInButtonText = computed(() => {
-  if (!currentShift.value) return '非打卡时段'
-  if (currentShift.value.checked) return '已打卡'
-  return `确认${currentShift.value.name}`
+  if (!selectedShift.value) return '请选择打卡时段'
+  if (selectedShift.value.checked) return '该时段已打卡'
+  return `确认${selectedShift.value.name}`
 })
 
 const checkInHint = computed(() => {
@@ -200,6 +217,15 @@ const onProjectConfirm = ({ selectedOptions }: any) => {
   selectedProject.value = selectedOptions[0].text
   selectedProjectId.value = selectedOptions[0].value
   showProjectPicker.value = false
+}
+
+// 选择打卡时段
+const selectShift = (shift: ShiftInfo) => {
+  if (shift.checked) {
+    showToast('该时段已打卡，无法选择')
+    return
+  }
+  selectedShiftId.value = shift.index
 }
 
 // 获取位置
@@ -238,8 +264,10 @@ const takePhoto = async () => {
   try {
     const image = await chooseImage()
     photo.value = image
-  } catch (error) {
+    showToast('拍照成功')
+  } catch (error: any) {
     console.error('拍照失败:', error)
+    showToast(error?.message || '拍照失败，请重试')
   }
 }
 
@@ -258,15 +286,13 @@ const deletePhoto = () => {
 // 更新时间
 const updateTime = () => {
   const now = new Date()
-  currentTime.value = now.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  }).replace(/\//g, '-')
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  const hour = String(now.getHours()).padStart(2, '0')
+  const minute = String(now.getMinutes()).padStart(2, '0')
+  const second = String(now.getSeconds()).padStart(2, '0')
+  currentTime.value = `${year}-${month}-${day} ${hour}:${minute}:${second}`
 }
 
 // 获取今日打卡统计
@@ -302,6 +328,11 @@ const updateCurrentShift = () => {
 // 签到
 const handleCheckIn = async () => {
   // 验证
+  if (!selectedShift.value) {
+    showToast('请选择打卡时段')
+    return
+  }
+
   if (!selectedProjectId.value) {
     showToast('请选择项目')
     return
@@ -325,6 +356,7 @@ const handleCheckIn = async () => {
   try {
     await attendanceApi.checkIn({
       projectId: selectedProjectId.value,
+      shiftIndex: selectedShift.value.index,
       photo: photo.value,
       latitude: locationInfo.value.latitude,
       longitude: locationInfo.value.longitude,
@@ -349,15 +381,28 @@ const handleCheckIn = async () => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await fetchTodayStats()
+  updateCurrentShift()
+
+  // 默认选择当前时段
+  const current = shifts.value.find(s => s.isCurrent && !s.checked)
+  if (current) {
+    selectedShiftId.value = current.index
+  } else {
+    // 如果没有当前时段，选择第一个未打卡的时段
+    const firstUnchecked = shifts.value.find(s => !s.checked)
+    if (firstUnchecked) {
+      selectedShiftId.value = firstUnchecked.index
+    }
+  }
+
   fetchLocation()
   updateTime()
-  fetchTodayStats()
-  updateCurrentShift()
   timer = setInterval(() => {
     updateTime()
     updateCurrentShift()
-  }, 60000) as unknown as number // 每分钟更新一次
+  }, 1000) as unknown as number // 每秒更新一次
 })
 
 onUnmounted(() => {
@@ -374,6 +419,30 @@ onUnmounted(() => {
 
 .check-in-page :deep(.van-cell-group) {
   margin-bottom: 16px;
+}
+
+/* 当前位置地址右对齐、全部显示 */
+.address-value {
+  text-align: right;
+  word-break: break-all;
+  white-space: normal;
+}
+
+/* 坐标值不换行、右对齐 */
+.coordinate-value {
+  white-space: nowrap;
+}
+
+/* 时间值不换行、完整显示 */
+.time-value {
+  white-space: nowrap;
+  font-family: monospace;
+}
+
+/* 签到信息区域的值右对齐 */
+.check-in-page :deep(.van-cell-group:nth-of-type(3) .van-cell__value) {
+  text-align: right;
+  flex: 1;
 }
 
 .today-status {
@@ -410,6 +479,15 @@ onUnmounted(() => {
 .shift-item.current {
   background: #fff7e6;
   border: 1px solid #ffd591;
+}
+
+.shift-item.selected {
+  border: 2px solid #1989fa;
+  box-shadow: 0 2px 8px rgba(25, 137, 250, 0.3);
+}
+
+.shift-item.selected:not(.checked):not(.current) {
+  background: #f0f7ff;
 }
 
 .shift-info {

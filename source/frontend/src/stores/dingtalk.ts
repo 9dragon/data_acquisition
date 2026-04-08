@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { dingtalkApi, type DingTalkAuthResponse } from '@/api/dingtalk'
 import { useUserStore } from './user'
 import { showToast, showLoadingToast, closeToast } from 'vant'
+import * as dd from 'dingtalk-jsapi'
 
 export const useDingTalkStore = defineStore('dingtalk', () => {
   const isDingTalkEnv = ref(false)
@@ -21,41 +22,9 @@ export const useDingTalkStore = defineStore('dingtalk', () => {
       return false
     }
 
-    // 加载钉钉JSAPI
-    isReady.value = await loadDingTalkJSAPI()
-    return isReady.value
-  }
-
-  /**
-   * 加载钉钉JSAPI
-   */
-  function loadDingTalkJSAPI(): Promise<boolean> {
-    return new Promise((resolve) => {
-      if ((window as any).dd) {
-        resolve(true)
-        return
-      }
-
-      const script = document.createElement('script')
-      // 使用钉钉官方JSAPI，支持客户端内免登
-      script.src = 'https://g.alicdn.com/dingding/dingtalk-jsapi/2.10.3/dingtalk.open.js'
-      script.onload = () => {
-        // JSAPI加载后需要等待ready
-        ;(window as any).dd.ready(() => {
-          console.log('钉钉JSAPI已就绪')
-          resolve(true)
-        })
-        ;(window as any).dd.error((err: any) => {
-          console.error('钉钉JSAPI错误:', err)
-          resolve(false)
-        })
-      }
-      script.onerror = () => {
-        console.error('钉钉JSAPI加载失败')
-        resolve(false)
-      }
-      document.head.appendChild(script)
-    })
+    // npm包方式，无需手动加载
+    isReady.value = true
+    return true
   }
 
   /**
@@ -105,8 +74,7 @@ export const useDingTalkStore = defineStore('dingtalk', () => {
    */
   function getAuthCode(): Promise<string> {
     return new Promise((resolve, reject) => {
-      const dd = (window as any).dd
-      if (!dd || !dd.runtime) {
+      if (!dd.runtime) {
         reject(new Error('钉钉JSAPI未加载'))
         return
       }
@@ -123,20 +91,20 @@ export const useDingTalkStore = defineStore('dingtalk', () => {
     })
   }
 
-
   /**
    * 拍照或选择图片
    */
   function chooseImage(): Promise<string> {
     return new Promise((resolve, reject) => {
-      if (isDingTalkEnv.value && (window as any).dd?.device?.camera) {
+      if (isDingTalkEnv.value && (dd as any).biz?.util?.uploadImageFromCamera) {
         // 使用钉钉相机
-        ;(window as any).dd.device.camera.chooseImage({
+        ;(dd as any).biz.util.uploadImageFromCamera({
+          compression: true,
           onSuccess: (result: any) => {
-            resolve(result.data[0])
+            resolve(result.url || result.picUrl || result)
           },
           onFail: (error: any) => {
-            reject(new Error(error.errorMessage))
+            reject(new Error(error.errorMessage || '拍照失败'))
           }
         })
       } else {
@@ -166,8 +134,8 @@ export const useDingTalkStore = defineStore('dingtalk', () => {
    * 预览图片
    */
   function previewImage(urls: string[], current?: string) {
-    if (isDingTalkEnv.value && (window as any).dd?.device?.image) {
-      ;(window as any).dd.device.image.preview({
+    if (isDingTalkEnv.value && (dd as any).device?.image?.preview) {
+      ;(dd as any).device.image.preview({
         urls: urls,
         current: current || urls[0]
       })
