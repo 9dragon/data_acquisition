@@ -2,9 +2,9 @@
   <div class="issue-detail">
     <el-page-header @back="handleBack" content="问题详情">
       <template #extra>
-        <el-button v-if="canEdit" type="primary" @click="handleEdit">编辑</el-button>
-        <el-button v-if="canAssign" @click="handleAssignDialog = true">分配</el-button>
-        <el-button v-if="canChangeStatus" type="success" @click="handleStatusDialog = true">更改状态</el-button>
+        <el-button v-if="canEdit" type="primary" :icon="Edit" @click="handleEdit">编辑</el-button>
+        <el-button v-if="canAssign" :icon="User" @click="handleAssignDialog = true">分配</el-button>
+        <el-button v-if="canChangeStatus" type="success" :icon="CircleCheck" @click="handleStatusDialog = true">更改状态</el-button>
       </template>
     </el-page-header>
 
@@ -133,10 +133,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { Edit, User, CircleCheck } from '@element-plus/icons-vue'
 import { issueApi } from '@/api/issue'
 import type { Issue, IssueComment, IssueStatusHistory } from '@/types/issue'
 import { ISSUE_TYPE_OPTIONS, ISSUE_PRIORITY_OPTIONS, ISSUE_STATUS_OPTIONS } from '@/types/issue'
 import { http } from '@/api/request'
+import { userApi } from '@/api/user'
 
 const router = useRouter()
 const route = useRoute()
@@ -168,9 +170,14 @@ onMounted(() => {
 async function loadData() {
   const id = Number(route.params.id)
   try {
-    issue.value = await issueApi.getById(id)
-    comments.value = await issueApi.getComments(id)
-    statusHistory.value = await issueApi.getHistory(id)
+    const [issueRes, commentsRes, historyRes] = await Promise.all([
+      issueApi.getById(id),
+      issueApi.getComments(id),
+      issueApi.getHistory(id)
+    ])
+    issue.value = issueRes
+    comments.value = commentsRes.records || commentsRes.data || commentsRes || []
+    statusHistory.value = historyRes.records || historyRes.data || historyRes || []
   } catch (e) {
     console.error('加载失败', e)
   }
@@ -178,8 +185,7 @@ async function loadData() {
 
 async function loadUsers() {
   try {
-    const res = await http.get<{ data: { list: { id: number; name: string }[] } }>('/users', { params: { pageNum: 1, pageSize: 100 } })
-    userOptions.value = res?.data?.list || []
+    userOptions.value = await userApi.getOptions()
   } catch (e) {
     console.error('加载用户失败', e)
   }
@@ -274,7 +280,7 @@ function getStatusType(status: string) {
   return map[status] || ''
 }
 
-function formatDateTime(dateStr: string) {
+function formatDateTime(dateStr: string | undefined) {
   if (!dateStr) return ''
   return dateStr.replace('T', ' ').substring(0, 19)
 }

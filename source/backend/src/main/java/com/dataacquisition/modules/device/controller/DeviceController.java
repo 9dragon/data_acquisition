@@ -1,6 +1,7 @@
 package com.dataacquisition.modules.device.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.dataacquisition.common.dto.OptionDto;
 import com.dataacquisition.common.response.Result;
 import com.dataacquisition.modules.device.entity.Device;
 import com.dataacquisition.modules.device.service.DeviceService;
@@ -10,6 +11,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * 设备Controller
@@ -36,6 +39,19 @@ public class DeviceController {
         Page<Device> page = new Page<>(pageNum, pageSize);
         Page<Device> result = deviceService.pageDevices(page, keyword, projectId, typeId);
         return Result.success(result);
+    }
+
+    /**
+     * 获取设备选项列表（用于下拉选择器）
+     */
+    @Operation(summary = "获取设备选项列表")
+    @GetMapping("/options")
+    public Result<List<OptionDto>> getDeviceOptions(
+            @Parameter(description = "项目ID") @RequestParam(required = false) Long projectId,
+            @Parameter(description = "车间ID") @RequestParam(required = false) Long workshopId,
+            @Parameter(description = "关键词") @RequestParam(required = false) String keyword) {
+        List<OptionDto> options = deviceService.getDeviceOptions(projectId, workshopId, keyword);
+        return Result.success(options);
     }
 
     /**

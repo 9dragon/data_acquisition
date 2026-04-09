@@ -15,6 +15,14 @@ export interface DeviceType {
 }
 
 /**
+ * 通用选项接口
+ */
+export interface Option {
+  id: number | string
+  name: string
+}
+
+/**
  * 分页响应接口
  */
 export interface PageResponse<T> {
@@ -38,6 +46,13 @@ export interface DeviceTypeQueryParams {
  * 设备类型API
  */
 export const deviceTypeApi = {
+  /**
+   * 获取设备类型选项列表（用于下拉选择器）
+   */
+  getOptions: (params?: { projectId?: number; keyword?: string }): Promise<Option[]> => {
+    return http.get('/device-types/options', { params })
+  },
+
   /**
    * 分页查询设备类型列表
    */

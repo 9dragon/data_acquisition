@@ -197,15 +197,13 @@ const progress = computed(() => {
 })
 
 const statusText = computed(() => {
-  if (progress.value === 0) return '未开始'
-  if (progress.value === 100) return '已完成'
+  if (progress.value >= 100) return '已完成'
   return '进行中'
 })
 
 const progressColor = computed(() => {
-  if (progress.value === 0) return '#d9d9d9'
-  if (progress.value === 100) return '#52c41a'
-  return '#1890ff'
+  if (progress.value >= 100) return '#52c41a' // 已完成：绿色
+  return '#1890ff'                             // 进行中：蓝色
 })
 
 // 将 flat 结构转换为 nested 结构供子组件使用

@@ -76,19 +76,14 @@ export type ResearchSection = 'basic' | 'controller' | 'collection';
 
 // 调研基础信息
 export interface DeviceResearchBasic {
-  // 新增字段
-  deviceCode?: string;          // 设备编号
-  deviceName?: string;          // 设备名称
-  deviceType?: string;          // 设备类型
-  projectName?: string;         // 项目名称
   projectId?: number;           // 项目ID
-  workshop?: string;            // 所属车间
+  projectName?: string;         // 项目名称（后端关联查询返回）
+  deviceTypeId?: string;        // 设备类型ID
+  deviceTypeName?: string;      // 设备类型名称（后端关联查询返回）
+  workshopId?: string;          // 车间ID
+  workshopName?: string;        // 车间名称（后端关联查询返回）
   quantity?: number;            // 数量
-  deviceManufacturer?: string;  // 设备厂商（区别于控制器厂商）
-
-  // 原有字段
-  manufacturer?: string;        // 设备生产厂商（兼容旧字段）
-  productionDate?: string;      // 出厂日期
+  deviceManufacturer?: string;  // 设备厂商
   remarks?: string;             // 备注
 }
 
@@ -135,33 +130,56 @@ export interface DeviceResearchCollection {
 
 // 设备调研完整记录
 export interface DeviceResearch extends BaseEntity {
-  deviceId?: number;                  // 关联设备ID（可选，用于后续关联）
-  deviceName?: string;                // 设备名称
-  projectId?: number;                 // 所属项目ID（可选）
-  projectName?: string;               // 项目名称
+  id?: number;                          // 调研ID
+  projectId?: number;                   // 项目ID
+  projectName?: string;                 // 项目名称（后端关联查询返回）
+  deviceTypeId?: string;                // 设备类型ID
+  deviceTypeName?: string;              // 设备类型名称（后端关联查询返回）
+  workshopId?: string;                  // 车间ID
+  workshopName?: string;                // 车间名称（后端关联查询返回）
+  quantity?: number;                    // 数量
+  deviceManufacturer?: string;          // 设备厂商
 
-  // 设备基本信息（从零创建时必填）
-  deviceCode?: string;                // 设备编号
-  deviceType?: string;                // 设备类型
-  workshop?: string;                  // 所属车间
+  // 控制器信息
+  isInterfaceOccupied?: boolean;         // 接口是否被占用
+  interfaceType?: string;               // 接口类型
+  hasTouchScreen?: boolean;             // 是否连接触摸屏
+  controllerBrand?: string;             // 控制器品牌
+  controllerModel?: string;             // 控制器型号
+  touchScreenBrand?: string;            // 触摸屏品牌
+  hasPointTable?: boolean;              // 是否提供点位表
+  hasPlcSource?: boolean;               // 是否提供PLC源程序
+  hasTouchScreenSource?: boolean;       // 是否提供触摸屏源程序
+  controllerPhotos?: string;            // 控制器照片
+  controllerVideos?: string;            // 控制器视频
+  touchscreenPhotos?: string;           // 触摸屏照片
+  touchscreenVideos?: string;           // 触摸屏视频
+  cabinetPhotos?: string;               // 控制柜照片
+  cabinetVideos?: string;               // 控制柜视频
 
-  // 新增字段
-  quantity?: number;                  // 数量
-  deviceManufacturer?: string;        // 设备厂商（区别于控制器厂商）
-
-  // 三大类调研信息
-  basic?: DeviceResearchBasic;
-  controller?: DeviceResearchController;
-  collection?: DeviceResearchCollection;
+  // 采集信息
+  collectDeviceStatus?: boolean;        // 采集设备状态
+  collectProcessParams?: boolean;       // 采集工艺参数
+  dataItems?: string;                   // 需采集数据项
+  dataItemsDetail?: string;             // 需采集数据项明细
+  collectProduction?: boolean;          // 采集产量/节拍
+  collectEnergy?: boolean;              // 采集能耗
 
   // 调研状态
-  basicCompleted?: boolean;           // 基础信息是否完成
-  controllerCompleted?: boolean;      // 控制器信息是否完成
-  collectionCompleted?: boolean;      // 采集信息是否完成
-  researchProgress?: number;          // 调研进度（0-100）
+  basicCompleted?: boolean;             // 基础信息是否完成
+  controllerCompleted?: boolean;        // 控制器信息是否完成
+  collectionCompleted?: boolean;        // 采集信息是否完成
+  researchProgress?: number;            // 调研进度（0-100）
 
   // 调研人员信息
-  researcherId?: number;              // 调研人员ID
-  researcherName?: string;            // 调研人员姓名
-  researchDate?: string;              // 调研日期
+  researcherId?: number;                // 调研人员ID
+  researcherName?: string;              // 调研人员姓名
+  researchDate?: string;                // 调研日期
+
+  // 备注
+  remarks?: string;                     // 备注
+
+  // 时间戳
+  createdAt?: string;                   // 创建时间
+  updatedAt?: string;                   // 更新时间
 }

@@ -69,6 +69,7 @@
 import { ref, computed, watch } from 'vue'
 import { Loading } from '@element-plus/icons-vue'
 import { http } from '@/api/request'
+import { deviceApi } from '@/api/device'
 import type { Device } from '@/types/device'
 
 interface Props {
@@ -145,10 +146,13 @@ async function loadProjectDevices(projectId: number) {
 
   try {
     loading.value = true
-    const response = await http.get<any>('/devices', {
+    const response = await deviceApi.getOptions({ projectId })
+    // 需要完整的设备信息（包含车间信息）来分组
+    // 如果选项接口不够，这里可能需要调整
+    const fullResponse = await http.get<any>('/devices', {
       params: { projectId, pageSize: 1000 }
     })
-    devices.value = response.records || []
+    devices.value = fullResponse.records || []
 
     // 默认全选
     if (props.modelValue === undefined || props.modelValue.length === 0) {

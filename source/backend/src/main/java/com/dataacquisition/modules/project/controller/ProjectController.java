@@ -1,6 +1,7 @@
 package com.dataacquisition.modules.project.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.dataacquisition.common.dto.OptionDto;
 import com.dataacquisition.common.response.Result;
 import com.dataacquisition.modules.project.dto.ProjectPlanResponseDto;
 import com.dataacquisition.modules.project.entity.Project;
@@ -12,6 +13,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * 项目Controller
@@ -39,6 +42,17 @@ public class ProjectController {
         Page<Project> page = new Page<>(pageNum, pageSize);
         Page<Project> result = projectService.pageProjects(page, keyword, status, stage);
         return Result.success(result);
+    }
+
+    /**
+     * 获取项目选项列表（用于下拉选择器）
+     */
+    @Operation(summary = "获取项目选项列表")
+    @GetMapping("/options")
+    public Result<List<OptionDto>> getProjectOptions(
+            @Parameter(description = "关键词") @RequestParam(required = false) String keyword) {
+        List<OptionDto> options = projectService.getProjectOptions(keyword);
+        return Result.success(options);
     }
 
     /**

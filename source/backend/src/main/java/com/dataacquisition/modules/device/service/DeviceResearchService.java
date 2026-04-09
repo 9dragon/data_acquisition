@@ -13,7 +13,7 @@ public interface DeviceResearchService extends IService<DeviceResearch> {
     /**
      * 分页查询设备调研列表
      */
-    Page<DeviceResearch> pageResearch(Page<DeviceResearch> page, String projectId, String workshop, String deviceType);
+    Page<DeviceResearch> pageResearch(Page<DeviceResearch> page, Long projectId, String workshopId, String deviceTypeId);
 
     /**
      * 创建调研

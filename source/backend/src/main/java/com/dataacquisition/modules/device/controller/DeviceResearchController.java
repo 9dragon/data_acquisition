@@ -31,11 +31,11 @@ public class DeviceResearchController {
     public Result<Page<DeviceResearch>> pageResearch(
             @Parameter(description = "页码") @RequestParam(defaultValue = "1") Integer pageNum,
             @Parameter(description = "每页条数") @RequestParam(defaultValue = "10") Integer pageSize,
-            @Parameter(description = "项目ID") @RequestParam(required = false) String projectId,
-            @Parameter(description = "车间") @RequestParam(required = false) String workshop,
-            @Parameter(description = "设备类型") @RequestParam(required = false) String deviceType) {
+            @Parameter(description = "项目ID") @RequestParam(required = false) Long projectId,
+            @Parameter(description = "车间ID") @RequestParam(required = false) String workshopId,
+            @Parameter(description = "设备类型ID") @RequestParam(required = false) String deviceTypeId) {
         Page<DeviceResearch> page = new Page<>(pageNum, pageSize);
-        Page<DeviceResearch> result = deviceResearchService.pageResearch(page, projectId, workshop, deviceType);
+        Page<DeviceResearch> result = deviceResearchService.pageResearch(page, projectId, workshopId, deviceTypeId);
         return Result.success(result);
     }
 
@@ -52,20 +52,6 @@ public class DeviceResearchController {
         return Result.success(research);
     }
 
-    /**
-     * 根据设备ID获取调研
-     */
-    @Operation(summary = "根据设备ID获取调研")
-    @GetMapping("/device/{deviceId}")
-    public Result<DeviceResearch> getResearchByDeviceId(@PathVariable Long deviceId) {
-        DeviceResearch research = deviceResearchService.lambdaQuery()
-                .eq(DeviceResearch::getDeviceId, deviceId)
-                .one();
-        if (research == null) {
-            return Result.error("调研记录不存在");
-        }
-        return Result.success(research);
-    }
 
     /**
      * 新增调研

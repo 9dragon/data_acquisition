@@ -48,6 +48,7 @@ export interface IssueComment {
   authorName?: string;
   attachments?: IssueAttachment[];
   createTime: string;
+  createdAt?: string;
   isInternal?: boolean;
 }
 
@@ -60,6 +61,7 @@ export interface IssueStatusHistory {
   operatorName?: string;
   remark?: string;
   createTime: string;
+  createdAt?: string;
 }
 
 export interface IssueStats {

@@ -3,6 +3,7 @@ package com.dataacquisition.modules.device.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.dataacquisition.common.dto.OptionDto;
 import com.dataacquisition.modules.device.entity.Device;
 import com.dataacquisition.modules.device.mapper.DeviceMapper;
 import com.dataacquisition.modules.device.service.DeviceService;
@@ -114,5 +115,35 @@ public class DeviceServiceImpl extends ServiceImpl<DeviceMapper, Device> impleme
                 device.setTypeName(typeNameMap.get(device.getTypeId()));
             }
         }
+    }
+
+    @Override
+    public List<OptionDto> getDeviceOptions(Long projectId, Long workshopId, String keyword) {
+        LambdaQueryWrapper<Device> wrapper = new LambdaQueryWrapper<>();
+
+        // 项目筛选
+        if (projectId != null) {
+            wrapper.eq(Device::getProjectId, projectId);
+        }
+
+        // 车间筛选
+        if (workshopId != null) {
+            wrapper.eq(Device::getWorkshopId, workshopId);
+        }
+
+        // 关键词搜索
+        if (StringUtils.isNotBlank(keyword)) {
+            wrapper.and(w -> w.like(Device::getName, keyword)
+                    .or()
+                    .like(Device::getCode, keyword));
+        }
+
+        // 排序
+        wrapper.orderByDesc(Device::getCreatedAt);
+
+        List<Device> list = this.list(wrapper);
+        return list.stream()
+                .map(d -> new OptionDto(d.getId(), d.getName()))
+                .collect(Collectors.toList());
     }
 }

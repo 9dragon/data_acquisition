@@ -23,7 +23,7 @@ import java.util.Map;
  */
 @Tag(name = "问题管理", description = "问题相关接口")
 @RestController
-@RequestMapping("/api/issues")
+@RequestMapping("/issues")
 @RequiredArgsConstructor
 public class IssueController {
 

@@ -1,6 +1,7 @@
 package com.dataacquisition.modules.device.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.dataacquisition.common.dto.OptionDto;
 import com.dataacquisition.common.response.Result;
 import com.dataacquisition.modules.device.entity.DeviceType;
 import com.dataacquisition.modules.device.service.DeviceTypeService;
@@ -10,6 +11,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * 设备类型Controller
@@ -36,6 +39,18 @@ public class DeviceTypeController {
             @Parameter(description = "排序方向") @RequestParam(required = false) String sortOrder) {
         IPage<DeviceType> result = deviceTypeService.getDeviceTypePage(page, pageSize, projectId, keyword, sortBy, sortOrder);
         return Result.success(result);
+    }
+
+    /**
+     * 获取设备类型选项列表（用于下拉选择器）
+     */
+    @Operation(summary = "获取设备类型选项列表")
+    @GetMapping("/options")
+    public Result<List<OptionDto>> getDeviceTypeOptions(
+            @Parameter(description = "项目ID") @RequestParam(required = false) Long projectId,
+            @Parameter(description = "关键词") @RequestParam(required = false) String keyword) {
+        List<OptionDto> options = deviceTypeService.getDeviceTypeOptions(projectId, keyword);
+        return Result.success(options);
     }
 
     /**

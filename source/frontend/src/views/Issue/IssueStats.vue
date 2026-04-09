@@ -103,14 +103,14 @@ onMounted(async () => {
 async function loadStats() {
   try {
     const data = await issueApi.getStats()
-    stats.total = data.total
-    stats.open = data.open
-    stats.assigned = data.assigned
-    stats.inProgress = data.inProgress
-    stats.resolved = data.resolved
-    stats.closed = data.closed
-    stats.byPriority = data.byPriority || {}
-    stats.byType = data.byType || {}
+    stats.total = data?.total || 0
+    stats.open = data?.open || 0
+    stats.assigned = data?.assigned || 0
+    stats.inProgress = data?.inProgress || 0
+    stats.resolved = data?.resolved || 0
+    stats.closed = data?.closed || 0
+    stats.byPriority = data?.byPriority || {}
+    stats.byType = data?.byType || {}
   } catch (e) {
     console.error('加载统计失败', e)
   }

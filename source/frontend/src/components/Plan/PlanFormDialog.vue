@@ -241,6 +241,7 @@ import type { ProjectPlan, ProjectPlanFormData, StageConfig, StageTaskConfig } f
 import { stageApi, type Stage } from '@/api/stage'
 import { http } from '@/api/request'
 import { useProjectStore } from '@/stores/project'
+import { userApi } from '@/api/user'
 import WeightSlider from './WeightSlider.vue'
 import TaskConfigList from './TaskConfigList.vue'
 import DeviceCascader from './DeviceCascader.vue'
@@ -299,10 +300,7 @@ async function loadStages() {
 // 加载用户列表
 async function loadUsers() {
   try {
-    const response = await http.get<any>('/users', {
-      params: { pageNum: 1, pageSize: 1000, status: 1 }
-    })
-    users.value = response.records
+    users.value = await userApi.getOptions()
   } catch (error) {
     console.error('加载用户失败:', error)
     ElMessage.error('加载用户数据失败')

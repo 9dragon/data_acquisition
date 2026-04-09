@@ -14,19 +14,14 @@ public class BasicInfoRequest {
     private Long projectId;
 
     /**
-     * 项目名称
+     * 设备类型ID
      */
-    private String projectName;
+    private String deviceTypeId;
 
     /**
-     * 所属车间
+     * 车间ID
      */
-    private String workshop;
-
-    /**
-     * 设备类型
-     */
-    private String deviceType;
+    private String workshopId;
 
     /**
      * 数量

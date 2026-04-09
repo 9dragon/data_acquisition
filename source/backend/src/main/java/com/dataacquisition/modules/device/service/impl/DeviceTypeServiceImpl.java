@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.dataacquisition.common.dto.OptionDto;
 import com.dataacquisition.common.exception.BusinessException;
 import com.dataacquisition.modules.device.entity.Device;
 import com.dataacquisition.modules.device.entity.DeviceType;
@@ -16,6 +17,9 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 设备类型Service实现
@@ -147,5 +151,30 @@ public class DeviceTypeServiceImpl extends ServiceImpl<DeviceTypeMapper, DeviceT
             wrapper.ne(DeviceType::getId, excludeId);
         }
         return deviceTypeMapper.selectCount(wrapper) == 0;
+    }
+
+    @Override
+    public List<OptionDto> getDeviceTypeOptions(Long projectId, String keyword) {
+        LambdaQueryWrapper<DeviceType> wrapper = new LambdaQueryWrapper<>();
+
+        // 项目筛选
+        if (projectId != null) {
+            wrapper.eq(DeviceType::getProjectId, projectId);
+        }
+
+        // 关键词搜索
+        if (StringUtils.isNotBlank(keyword)) {
+            wrapper.and(w -> w.like(DeviceType::getName, keyword)
+                    .or()
+                    .like(DeviceType::getCode, keyword));
+        }
+
+        // 排序
+        wrapper.orderByDesc(DeviceType::getCreatedAt);
+
+        List<DeviceType> list = this.list(wrapper);
+        return list.stream()
+                .map(dt -> new OptionDto(dt.getId(), dt.getName()))
+                .collect(Collectors.toList());
     }
 }

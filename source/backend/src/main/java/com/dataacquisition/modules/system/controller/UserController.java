@@ -2,6 +2,7 @@ package com.dataacquisition.modules.system.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.dataacquisition.common.dto.OptionDto;
 import com.dataacquisition.common.response.Result;
 import com.dataacquisition.modules.system.entity.User;
 import com.dataacquisition.modules.system.service.UserService;
@@ -15,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -55,6 +57,17 @@ public class UserController {
 
         userService.page(page, wrapper);
         return Result.success(page);
+    }
+
+    /**
+     * 获取用户选项列表（用于下拉选择器）
+     */
+    @Operation(summary = "获取用户选项列表")
+    @GetMapping("/options")
+    public Result<List<OptionDto>> getUserOptions(
+            @Parameter(description = "关键词") @RequestParam(required = false) String keyword) {
+        List<OptionDto> options = userService.getUserOptions(keyword);
+        return Result.success(options);
     }
 
     /**

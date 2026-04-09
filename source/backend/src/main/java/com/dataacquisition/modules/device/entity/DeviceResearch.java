@@ -25,39 +25,19 @@ public class DeviceResearch extends BaseEntity {
     private Long id;
 
     /**
-     * 关联设备ID（可选）
-     */
-    private Long deviceId;
-
-    /**
-     * 设备编号
-     */
-    private String deviceCode;
-
-    /**
-     * 设备名称
-     */
-    private String deviceName;
-
-    /**
      * 所属项目ID
      */
     private Long projectId;
 
     /**
-     * 项目名称
+     * 设备类型ID
      */
-    private String projectName;
+    private String deviceTypeId;
 
     /**
-     * 设备类型
+     * 车间ID
      */
-    private String deviceType;
-
-    /**
-     * 所属车间
-     */
-    private String workshop;
+    private String workshopId;
 
     /**
      * 数量
@@ -200,11 +180,6 @@ public class DeviceResearch extends BaseEntity {
     private Long researcherId;
 
     /**
-     * 调研人员姓名
-     */
-    private String researcherName;
-
-    /**
      * 调研日期
      */
     private LocalDate researchDate;
@@ -213,4 +188,30 @@ public class DeviceResearch extends BaseEntity {
      * 备注
      */
     private String remarks;
+
+    // ========== 以下字段不在数据库表中，用于关联查询返回 ==========
+
+    /**
+     * 项目名称（关联查询）
+     */
+    @TableField(exist = false)
+    private String projectName;
+
+    /**
+     * 设备类型名称（关联查询）
+     */
+    @TableField(exist = false)
+    private String deviceTypeName;
+
+    /**
+     * 车间名称（关联查询）
+     */
+    @TableField(exist = false)
+    private String workshopName;
+
+    /**
+     * 调研人员姓名（关联查询）
+     */
+    @TableField(exist = false)
+    private String researcherName;
 }

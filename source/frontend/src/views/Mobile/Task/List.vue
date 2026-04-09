@@ -24,20 +24,16 @@
           @click="goToDetail(task.id)"
         >
           <div class="task-header">
-            <span class="task-code">{{ task.code }}</span>
+            <span class="task-stage">{{ task.stageName || '未分类' }}</span>
             <van-tag :type="getStatusType(task.status)">
               {{ getStatusText(task.status) }}
             </van-tag>
           </div>
-          <div class="task-title">{{ task.title }}</div>
+          <div class="task-title">{{ task.name }}</div>
           <div class="task-info">
-            <span v-if="task.projectName" class="info-item">
-              <van-icon name="folder-o" />
-              {{ task.projectName }}
-            </span>
-            <span v-if="task.deviceName" class="info-item">
-              <van-icon name="monitor-o" />
-              {{ task.deviceName }}
+            <span v-if="task.managerName" class="info-item">
+              <van-icon name="manager-o" />
+              负责人: {{ task.managerName }}
             </span>
           </div>
           <div class="task-progress">
@@ -45,7 +41,7 @@
           </div>
           <div class="task-footer">
             <span class="task-date">
-              {{ formatDate(task.plannedEndDate) }}
+              截止: {{ formatDate(task.endDate) }}
             </span>
             <van-button
               v-if="task.status !== 'completed'"
@@ -125,8 +121,7 @@ const getProgressColor = (progress: number) => {
 // 格式化日期
 const formatDate = (dateStr?: string) => {
   if (!dateStr) return '无截止日期'
-  const date = new Date(dateStr)
-  return `${date.getMonth() + 1}月${date.getDate()}日`
+  return dateStr
 }
 
 // 状态变化
@@ -233,6 +228,12 @@ onMounted(() => {
 .task-code {
   font-size: 12px;
   color: #999;
+}
+
+.task-stage {
+  font-size: 12px;
+  color: #1989fa;
+  font-weight: 500;
 }
 
 .task-title {

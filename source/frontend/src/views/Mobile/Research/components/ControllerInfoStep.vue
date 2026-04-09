@@ -1,0 +1,313 @@
+<template>
+  <div class="controller-info-step">
+    <van-cell-group inset title="控制器信息">
+      <van-field name="isInterfaceOccupied" label="接口是否被占用" required>
+        <template #input>
+          <van-radio-group v-model="formData.isInterfaceOccupied" direction="horizontal" @change="updateValue">
+            <van-radio name="true">是</van-radio>
+            <van-radio name="false">否</van-radio>
+          </van-radio-group>
+        </template>
+      </van-field>
+
+      <van-field
+        name="interfaceType"
+        label="接口类型"
+        placeholder="请选择接口类型"
+        is-link
+        readonly
+        required
+        :rules="[{ required: true, message: '请选择接口类型' }]"
+        @click="showInterfaceTypePicker = true"
+      >
+        <template #input>
+          <span>{{ formData.interfaceType || '请选择' }}</span>
+        </template>
+      </van-field>
+
+      <van-field name="hasTouchScreen" label="是否连接触摸屏" required>
+        <template #input>
+          <van-radio-group v-model="formData.hasTouchScreen" direction="horizontal" @change="updateValue">
+            <van-radio name="true">是</van-radio>
+            <van-radio name="false">否</van-radio>
+          </van-radio-group>
+        </template>
+      </van-field>
+
+      <van-field
+        v-if="formData.hasTouchScreen === 'true'"
+        v-model="formData.touchScreenBrand"
+        name="touchScreenBrand"
+        label="触摸屏品牌"
+        placeholder="请输入触摸屏品牌"
+        required
+        :rules="[{ required: true, message: '请输入触摸屏品牌' }]"
+      />
+
+      <van-field
+        name="controllerBrand"
+        label="控制器品牌"
+        placeholder="请选择或输入控制器品牌"
+        is-link
+        readonly
+        required
+        :rules="[{ required: true, message: '请选择或输入控制器品牌' }]"
+        @click="showControllerBrandPicker = true"
+      >
+        <template #input>
+          <span>{{ formData.controllerBrand || '请选择' }}</span>
+        </template>
+      </van-field>
+
+      <van-field
+        v-model="formData.controllerModel"
+        name="controllerModel"
+        label="控制器型号"
+        placeholder="请输入控制器型号（选填）"
+      />
+
+      <van-field name="hasPointTable" label="提供的资料">
+        <template #input>
+          <van-checkbox-group v-model="providedMaterials" direction="vertical" @change="updateMaterials">
+            <van-checkbox name="hasPointTable">是否提供点位表</van-checkbox>
+            <van-checkbox name="hasPlcSource">是否提供PLC源程序</van-checkbox>
+            <van-checkbox name="hasTouchScreenSource">是否提供触摸屏源程序</van-checkbox>
+          </van-checkbox-group>
+        </template>
+      </van-field>
+    </van-cell-group>
+
+    <!-- 多媒体资料上传 -->
+    <van-cell-group inset title="多媒体资料">
+      <van-collapse v-model="activeCollapse" accordion>
+        <van-collapse-item title="控制器照片/视频" name="controller">
+          <van-uploader
+            v-model="controllerFiles"
+            multiple
+            :max-count="9"
+            :after-read="(file) => handleAfterRead(file, 'controller')"
+            @delete="(file) => handleDelete(file, 'controller')"
+          />
+        </van-collapse-item>
+
+        <van-collapse-item title="触摸屏照片/视频" name="touchscreen">
+          <van-uploader
+            v-model="touchscreenFiles"
+            multiple
+            :max-count="9"
+            :after-read="(file) => handleAfterRead(file, 'touchscreen')"
+            @delete="(file) => handleDelete(file, 'touchscreen')"
+          />
+        </van-collapse-item>
+
+        <van-collapse-item title="控制柜照片/视频" name="cabinet">
+          <van-uploader
+            v-model="cabinetFiles"
+            multiple
+            :max-count="9"
+            :after-read="(file) => handleAfterRead(file, 'cabinet')"
+            @delete="(file) => handleDelete(file, 'cabinet')"
+          />
+        </van-collapse-item>
+      </van-collapse>
+    </van-cell-group>
+
+    <!-- 接口类型选择器 -->
+    <van-popup v-model:show="showInterfaceTypePicker" position="bottom">
+      <van-picker
+        :columns="interfaceTypeOptions"
+        @confirm="onInterfaceTypeConfirm"
+        @cancel="showInterfaceTypePicker = false"
+      />
+    </van-popup>
+
+    <!-- 控制器品牌选择器 -->
+    <van-popup v-model:show="showControllerBrandPicker" position="bottom">
+      <van-picker
+        :columns="controllerBrandOptions"
+        @confirm="onControllerBrandConfirm"
+        @cancel="showControllerBrandPicker = false"
+      />
+    </van-popup>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, reactive, onMounted, computed } from 'vue'
+import { showToast, type UploaderFileListItem } from 'vant'
+import type { DeviceResearchController } from '@/types/device'
+
+interface Props {
+  modelValue: DeviceResearchController
+}
+
+interface Emits {
+  (e: 'update:modelValue', value: DeviceResearchController): void
+}
+
+const props = defineProps<Props>()
+const emit = defineEmits<Emits>()
+
+const formData = reactive<DeviceResearchController>({ ...props.modelValue })
+
+// 提供的资料
+const providedMaterials = ref<string[]>([])
+
+// 多媒体文件
+const controllerFiles = ref<UploaderFileListItem[]>([])
+const touchscreenFiles = ref<UploaderFileListItem[]>([])
+const cabinetFiles = ref<UploaderFileListItem[]>([])
+
+// 折叠面板
+const activeCollapse = ref('')
+
+// 监听变化
+const updateValue = () => {
+  emit('update:modelValue', { ...formData })
+}
+
+// 更新提供的资料
+const updateMaterials = () => {
+  formData.hasPointTable = providedMaterials.value.includes('hasPointTable')
+  formData.hasPlcSource = providedMaterials.value.includes('hasPlcSource')
+  formData.hasTouchScreenSource = providedMaterials.value.includes('hasTouchScreenSource')
+  updateValue()
+}
+
+// 接口类型选择器
+const showInterfaceTypePicker = ref(false)
+const interfaceTypeOptions = [
+  { text: 'RJ45', value: 'RJ45' },
+  { text: 'RJ232', value: 'RJ232' }
+]
+
+const onInterfaceTypeConfirm = ({ selectedOptions }: any) => {
+  formData.interfaceType = selectedOptions[0].value
+  showInterfaceTypePicker.value = false
+  updateValue()
+}
+
+// 控制器品牌选择器
+const showControllerBrandPicker = ref(false)
+const controllerBrandOptions = [
+  { text: '魏德米勒', value: '魏德米勒' },
+  { text: '汇川', value: '汇川' },
+  { text: '信捷', value: '信捷' },
+  { text: '欧姆龙', value: '欧姆龙' },
+  { text: '西门子', value: '西门子' },
+  { text: '台达', value: '台达' },
+  { text: '三菱', value: '三菱' }
+]
+
+const onControllerBrandConfirm = ({ selectedOptions }: any) => {
+  formData.controllerBrand = selectedOptions[0].text
+  showControllerBrandPicker.value = false
+  updateValue()
+}
+
+// 处理文件上传
+const handleAfterRead = async (file: UploaderFileListItem | UploaderFileListItem[], type: string) => {
+  const files = Array.isArray(file) ? file : [file]
+
+  for (const item of files) {
+    // TODO: 上传文件到服务器
+    console.log(`上传${type}文件:`, item)
+    // 这里应该调用上传API，例如：
+    // const result = await deviceResearchApi.uploadMedia(item.file as File)
+    // item.url = result.url
+  }
+  updateMediaUrls()
+}
+
+// 处理文件删除
+const handleDelete = (file: UploaderFileListItem, type: string) => {
+  updateMediaUrls()
+}
+
+// 更新媒体URL
+const updateMediaUrls = () => {
+  const formatFiles = (files: UploaderFileListItem[]) => {
+    return files
+      .filter(f => f.url)
+      .map(f => ({ url: f.url, type: f.file?.type?.startsWith('video') ? 'video' : 'image' }))
+  }
+
+  formData.controllerPhotos = JSON.stringify(formatFiles(controllerFiles.value))
+  formData.touchscreenPhotos = JSON.stringify(formatFiles(touchscreenFiles.value))
+  formData.cabinetPhotos = JSON.stringify(formatFiles(cabinetFiles.value))
+  updateValue()
+}
+
+// 初始化
+onMounted(() => {
+  Object.assign(formData, props.modelValue)
+
+  // 初始化提供的资料
+  if (formData.hasPointTable) providedMaterials.value.push('hasPointTable')
+  if (formData.hasPlcSource) providedMaterials.value.push('hasPlcSource')
+  if (formData.hasTouchScreenSource) providedMaterials.value.push('hasTouchScreenSource')
+
+  // 初始化媒体文件
+  try {
+    if (formData.controllerPhotos) {
+      const photos = JSON.parse(formData.controllerPhotos)
+      controllerFiles.value = photos.map((p: any) => ({ url: p.url }))
+    }
+  } catch (e) { /* ignore */ }
+
+  try {
+    if (formData.touchscreenPhotos) {
+      const photos = JSON.parse(formData.touchscreenPhotos)
+      touchscreenFiles.value = photos.map((p: any) => ({ url: p.url }))
+    }
+  } catch (e) { /* ignore */ }
+
+  try {
+    if (formData.cabinetPhotos) {
+      const photos = JSON.parse(formData.cabinetPhotos)
+      cabinetFiles.value = photos.map((p: any) => ({ url: p.url }))
+    }
+  } catch (e) { /* ignore */ }
+})
+
+// 暴露验证方法
+defineExpose({
+  validate: () => {
+    if (formData.isInterfaceOccupied === undefined) {
+      showToast('请选择接口是否被占用')
+      return false
+    }
+    if (!formData.interfaceType) {
+      showToast('请选择接口类型')
+      return false
+    }
+    if (formData.hasTouchScreen === undefined) {
+      showToast('请选择是否连接触摸屏')
+      return false
+    }
+    if (formData.hasTouchScreen === 'true' && !formData.touchScreenBrand) {
+      showToast('请输入触摸屏品牌')
+      return false
+    }
+    if (!formData.controllerBrand) {
+      showToast('请选择或输入控制器品牌')
+      return false
+    }
+    return true
+  }
+})
+</script>
+
+<style scoped>
+.controller-info-step {
+  padding: 16px 0;
+}
+
+:deep(.van-cell-group) {
+  margin-bottom: 12px;
+}
+
+:deep(.van-checkbox) {
+  margin-bottom: 8px;
+}
+</style>

@@ -152,6 +152,9 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Edit, Delete } from '@element-plus/icons-vue'
 import { http } from '@/api/request'
+import { projectApi } from '@/api/project'
+import { deviceTypeApi } from '@/api/deviceType'
+import { workshopApi } from '@/api/workshop'
 
 const loading = ref(false)
 const tableData = ref<any[]>([])
@@ -221,8 +224,7 @@ function handleReset() {
 // 获取项目列表
 async function getProjectList() {
   try {
-    const response = await http.get<any>('/projects')
-    projectList.value = response.records || response || []
+    projectList.value = await projectApi.getOptions()
   } catch (error) {
     console.error('获取项目列表失败', error)
   }
@@ -231,8 +233,7 @@ async function getProjectList() {
 // 获取设备类型列表
 async function getDeviceTypeList() {
   try {
-    const response = await http.get<any>('/device-types')
-    deviceTypeList.value = response.records || response || []
+    deviceTypeList.value = await deviceTypeApi.getOptions()
   } catch (error) {
     console.error('获取设备类型列表失败', error)
   }
@@ -241,8 +242,7 @@ async function getDeviceTypeList() {
 // 获取车间列表
 async function getWorkshopList() {
   try {
-    const response = await http.get<any>('/workshops')
-    workshopList.value = response.records || response || []
+    workshopList.value = await workshopApi.getOptions()
   } catch (error) {
     console.error('获取车间列表失败', error)
   }

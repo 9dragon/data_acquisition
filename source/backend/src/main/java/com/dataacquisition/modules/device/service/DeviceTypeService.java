@@ -2,7 +2,10 @@ package com.dataacquisition.modules.device.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.dataacquisition.common.dto.OptionDto;
 import com.dataacquisition.modules.device.entity.DeviceType;
+
+import java.util.List;
 
 /**
  * 设备类型Service接口
@@ -55,4 +58,13 @@ public interface DeviceTypeService extends IService<DeviceType> {
      * @return 是否唯一
      */
     Boolean checkCodeUnique(Long projectId, String code, Long excludeId);
+
+    /**
+     * 获取设备类型选项列表（用于下拉选择器）
+     *
+     * @param projectId 项目ID
+     * @param keyword   关键词
+     * @return 选项列表
+     */
+    List<OptionDto> getDeviceTypeOptions(Long projectId, String keyword);
 }

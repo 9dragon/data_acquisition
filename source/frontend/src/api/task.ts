@@ -171,32 +171,27 @@ export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled'
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent'
 
 /**
- * 移动端任务
+ * 移动端任务（与后端 ProjectTask 实体匹配）
  */
 export interface MobileTask {
   id: number
-  code: string
-  title: string
-  description?: string
-  type?: string
-  status: TaskStatus
-  priority: TaskPriority
   projectId: number
   projectName?: string
-  deviceId?: number
-  deviceName?: string
-  assigneeId?: number
-  assigneeName?: string
-  creatorId?: number
-  creatorName?: string
-  plannedStartDate?: string
-  plannedEndDate?: string
+  stageKey: string
+  stageName?: string
+  taskKey: string
+  name: string
+  description?: string
+  status: TaskStatus
+  startDate?: string
+  endDate?: string
   actualStartDate?: string
   actualEndDate?: string
   progress: number
-  remarks?: string
-  createdAt: string
-  updatedAt?: string
+  managerId?: number
+  managerName?: string
+  participantIds?: string
+  participantNames?: string
 }
 
 /**

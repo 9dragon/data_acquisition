@@ -2,7 +2,10 @@ package com.dataacquisition.modules.system.service;
 
 import org.springframework.security.core.userdetails.UserDetailsService;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.dataacquisition.common.dto.OptionDto;
 import com.dataacquisition.modules.system.entity.User;
+
+import java.util.List;
 
 /**
  * 用户Service接口
@@ -48,4 +51,9 @@ public interface UserService extends IService<User>, UserDetailsService {
      * 设置当前项目
      */
     Boolean setCurrentProject(Long userId, Long projectId);
+
+    /**
+     * 获取用户选项列表（用于下拉选择器）
+     */
+    List<OptionDto> getUserOptions(String keyword);
 }

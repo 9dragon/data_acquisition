@@ -19,28 +19,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class DeviceResearchServiceImpl extends ServiceImpl<DeviceResearchMapper, DeviceResearch> implements DeviceResearchService {
 
     @Override
-    public Page<DeviceResearch> pageResearch(Page<DeviceResearch> page, String projectId, String workshop, String deviceType) {
-        LambdaQueryWrapper<DeviceResearch> wrapper = new LambdaQueryWrapper<>();
-
-        // 项目筛选
-        if (StringUtils.isNotBlank(projectId)) {
-            wrapper.eq(DeviceResearch::getProjectId, projectId);
-        }
-
-        // 车间筛选
-        if (StringUtils.isNotBlank(workshop)) {
-            wrapper.like(DeviceResearch::getWorkshop, workshop);
-        }
-
-        // 设备类型筛选
-        if (StringUtils.isNotBlank(deviceType)) {
-            wrapper.like(DeviceResearch::getDeviceType, deviceType);
-        }
-
-        // 排序
-        wrapper.orderByDesc(DeviceResearch::getCreatedAt);
-
-        return this.page(page, wrapper);
+    public Page<DeviceResearch> pageResearch(Page<DeviceResearch> page, Long projectId, String workshopId, String deviceTypeId) {
+        // 使用新的关联查询方法
+        return baseMapper.pageResearchWithNames(page, projectId, workshopId, deviceTypeId);
     }
 
     @Override
@@ -50,24 +31,17 @@ public class DeviceResearchServiceImpl extends ServiceImpl<DeviceResearchMapper,
 
         // 设置基本信息
         entity.setProjectId(request.getProjectId());
-        entity.setDeviceId(request.getDeviceId());
+        entity.setDeviceTypeId(request.getDeviceTypeId());
+        entity.setWorkshopId(request.getWorkshopId());
+        entity.setQuantity(request.getQuantity());
+        entity.setDeviceManufacturer(request.getDeviceManufacturer());
+        entity.setRemarks(request.getRemarks());
 
         // 初始化进度
         entity.setBasicCompleted(false);
         entity.setControllerCompleted(false);
         entity.setCollectionCompleted(false);
-        entity.setResearchProgress(0);
-
-        // 如果有基础信息，直接设置
-        if (request.getBasic() != null) {
-            BasicInfoRequest basic = request.getBasic();
-            entity.setProjectName(basic.getProjectName());
-            entity.setWorkshop(basic.getWorkshop());
-            entity.setDeviceType(basic.getDeviceType());
-            entity.setQuantity(basic.getQuantity());
-            entity.setDeviceManufacturer(basic.getDeviceManufacturer());
-            entity.setRemarks(basic.getRemarks());
-        }
+        entity.setResearchProgress(33); // 填写基础信息后设置为33%
 
         this.save(entity);
         return toResponse(entity);
@@ -101,9 +75,8 @@ public class DeviceResearchServiceImpl extends ServiceImpl<DeviceResearchMapper,
 
         // 更新基础信息字段
         existing.setProjectId(request.getProjectId());
-        existing.setProjectName(request.getProjectName());
-        existing.setWorkshop(request.getWorkshop());
-        existing.setDeviceType(request.getDeviceType());
+        existing.setDeviceTypeId(request.getDeviceTypeId());
+        existing.setWorkshopId(request.getWorkshopId());
         existing.setQuantity(request.getQuantity());
         existing.setDeviceManufacturer(request.getDeviceManufacturer());
         existing.setRemarks(request.getRemarks());

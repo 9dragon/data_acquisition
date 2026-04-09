@@ -2,12 +2,14 @@ package com.dataacquisition.modules.system.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.dataacquisition.common.dto.OptionDto;
 import com.dataacquisition.common.exception.BusinessException;
 import com.dataacquisition.modules.project.entity.Project;
 import com.dataacquisition.modules.project.service.ProjectService;
 import com.dataacquisition.modules.system.entity.User;
 import com.dataacquisition.modules.system.mapper.UserMapper;
 import com.dataacquisition.modules.system.service.UserService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,7 +18,9 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 用户Service实现
@@ -122,5 +126,28 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         user.setCurrentProjectId(projectId);
         return this.updateById(user);
+    }
+
+    @Override
+    public List<OptionDto> getUserOptions(String keyword) {
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+
+        // 只查询启用的用户
+        wrapper.eq(User::getStatus, 1);
+
+        // 关键词搜索（用户名或姓名）
+        if (StringUtils.isNotBlank(keyword)) {
+            wrapper.and(w -> w.like(User::getName, keyword)
+                    .or()
+                    .like(User::getUsername, keyword));
+        }
+
+        // 排序
+        wrapper.orderByDesc(User::getCreatedAt);
+
+        List<User> list = this.list(wrapper);
+        return list.stream()
+                .map(u -> new OptionDto(u.getId(), u.getName()))
+                .collect(Collectors.toList());
     }
 }

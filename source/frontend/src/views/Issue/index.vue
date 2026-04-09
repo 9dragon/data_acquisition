@@ -39,7 +39,7 @@
       </el-form>
 
       <el-table :data="tableData" :loading="loading" border stripe>
-        <el-table-column prop="code" label="问题编号" width="150" />
+        <el-table-column prop="code" label="问题编号" width="180" fixed="left" />
         <el-table-column prop="title" label="问题标题" min-width="200" />
         <el-table-column prop="projectName" label="所属项目" width="150" />
         <el-table-column prop="deviceName" label="关联设备" width="120">
@@ -73,14 +73,26 @@
             {{ formatDateTime(row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="180" fixed="right">
+        <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
             <div class="action-buttons">
-              <el-button link type="primary" @click="handleView(row)">查看</el-button>
-              <el-button link type="primary" @click="handleEdit(row)">编辑</el-button>
-              <el-popconfirm title="确认删除" @confirm="handleDelete(row)">
+              <el-button link type="primary" :icon="View" @click="handleView(row)">
+                查看
+              </el-button>
+              <el-button link type="primary" :icon="Edit" @click="handleEdit(row)">
+                编辑
+              </el-button>
+              <el-popconfirm
+                title="确认删除"
+                confirm-button-text="确定"
+                cancel-button-text="取消"
+                width="200"
+                @confirm="handleDelete(row)"
+              >
                 <template #reference>
-                  <el-button link type="danger">删除</el-button>
+                  <el-button link type="danger" :icon="Delete">
+                    删除
+                  </el-button>
                 </template>
               </el-popconfirm>
             </div>
@@ -89,6 +101,7 @@
       </el-table>
 
       <el-pagination
+        class="pagination-wrapper"
         v-model:current-page="queryParams.pageNum"
         v-model:page-size="queryParams.pageSize"
         :total="total"
@@ -112,10 +125,12 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { View, Edit, Delete } from '@element-plus/icons-vue'
 import { issueApi } from '@/api/issue'
 import type { Issue } from '@/types/issue'
 import { ISSUE_TYPE_OPTIONS, ISSUE_PRIORITY_OPTIONS, ISSUE_STATUS_OPTIONS } from '@/types/issue'
 import { http } from '@/api/request'
+import { projectApi } from '@/api/project'
 import IssueForm from './IssueForm.vue'
 
 const router = useRouter()
@@ -146,8 +161,7 @@ onMounted(() => {
 
 async function loadProjects() {
   try {
-    const res = await http.get<{ data: { list: { id: number; name: string }[] } }>('/projects', { params: { pageNum: 1, pageSize: 100 } })
-    projectOptions.value = res?.data?.list || []
+    projectOptions.value = await projectApi.getOptions()
   } catch (e) {
     console.error('加载项目失败', e)
   }
@@ -157,7 +171,7 @@ async function handleQuery() {
   loading.value = true
   try {
     const res = await issueApi.page(queryParams.value)
-    tableData.value = res.data || []
+    tableData.value = res.records || res.data || []
     total.value = res.total || 0
   } catch (e) {
     console.error('查询失败', e)
@@ -238,7 +252,7 @@ function getStatusType(status: string) {
   return map[status] || ''
 }
 
-function formatDateTime(dateStr: string) {
+function formatDateTime(dateStr: string | undefined) {
   if (!dateStr) return ''
   return dateStr.replace('T', ' ').substring(0, 19)
 }
@@ -262,5 +276,11 @@ function formatDateTime(dateStr: string) {
 .action-buttons {
   display: flex;
   gap: 8px;
+}
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
 }
 </style>

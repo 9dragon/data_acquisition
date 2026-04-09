@@ -130,7 +130,7 @@
         <el-table-column label="完整度" width="100" align="center">
           <template #default="{ row }">
             <el-tag :type="getProgressType(row.researchProgress)">
-              {{ row.researchProgress }}%
+              {{ getProgressText(row.researchProgress) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -387,9 +387,14 @@ const handleSuccess = () => {
 }
 
 const getProgressType = (progress?: number) => {
-  if (progress === 100) return 'success'
-  if (progress === 0) return 'info'
-  return 'warning'
+  if (progress === 100) return 'success'  // 已完成：绿色
+  return 'warning'                         // 进行中：橙色
+}
+
+const getProgressText = (progress?: number) => {
+  if (!progress) return '-'
+  if (progress >= 100) return '已完成'
+  return '进行中'
 }
 
 onMounted(async () => {

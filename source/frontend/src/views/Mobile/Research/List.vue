@@ -1,17 +1,11 @@
 <template>
-  <div class="research-list">
-    <!-- 搜索栏 -->
-    <van-search
-      v-model="searchKeyword"
-      placeholder="搜索设备调研"
-      @search="handleSearch"
-    />
-
-    <!-- 筛选栏 -->
-    <van-dropdown-menu>
-      <van-dropdown-item v-model="statusFilter" :options="statusOptions" @change="handleQuery" />
-      <van-dropdown-item v-model="dateFilter" :options="dateOptions" @change="handleQuery" />
-    </van-dropdown-menu>
+  <div class="research-list-page">
+    <!-- 状态筛选 -->
+    <van-tabs v-model:active="activeStatus" @change="onStatusChange" :before-change="onBeforeChange">
+      <van-tab title="全部" name="" />
+      <van-tab title="进行中" name="in_progress" />
+      <van-tab title="已完成" name="completed" />
+    </van-tabs>
 
     <!-- 调研列表 -->
     <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
@@ -19,32 +13,55 @@
         v-model:loading="loading"
         :finished="finished"
         finished-text="没有更多了"
+        :immediate-check="false"
         @load="onLoad"
       >
-        <van-cell
+        <div
           v-for="item in list"
           :key="item.id"
-          :title="item.deviceName"
-          is-link
+          class="research-item"
           @click="goToDetail(item.id)"
         >
-          <template #label>
-            <div class="research-info">
-              <span class="status" :class="item.status">{{ getStatusText(item.status) }}</span>
-              <span class="date">{{ formatDate(item.createdAt) }}</span>
-            </div>
-          </template>
-          <template #right-icon>
+          <div class="research-header">
+            <span class="research-workshop">{{ item.workshopName || '-' }}</span>
+            <van-tag :type="getStatusType(item.researchProgress)">
+              {{ getStatusText(item.researchProgress) }}
+            </van-tag>
+          </div>
+
+          <div class="research-title">
+            {{ item.deviceTypeName || '-' }}
+            <span v-if="item.quantity">（{{ item.quantity }}台）</span>
+          </div>
+
+          <div class="research-info" v-if="item.deviceManufacturer">
+            <span class="info-item">
+              <van-icon name="building-o" />
+              {{ item.deviceManufacturer }}
+            </span>
+          </div>
+
+          <div class="research-progress">
+            <van-progress
+              :percentage="item.researchProgress || 0"
+              :color="getProgressColor(item.researchProgress)"
+              :pivot-text="`${item.researchProgress || 0}%`"
+              pivot-color="#1989fa"
+            />
+          </div>
+
+          <div class="research-footer">
+            <span class="research-date">{{ formatDate(item.createdAt) }}</span>
             <van-button
-              v-if="item.status === 'pending'"
+              v-if="(item.researchProgress || 0) < 100"
               size="small"
               type="primary"
-              @click.stop="goToFill(item.id)"
+              @click.stop="goToEdit(item.id)"
             >
-              填报
+              {{ (item.researchProgress || 0) === 0 ? '开始填报' : '继续填报' }}
             </van-button>
-          </template>
-        </van-cell>
+          </div>
+        </div>
       </van-list>
     </van-pull-refresh>
 
@@ -54,110 +71,100 @@
       magnetic="x"
       @click="goToCreate"
     />
+
+    <!-- 空状态 -->
+    <van-empty v-if="list.length === 0 && !loading" description="暂无调研记录" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted, nextTick, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
+import { deviceResearchApi } from '@/api/deviceResearch'
+import { useMobileProjectStore } from '@/stores/mobileProject'
+import type { DeviceResearch } from '@/types/device'
 
 const router = useRouter()
+const projectStore = useMobileProjectStore()
 
-// 搜索关键词
-const searchKeyword = ref('')
+// 当前项目
+const currentProject = computed(() => projectStore.currentProject)
 
-// 状态筛选
-const statusFilter = ref(0)
-const statusOptions = [
-  { text: '全部状态', value: 0 },
-  { text: '待填报', value: 'pending' },
-  { text: '已完成', value: 'completed' }
-]
+// 当前选中的状态
+type ResearchStatus = '' | 'in_progress' | 'completed'
+const activeStatus = ref<ResearchStatus>('')
 
-// 日期筛选
-const dateFilter = ref(0)
-const dateOptions = [
-  { text: '全部时间', value: 0 },
-  { text: '今天', value: 1 },
-  { text: '本周', value: 2 },
-  { text: '本月', value: 3 }
-]
+// 查询参数
+const queryParams = reactive({
+  pageNum: 1,
+  pageSize: 10,
+  projectId: undefined as number | undefined,
+  workshop: ''
+})
 
 // 列表数据
-const list = ref<any[]>([])
+const list = ref<DeviceResearch[]>([])
+
+// 分页状态
 const loading = ref(false)
 const finished = ref(false)
 const refreshing = ref(false)
 
-// 分页参数
-const pageNum = ref(1)
-const pageSize = ref(10)
+// 是否首次加载
+const isFirstLoad = ref(true)
 
-// 获取调研列表
-const fetchList = async () => {
-  loading.value = true
-  try {
-    // TODO: 调用API获取调研列表
-    // const result = await researchApi.list({
-    //   keyword: searchKeyword.value,
-    //   status: statusFilter.value || undefined,
-    //   pageNum: pageNum.value,
-    //   pageSize: pageSize.value
-    // })
+// 获取状态类型
+const getStatusType = (progress?: number) => {
+  if (!progress) return 'default'
+  if (progress >= 100) return 'success'  // 已完成：绿色
+  return 'primary'                       // 进行中：蓝色
+}
 
-    // 模拟数据
-    const mockData = [
-      { id: 1, deviceName: '数控机床-001', status: 'pending', createdAt: '2026-04-07 10:00:00' },
-      { id: 2, deviceName: '加工中心-A02', status: 'completed', createdAt: '2026-04-06 14:30:00' },
-      { id: 3, deviceName: '冲压设备-B01', status: 'pending', createdAt: '2026-04-07 09:15:00' }
-    ]
+// 获取状态文本
+const getStatusText = (progress?: number) => {
+  if (!progress) return '-'
+  if (progress >= 100) return '已完成'
+  return '进行中'
+}
 
-    if (pageNum.value === 1) {
-      list.value = mockData
-    } else {
-      list.value.push(...mockData)
-    }
+// 获取进度颜色
+const getProgressColor = (progress?: number) => {
+  if (!progress) return '#ddd'
+  if (progress >= 100) return '#07c160'  // 已完成：绿色
+  return '#1989fa'                       // 进行中：蓝色
+}
 
-    if (mockData.length < pageSize.value) {
-      finished.value = true
-    }
-  } catch (error) {
-    showToast('加载失败')
-  } finally {
-    loading.value = false
+// 格式化日期
+const formatDate = (dateStr?: string) => {
+  if (!dateStr) return '-'
+  const date = new Date(dateStr)
+  const today = new Date()
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+
+  if (date.toDateString() === today.toDateString()) {
+    return '今天'
+  } else if (date.toDateString() === yesterday.toDateString()) {
+    return '昨天'
+  } else {
+    return `${date.getMonth() + 1}月${date.getDate()}日`
   }
 }
 
-// 加载更多
-const onLoad = () => {
-  pageNum.value++
-  fetchList()
-}
-
-// 下拉刷新
-const onRefresh = () => {
-  pageNum.value = 1
+// 状态变化
+const onStatusChange = () => {
+  queryParams.pageNum = 1
+  list.value = []
   finished.value = false
-  fetchList().then(() => {
-    refreshing.value = false
+  nextTick(() => {
+    onLoad()
   })
 }
 
-// 搜索
-const handleSearch = () => {
-  pageNum.value = 1
-  finished.value = false
-  list.value = []
-  fetchList()
-}
-
-// 筛选
-const handleQuery = () => {
-  pageNum.value = 1
-  finished.value = false
-  list.value = []
-  fetchList()
+// 标签切换前的钩子
+const onBeforeChange = () => {
+  return true
 }
 
 // 跳转详情
@@ -165,79 +172,155 @@ const goToDetail = (id: number) => {
   router.push(`/mobile/research/detail/${id}`)
 }
 
-// 跳转填报
-const goToFill = (id: number) => {
-  router.push(`/mobile/research/detail/${id}`)
+// 跳转编辑
+const goToEdit = (id: number) => {
+  router.push(`/mobile/research/create?id=${id}`)
 }
 
 // 跳转新建
 const goToCreate = () => {
+  if (!currentProject.value) {
+    showToast('请先选择项目')
+    return
+  }
   router.push('/mobile/research/create')
 }
 
-// 获取状态文本
-const getStatusText = (status: string) => {
-  const statusMap: Record<string, string> = {
-    pending: '待填报',
-    completed: '已完成'
+// 加载数据
+const onLoad = async () => {
+  if (isFirstLoad.value) {
+    return
   }
-  return statusMap[status] || status
+
+  if (loading.value || finished.value) {
+    return
+  }
+
+  if (refreshing.value) {
+    list.value = []
+    refreshing.value = false
+  }
+
+  loading.value = true
+
+  try {
+    const result = await deviceResearchApi.getPage(queryParams)
+    let newList = result.records || []
+
+    // 根据状态筛选
+    if (activeStatus.value === 'in_progress') {
+      newList = newList.filter(item => (item.researchProgress || 0) < 100)
+    } else if (activeStatus.value === 'completed') {
+      newList = newList.filter(item => (item.researchProgress || 0) >= 100)
+    }
+
+    if (queryParams.pageNum === 1) {
+      list.value = newList
+    } else {
+      list.value.push(...newList)
+    }
+
+    if (newList.length < queryParams.pageSize) {
+      finished.value = true
+    } else {
+      queryParams.pageNum++
+    }
+  } catch (error) {
+    console.error('加载调研列表失败:', error)
+    finished.value = true
+  } finally {
+    loading.value = false
+  }
 }
 
-// 格式化日期
-const formatDate = (dateStr: string) => {
-  const date = new Date(dateStr)
-  const now = new Date()
-  const diff = now.getTime() - date.getTime()
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-
-  if (days === 0) {
-    return '今天'
-  } else if (days === 1) {
-    return '昨天'
-  } else if (days < 7) {
-    return `${days}天前`
-  } else {
-    return dateStr.split(' ')[0]
-  }
+// 下拉刷新
+const onRefresh = () => {
+  queryParams.pageNum = 1
+  finished.value = false
+  onLoad()
 }
 
 // 初始化
-onMounted(() => {
-  fetchList()
+onMounted(async () => {
+  // 获取当前项目
+  await projectStore.fetchCurrentProject()
+
+  // 设置项目ID用于筛选
+  if (currentProject.value?.id) {
+    queryParams.projectId = currentProject.value.id
+  }
+
+  isFirstLoad.value = false
+  onLoad()
 })
 </script>
 
 <style scoped>
-.research-list {
+.research-list-page {
   min-height: 100vh;
   background-color: #f5f5f5;
 }
 
+/* 调研卡片 */
+.research-item {
+  margin: 12px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+}
+
+.research-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.research-workshop {
+  font-size: 14px;
+  color: #1989fa;
+  font-weight: 500;
+}
+
+.research-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 12px;
+}
+
 .research-info {
   display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.info-item {
+  display: flex;
   align-items: center;
-  gap: 8px;
+  font-size: 13px;
+  color: #666;
 }
 
-.status {
+.info-item :deep(.van-icon) {
+  margin-right: 4px;
+  font-size: 14px;
+}
+
+.research-progress {
+  margin-bottom: 12px;
+}
+
+.research-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.research-date {
   font-size: 12px;
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-.status.pending {
-  color: #ff976a;
-  background-color: #fff3e0;
-}
-
-.status.completed {
-  color: #07c160;
-  background-color: #e8f5e9;
-}
-
-.date {
-  font-size: 12px;
-  color: #969799;
+  color: #999;
 }
 </style>

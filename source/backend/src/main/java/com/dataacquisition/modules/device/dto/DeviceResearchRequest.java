@@ -14,12 +14,27 @@ public class DeviceResearchRequest {
     private Long projectId;
 
     /**
-     * 设备ID（可选）
+     * 设备类型ID
      */
-    private Long deviceId;
+    private String deviceTypeId;
 
     /**
-     * 基础信息
+     * 车间ID
      */
-    private BasicInfoRequest basic;
+    private String workshopId;
+
+    /**
+     * 数量
+     */
+    private Integer quantity;
+
+    /**
+     * 设备厂商
+     */
+    private String deviceManufacturer;
+
+    /**
+     * 备注
+     */
+    private String remarks;
 }
