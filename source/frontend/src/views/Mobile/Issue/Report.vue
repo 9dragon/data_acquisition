@@ -1,12 +1,17 @@
 <template>
   <div class="issue-report-page">
-    <!-- 项目选择 -->
+    <!-- 基本信息 -->
     <van-cell-group inset title="基本信息">
-      <van-cell
-        is-link
-        :title="selectedProject || '选择项目'"
-        @click="showProjectPicker = true"
-      />
+      <van-cell>
+        <template #title>
+          <span>当前项目</span>
+        </template>
+        <template #value>
+          <span :class="{ 'no-project': !selectedProject }">
+            {{ selectedProject || '请在【我的】页面选择项目' }}
+          </span>
+        </template>
+      </van-cell>
       <van-cell
         is-link
         title="关联设备"
@@ -92,15 +97,6 @@
       </van-button>
     </div>
 
-    <!-- 项目选择弹窗 -->
-    <van-popup v-model:show="showProjectPicker" position="bottom">
-      <van-picker
-        :columns="projectList"
-        @confirm="onProjectConfirm"
-        @cancel="showProjectPicker = false"
-      />
-    </van-popup>
-
     <!-- 设备选择弹窗 -->
     <van-popup v-model:show="showDevicePicker" position="bottom">
       <van-picker
@@ -131,19 +127,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast, showLoadingToast, closeToast, type UploaderFileListItem } from 'vant'
 import { mobileIssueApi, type IssueReportRequest, type IssuePriority } from '@/api/issue'
 import { getLocation } from '@/utils/dingtalk'
+import { useMobileProjectStore } from '@/stores/mobileProject'
 
 const router = useRouter()
+const projectStore = useMobileProjectStore()
 
 const submitting = ref(false)
 const showProjectPicker = ref(false)
 const showDevicePicker = ref(false)
 const showTypePicker = ref(false)
 const showPriorityPicker = ref(false)
+
+// 项目列表
+const projectList = computed(() => {
+  return projectStore.projectList.map(p => ({
+    text: p.name,
+    value: p.id
+  }))
+})
+
+const selectedProject = computed(() => projectStore.currentProject?.name || '')
 
 // 表单数据
 const formData = reactive<IssueReportRequest>({
@@ -218,8 +226,11 @@ const getPriorityText = (priority: IssuePriority) => {
 
 // 选择项目
 const onProjectConfirm = ({ selectedOptions }: any) => {
-  selectedProject.value = selectedOptions[0].text
-  formData.projectId = selectedOptions[0].value
+  const project = projectStore.projectList.find(p => p.id === selectedOptions[0].value)
+  if (project) {
+    projectStore.setCurrentProject(project)
+    formData.projectId = project.id
+  }
   showProjectPicker.value = false
 }
 
@@ -323,6 +334,11 @@ const handleSubmit = async () => {
     submitting.value = false
   }
 }
+
+onMounted(async () => {
+  await projectStore.fetchProjects()
+  await projectStore.fetchCurrentProject()
+})
 </script>
 
 <style scoped>

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.Base64;
 import java.util.UUID;
@@ -73,9 +74,21 @@ public class MinioService {
      *
      * @param base64Data Base64数据
      * @param path       路径前缀
-     * @return 文件URL
+     * @return 文件URL（带签名）
      */
     public String uploadBase64Image(String base64Data, String path) {
+        // 同时返回路径，供导出使用
+        return uploadBase64ImageAndReturnPath(base64Data, path).get("url");
+    }
+
+    /**
+     * 上传Base64图片，返回路径和URL
+     *
+     * @param base64Data Base64数据
+     * @param path       路径前缀
+     * @return 包含 url 和 path 的 Map
+     */
+    public java.util.Map<String, String> uploadBase64ImageAndReturnPath(String base64Data, String path) {
         try {
             // 确保bucket存在
             ensureBucketExists();
@@ -95,7 +108,7 @@ public class MinioService {
                 extension = ".webp";
             }
 
-            // 生成文件名
+            // 生成文件名（去掉前缀斜杠，保持与前端一致）
             String fileName = path + "/" + UUID.randomUUID() + extension;
 
             // 解码Base64
@@ -112,7 +125,10 @@ public class MinioService {
                     .build()
             );
 
-            return getFileUrl(fileName);
+            java.util.Map<String, String> result = new java.util.HashMap<>();
+            result.put("url", getFileUrl(fileName));
+            result.put("path", fileName);
+            return result;
         } catch (Exception e) {
             log.error("Base64图片上传失败", e);
             throw new RuntimeException("图片上传失败: " + e.getMessage());
@@ -201,6 +217,34 @@ public class MinioService {
             }
             return null;
         } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * 从存储中读取图片字节（绕过URL签名）
+     *
+     * @param objectPath 对象路径，如 attendance/xxx.jpg
+     * @return 图片字节数组
+     */
+    public byte[] getImageBytes(String objectPath) {
+        try {
+            GetObjectArgs args = GetObjectArgs.builder()
+                    .bucket(bucketName)
+                    .object(objectPath)
+                    .build();
+            
+            try (InputStream stream = minioClient.getObject(args);
+                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+                byte[] buffer = new byte[4096];
+                int bytesRead;
+                while ((bytesRead = stream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
+                }
+                return outputStream.toByteArray();
+            }
+        } catch (Exception e) {
+            log.error("读取图片失败: {}", objectPath, e);
             return null;
         }
     }

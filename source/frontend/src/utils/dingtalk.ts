@@ -47,7 +47,15 @@ export function configDingTalkJSAPI(): Promise<boolean> {
           nonceStr: config.nonceStr,
           signature: config.signature,
           type: 0,
-          jsApiList: ['getLocation', 'device.geolocation.get', 'biz.util.uploadImageFromCamera', 'biz.util.uploadImage']
+          jsApiList: [
+  'getLocation',
+  'device.geolocation.get',
+  'chooseImage',           // 新版拍照API
+  'chooseMedia',           // 新版媒体选择API
+  'biz.util.uploadImageFromCamera', // 保留：兼容旧版
+  'biz.util.uploadImage',          // 保留：兼容旧版
+	  'biz.util.previewImage'           // 图片预览API
+]
         })
 
         dd.ready(() => {
@@ -277,12 +285,29 @@ function attemptChooseImage(
   resolve: (value: string) => void,
   reject: (reason: any) => void
 ) {
-  // 方法1: 使用 dd.biz.util.uploadImageFromCamera (直接拍照)
+  // 使用新版 dd.chooseImage API (dingtalk-jsapi 3.0.27+)
+  if (typeof dd.chooseImage === 'function') {
+    dd.chooseImage({
+      sourceType: ['camera'], // 仅拍照，不包括相册
+      success: (res: any) => {
+        // 新版API返回格式：{ filePaths: string[], files: Object[] }
+        const imageUrl = res.filePaths?.[0] || res.url || res.picUrl || res
+        resolve(imageUrl)
+      },
+      fail: (err: any) => {
+        reject(new Error(err.errorMessage || '拍照失败'))
+      }
+    })
+    return
+  }
+
+  // 降级方案：尝试旧版API uploadImageFromCamera
   if ((dd as any).biz?.util?.uploadImageFromCamera) {
     (dd as any).biz.util.uploadImageFromCamera({
       compression: true,
       onSuccess: (res: any) => {
-        resolve(res.url || res.picUrl || res)
+        const imageUrl = res.url || res.picUrl || res
+        resolve(imageUrl)
       },
       onFail: (err: any) => {
         reject(new Error(err.errorMessage || '拍照失败'))
@@ -291,7 +316,7 @@ function attemptChooseImage(
     return
   }
 
-  // 方法2: 使用 dd.biz.util.uploadImage (可以拍照或选择图片)
+  // 降级方案：尝试旧版API uploadImage
   if ((dd as any).biz?.util?.uploadImage) {
     (dd as any).biz.util.uploadImage({
       multiple: false,
@@ -321,8 +346,8 @@ export function previewImage(urls: string[], current?: string): void {
     return
   }
 
-  if ((dd as any).device?.image?.preview) {
-    (dd as any).device.image.preview({
+  if ((dd as any).biz?.util?.previewImage) {
+    (dd as any).biz.util.previewImage({
       urls: urls,
       current: current || urls[0]
     })

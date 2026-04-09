@@ -10,6 +10,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -109,6 +111,48 @@ public class UserController {
     public Result<Void> resetPassword(@PathVariable Long id, @RequestBody Map<String, String> request) {
         String newPassword = request.get("password");
         userService.resetPassword(id, newPassword);
+        return Result.success();
+    }
+
+    /**
+     * 获取当前用户的项目
+     */
+    @Operation(summary = "获取当前用户的项目")
+    @GetMapping("/current-project")
+    public Result<Object> getCurrentProject(@AuthenticationPrincipal UserDetails userDetails) {
+        String username = userDetails.getUsername();
+        User user = userService.getByUsername(username);
+        if (user == null) {
+            return Result.error("用户不存在");
+        }
+        if (user.getCurrentProjectId() == null) {
+            return Result.error("用户未设置当前项目");
+        }
+        Object project = userService.getCurrentProject(user.getCurrentProjectId());
+        if (project == null) {
+            return Result.error("项目不存在");
+        }
+        return Result.success(project);
+    }
+
+    /**
+     * 设置当前用户的项目
+     */
+    @Operation(summary = "设置当前用户的项目")
+    @PostMapping("/current-project")
+    public Result<Void> setCurrentProject(
+            @RequestBody Map<String, Long> request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String username = userDetails.getUsername();
+        User user = userService.getByUsername(username);
+        if (user == null) {
+            return Result.error("用户不存在");
+        }
+        Long projectId = request.get("projectId");
+        if (projectId == null) {
+            return Result.error("项目ID不能为空");
+        }
+        userService.setCurrentProject(user.getId(), projectId);
         return Result.success();
     }
 }

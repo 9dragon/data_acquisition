@@ -39,13 +39,15 @@
       </div>
     </van-cell-group>
 
-    <!-- 项目选择 -->
-    <van-cell-group inset title="选择项目">
-      <van-cell
-        is-link
-        :title="selectedProject || '请选择项目'"
-        @click="showProjectPicker = true"
-      />
+    <!-- 当前项目（从我的页面选择） -->
+    <van-cell-group inset title="当前项目">
+      <van-cell>
+        <template #value>
+          <span :class="{ 'no-project': !selectedProject }">
+            {{ selectedProject || '请在【我的】页面选择项目' }}
+          </span>
+        </template>
+      </van-cell>
     </van-cell-group>
 
     <!-- 签到信息 -->
@@ -74,7 +76,9 @@
     <van-cell-group inset title="拍照签到">
       <div class="photo-section">
         <div v-if="photo" class="photo-preview" @click="previewPhoto">
-          <van-image :src="photo" fit="cover" />
+          <div class="photo-wrapper">
+            <van-image :src="photo" fit="contain" />
+          </div>
           <van-icon name="cross" class="photo-delete" @click.stop="deletePhoto" />
         </div>
         <div v-else class="photo-upload" @click="takePhoto">
@@ -89,11 +93,15 @@
       <van-field
         v-model="remark"
         type="textarea"
-        placeholder="请输入备注信息（选填）"
+        :placeholder="remarkPlaceholder"
         rows="3"
         maxlength="200"
         show-word-limit
+        :required="!isInShiftTime"
       />
+      <div v-if="!isInShiftTime" class="remark-required-hint">
+        <van-icon name="info-o" /> 当前不在打卡时段内，必须填写备注才能打卡
+      </div>
     </van-cell-group>
 
     <!-- 签到按钮 -->
@@ -113,14 +121,20 @@
       </div>
     </div>
 
-    <!-- 项目选择弹窗 -->
-    <van-popup v-model:show="showProjectPicker" position="bottom">
-      <van-picker
-        :columns="projectList"
-        @confirm="onProjectConfirm"
-        @cancel="showProjectPicker = false"
-      />
-    </van-popup>
+    <!-- 相机弹窗 - 使用全屏div替代van-popup -->
+    <teleport to="body">
+      <div v-if="showCamera" class="camera-fullscreen">
+        <WatermarkCamera
+          :user-name="userStore.name"
+          :time="currentTime"
+          :location="locationInfo.address"
+          :watermark-config="cameraWatermarkConfig"
+          @photo-captured="handlePhotoCaptured"
+          @cancel="showCamera = false"
+        />
+      </div>
+    </teleport>
+
   </div>
 </template>
 
@@ -129,20 +143,71 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { showToast, showLoadingToast, closeToast } from 'vant'
 import { useRouter } from 'vue-router'
 import { attendanceApi, type ShiftInfo } from '@/api/attendance'
+import { systemConfigApi } from '@/api/systemConfig'
 import { getLocation, type LocationInfo, chooseImage, previewImage as ddPreviewImage } from '@/utils/dingtalk'
+import { useUserStore } from '@/stores/user'
+import WatermarkCamera from '@/components/WatermarkCamera.vue'
+
+// 水印配置接口
+interface WatermarkConfig {
+  enabled: boolean
+  position: string
+  fontSize: number
+  color: string
+  alpha: number
+  showTime: boolean
+  showLocation: boolean
+  showUser: boolean
+  [key: string]: any
+}
+
 
 const router = useRouter()
+import { useMobileProjectStore } from '@/stores/mobileProject'
+import { navigateWithFullScreen } from '@/utils/routerHelper'
+
+const userStore = useUserStore()
+const projectStore = useMobileProjectStore()
 
 // 项目列表
-const projectList = ref([
-  { text: '项目A', value: 1 },
-  { text: '项目B', value: 2 },
-  { text: '项目C', value: 3 }
-])
+const projectList = computed(() => {
+  return projectStore.projectList.map(p => ({
+    text: p.name,
+    value: p.id
+  }))
+})
 
-const showProjectPicker = ref(false)
-const selectedProject = ref('')
-const selectedProjectId = ref<number>()
+const selectedProject = computed(() => projectStore.currentProject?.name || '')
+const selectedProjectId = computed(() => projectStore.currentProject?.id)
+
+// 水印配置
+const watermarkConfig = ref<WatermarkConfig>({
+  enabled: true,
+  position: 'bottom_right',
+  fontSize: 24,
+  color: '#FFFFFF',
+  alpha: 0.8,
+  showTime: true,
+  showLocation: true,
+  showUser: true
+})
+
+// 水印配置转换（适配WatermarkCamera组件）
+const cameraWatermarkConfig = computed(() => {
+  const config = watermarkConfig.value
+  return {
+    showTime: config.showTime,
+    showLocation: config.showLocation,
+    showName: config.showUser,
+    backgroundColor: `rgba(0, 0, 0, ${config.alpha})`,
+    textColor: config.color,
+    fontSize: config.fontSize,
+    position: config.position
+  }
+})
+
+// 相机弹窗
+const showCamera = ref(false)
 
 // 位置信息
 const locationInfo = ref<LocationInfo>({
@@ -209,15 +274,18 @@ const checkInHint = computed(() => {
   return null
 })
 
+// 判断是否在打卡时段内
+const isInShiftTime = computed(() => {
+  return !!currentShift.value
+})
+
+// 备注占位符
+const remarkPlaceholder = computed(() => {
+  return isInShiftTime.value ? '请输入备注信息（选填）' : '请输入备注信息（非打卡时段必填）'
+})
+
 // 定时器
 let timer: number | null = null
-
-// 选择项目
-const onProjectConfirm = ({ selectedOptions }: any) => {
-  selectedProject.value = selectedOptions[0].text
-  selectedProjectId.value = selectedOptions[0].value
-  showProjectPicker.value = false
-}
 
 // 选择打卡时段
 const selectShift = (shift: ShiftInfo) => {
@@ -260,15 +328,208 @@ const fetchLocation = async () => {
 }
 
 // 拍照
-const takePhoto = async () => {
+const takePhoto = () => {
+  // 使用钉钉API拍照并添加水印（避免黑屏问题）
+  takePhotoWithDingTalk()
+}
+
+// 处理相机组件拍照结果
+const handlePhotoCaptured = (photoData: string) => {
+  console.log('接收带水印图片数据，长度:', photoData?.length)
+  photo.value = photoData
+  showCamera.value = false
+  showToast('拍照成功')
+}
+
+// 钉钉API拍照并添加水印
+const takePhotoWithDingTalk = async () => {
   try {
-    const image = await chooseImage()
-    photo.value = image
+    showLoadingToast({
+      message: '拍照中...',
+      forbidClick: true
+    })
+
+    // 使用钉钉API拍照
+    const imageUrl = await chooseImage()
+
+    // 将图片URL转换为base64
+    const base64Image = await urlToBase64(imageUrl)
+
+    // 添加水印
+    const watermarkedImage = await addWatermarkToImage(base64Image)
+
+    photo.value = watermarkedImage
+    closeToast()
     showToast('拍照成功')
   } catch (error: any) {
-    console.error('拍照失败:', error)
-    showToast(error?.message || '拍照失败，请重试')
+    closeToast()
+    showToast(error.message || '拍照失败')
   }
+}
+
+// 将图片URL转换为base64
+const urlToBase64 = (url: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = img.width
+      canvas.height = img.height
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        reject(new Error('无法创建Canvas上下文'))
+        return
+      }
+      ctx.drawImage(img, 0, 0)
+      resolve(canvas.toDataURL('image/jpeg', 0.9))
+    }
+    img.onerror = () => {
+      reject(new Error('图片加载失败'))
+    }
+    img.src = url
+  })
+}
+
+// 为图片添加水印
+const addWatermarkToImage = async (base64Data: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = img.width
+      canvas.height = img.height
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        reject(new Error('无法创建Canvas上下文'))
+        return
+      }
+
+      // 绘制原图
+      ctx.drawImage(img, 0, 0)
+
+      // 如果水印未启用，直接返回原图
+      if (!watermarkConfig.value.enabled) {
+        const originalData = canvas.toDataURL('image/jpeg', 0.9)
+        resolve(originalData)
+        return
+      }
+
+      // 配置
+      const config = watermarkConfig.value
+
+      // 构建水印文本
+      const watermarkTexts = []
+      if (config.showTime && currentTime.value) watermarkTexts.push(currentTime.value)
+      if (config.showLocation && locationInfo.value.address) watermarkTexts.push(locationInfo.value.address)
+      if (config.showUser && userStore.name) watermarkTexts.push(userStore.name)
+
+      // 如果没有水印内容，直接返回原图
+      if (watermarkTexts.length === 0) {
+        const originalData = canvas.toDataURL('image/jpeg', 0.9)
+        resolve(originalData)
+        return
+      }
+
+      const watermarkText = watermarkTexts.join(' | ')
+
+      // 设置水印样式
+      ctx.font = `bold ${config.fontSize}px Arial`
+      // 颜色和透明度处理
+      const textColor = config.color || '#FFFFFF'
+      const alpha = config.alpha || 0.8
+      // 将十六进制颜色转换为rgba以应用透明度
+      const applyAlphaToColor = (color: string, alphaValue: number): string => {
+        if (color.startsWith('#')) {
+          const r = parseInt(color.slice(1, 3), 16)
+          const g = parseInt(color.slice(3, 5), 16)
+          const b = parseInt(color.slice(5, 7), 16)
+          return `rgba(${r}, ${g}, ${b}, ${alphaValue})`
+        }
+        // 如果已经是rgba或rgb，尝试替换alpha
+        if (color.startsWith('rgba')) {
+          return color.replace(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*[\d\.]+\)/, `rgba($1, $2, $3, ${alphaValue})`)
+        }
+        if (color.startsWith('rgb')) {
+          return `rgba(${color.substring(4, color.length - 1)}, ${alphaValue})`
+        }
+        // 其他格式直接返回，不应用alpha
+        return color
+      }
+      ctx.fillStyle = applyAlphaToColor(textColor, alpha)
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)' // 阴影颜色保持固定
+      ctx.lineWidth = 2
+      ctx.textAlign = 'left'
+
+      // 计算水印位置（根据配置）
+      const padding = 20
+      const maxWidth = canvas.width - (padding * 2) // 最大宽度（左右各留padding）
+      const lineHeight = config.fontSize * 1.2 // 行高
+
+      // 文本换行处理
+      const words = watermarkText.split(' | ')
+      const lines: string[] = []
+      let currentLine = ''
+
+      for (const word of words) {
+        // 如果当前行不为空，添加分隔符
+        const separator = currentLine ? ' | ' : ''
+        const testLine = currentLine + separator + word
+        const metrics = ctx.measureText(testLine)
+
+        if (metrics.width > maxWidth && currentLine) {
+          // 当前行已满，保存并开始新行
+          lines.push(currentLine)
+          currentLine = word
+        } else {
+          currentLine = testLine
+        }
+      }
+      if (currentLine) {
+        lines.push(currentLine)
+      }
+
+      // 如果没有换行，保持单行逻辑
+      if (lines.length === 0) {
+        lines.push(watermarkText)
+      }
+
+      // 计算每行的x坐标和起始y坐标
+      let x = padding
+      let y = canvas.height - padding
+
+      // 根据位置配置调整坐标
+      if (config.position === 'top_left') {
+        y = padding + config.fontSize
+      } else if (config.position === 'top_right') {
+        x = canvas.width - padding
+        y = padding + config.fontSize
+        ctx.textAlign = 'right'
+      } else if (config.position === 'bottom_left') {
+        x = padding
+        y = canvas.height - padding - (lines.length - 1) * lineHeight
+      } else if (config.position === 'bottom_right') {
+        x = canvas.width - padding
+        y = canvas.height - padding - (lines.length - 1) * lineHeight
+        ctx.textAlign = 'right'
+      }
+
+      // 绘制多行水印
+      for (const line of lines) {
+        ctx.strokeText(line, x, y)
+        ctx.fillText(line, x, y)
+        y += lineHeight
+      }
+
+      // 转换为base64
+      const watermarkedData = canvas.toDataURL('image/jpeg', 0.9)
+      resolve(watermarkedData)
+    }
+    img.onerror = (err) => {
+      reject(new Error(`图片加载失败: ${err}`))
+    }
+    img.src = base64Data
+  })
 }
 
 // 预览照片
@@ -338,6 +599,12 @@ const handleCheckIn = async () => {
     return
   }
 
+  // 非打卡时段必须填写备注
+  if (!isInShiftTime.value && !remark.value.trim()) {
+    showToast('当前不在打卡时段内，必须填写备注')
+    return
+  }
+
   // 位置信息必填
   if (!locationInfo.value.latitude || locationInfo.value.latitude === 0) {
     showToast('请先获取位置信息')
@@ -382,6 +649,19 @@ const handleCheckIn = async () => {
 }
 
 onMounted(async () => {
+  // 获取水印配置
+  try {
+    const config = await systemConfigApi.getConfigJson('attendance.watermark')
+    if (config) {
+      watermarkConfig.value = { ...watermarkConfig.value, ...config }
+    }
+  } catch (error) {
+    console.error('获取水印配置失败:', error)
+  }
+
+  await projectStore.fetchProjects()
+  await projectStore.fetchCurrentProject()
+
   await fetchTodayStats()
   updateCurrentShift()
 
@@ -414,7 +694,7 @@ onUnmounted(() => {
 
 <style scoped>
 .check-in-page {
-  padding: 16px;
+  padding: 0;
 }
 
 .check-in-page :deep(.van-cell-group) {
@@ -433,16 +713,25 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 
-/* 时间值不换行、完整显示 */
+/* 时间值不换行、右对齐 */
 .time-value {
   white-space: nowrap;
-  font-family: monospace;
+  text-align: right;
 }
 
 /* 签到信息区域的值右对齐 */
+.check-in-page :deep(.van-cell-group:nth-of-type(3)) {
+  overflow: visible;
+}
+
+.check-in-page :deep(.van-cell-group:nth-of-type(3) .van-cell__body) {
+  overflow: visible;
+}
+
 .check-in-page :deep(.van-cell-group:nth-of-type(3) .van-cell__value) {
   text-align: right;
-  flex: 1;
+  overflow: visible;
+  min-width: 180px;
 }
 
 .today-status {
@@ -524,10 +813,17 @@ onUnmounted(() => {
   height: 200px;
 }
 
-.photo-preview :deep(.van-image) {
+.photo-wrapper {
+  position: relative;
   width: 100%;
   height: 100%;
   border-radius: 8px;
+  overflow: hidden;
+}
+
+.photo-wrapper :deep(.van-image) {
+  width: 100%;
+  height: 100%;
 }
 
 .photo-delete {
@@ -569,4 +865,25 @@ onUnmounted(() => {
   font-size: 13px;
   color: #999;
 }
+
+.remark-required-hint {
+  padding: 8px 16px;
+  font-size: 13px;
+  color: #ff976a;
+  background: #fff7e6;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.camera-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  background: #000;
+}
+
 </style>

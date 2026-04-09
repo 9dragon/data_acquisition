@@ -112,6 +112,7 @@ com\dataacquisition\modules\system\service\impl\PermissionServiceImpl.class
 com\dataacquisition\modules\issue\service\IssueService.class
 com\dataacquisition\modules\device\service\impl\DeviceResearchServiceImpl.class
 com\dataacquisition\modules\system\controller\UserController.class
+com\dataacquisition\modules\attendance\service\impl\AttendanceExportServiceImpl$1.class
 com\dataacquisition\modules\dingtalk\service\impl\DingTalkServiceImpl.class
 com\dataacquisition\modules\issue\entity\IssueStatusHistory.class
 com\dataacquisition\common\handler\StageTaskTemplateListTypeHandler$1.class

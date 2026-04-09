@@ -2,22 +2,22 @@
   <div class="mobile-home">
     <!-- 今日签到状态 -->
     <div class="today-status">
-      <div class="status-card" :class="{ checked: todayChecked }">
+      <div class="status-card" :class="attendanceStatus">
         <div class="status-icon">
-          <van-icon :name="todayChecked ? 'checked' : 'location-o'" size="40" />
+          <van-icon :name="attendanceIcon" size="40" />
         </div>
         <div class="status-text">
-          <div class="status-title">{{ todayChecked ? '今日已签到' : '今日未签到' }}</div>
-          <div class="status-time">{{ todayCheckTime || '--:--' }}</div>
+          <div class="status-title">{{ attendanceText }}</div>
+          <div class="status-time" v-if="checkedShifts > 0">{{ checkedShifts }}/{{ totalShifts }} 次</div>
         </div>
         <van-button
-          v-if="!todayChecked"
+          v-if="attendanceStatus !== 'complete'"
           type="primary"
           size="small"
           round
           @click="goToCheckIn"
         >
-          立即签到
+          {{ attendanceStatus === 'none' ? '立即签到' : '继续签到' }}
         </van-button>
       </div>
     </div>
@@ -60,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast, showLoadingToast, closeToast } from 'vant'
 import { attendanceApi } from '@/api/attendance'
@@ -70,9 +70,28 @@ import { navigateWithFullScreen } from '@/utils/routerHelper'
 
 const router = useRouter()
 
-// 今日签到状态
-const todayChecked = ref(false)
-const todayCheckTime = ref('')
+// 今日签到统计
+const checkedShifts = ref(0)
+const totalShifts = ref(0)
+
+// 签到状态 computed
+const attendanceStatus = computed(() => {
+  if (checkedShifts.value === 0) return 'none'
+  if (checkedShifts.value >= totalShifts.value) return 'complete'
+  return 'partial'
+})
+
+const attendanceIcon = computed(() => {
+  if (attendanceStatus.value === 'complete') return 'checked'
+  if (attendanceStatus.value === 'partial') return 'clock-o'
+  return 'location-o'
+})
+
+const attendanceText = computed(() => {
+  if (attendanceStatus.value === 'complete') return '今日已签到'
+  if (attendanceStatus.value === 'partial') return '今日已签到'
+  return '今日未签到'
+})
 
 // 待办数量
 const todoCount = ref(0)
@@ -119,22 +138,13 @@ const goToCheckIn = () => {
 // 检查今日签到
 const checkTodayAttendance = async () => {
   try {
-    const today = new Date().toISOString().split('T')[0]
-    const result = await attendanceApi.myRecords({
-      startDate: today,
-      endDate: today,
-      pageNum: 1,
-      pageSize: 1
-    })
-
-    if (result.records && result.records.length > 0) {
-      todayChecked.value = true
-      const record = result.records[0]
-      const time = new Date(record.checkInTime)
-      todayCheckTime.value = `${String(time.getHours()).padStart(2, '0')}:${String(time.getMinutes()).padStart(2, '0')}`
-    }
+    const stats = await attendanceApi.getTodayStats()
+    checkedShifts.value = stats.checkedShifts || 0
+    totalShifts.value = stats.totalShifts || 0
   } catch (error) {
     console.error('检查签到状态失败:', error)
+    checkedShifts.value = 0
+    totalShifts.value = 0
   }
 }
 
@@ -201,8 +211,13 @@ onMounted(async () => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.status-card.checked {
+.status-card.complete {
   background: linear-gradient(135deg, #07c160 0%, #3ad068 100%);
+  color: #fff;
+}
+
+.status-card.partial {
+  background: linear-gradient(135deg, #ff976a 0%, #ffa366 100%);
   color: #fff;
 }
 

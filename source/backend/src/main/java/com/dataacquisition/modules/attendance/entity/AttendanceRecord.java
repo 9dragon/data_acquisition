@@ -1,6 +1,7 @@
 package com.dataacquisition.modules.attendance.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -27,6 +28,12 @@ public class AttendanceRecord {
     private Long projectId;
 
     /**
+     * 项目名称（非数据库字段）
+     */
+    @TableField(exist = false)
+    private String projectName;
+
+    /**
      * 用户ID
      */
     private Long userId;
@@ -42,9 +49,14 @@ public class AttendanceRecord {
     private LocalDateTime checkInTime;
 
     /**
-     * 签到照片URL
+     * 签到照片URL（带签名，用于展示）
      */
     private String photoUrl;
+
+    /**
+     * 签到照片路径（无签名，带水印，用于导出）
+     */
+    private String photoPath;
 
     /**
      * 签到位置

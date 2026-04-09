@@ -3,6 +3,8 @@ package com.dataacquisition.modules.system.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.dataacquisition.common.exception.BusinessException;
+import com.dataacquisition.modules.project.entity.Project;
+import com.dataacquisition.modules.project.service.ProjectService;
 import com.dataacquisition.modules.system.entity.User;
 import com.dataacquisition.modules.system.mapper.UserMapper;
 import com.dataacquisition.modules.system.service.UserService;
@@ -13,6 +15,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 用户Service实现
@@ -21,9 +25,11 @@ import java.time.format.DateTimeFormatter;
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
     private final PasswordEncoder passwordEncoder;
+    private final ProjectService projectService;
 
-    public UserServiceImpl(PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(PasswordEncoder passwordEncoder, ProjectService projectService) {
         this.passwordEncoder = passwordEncoder;
+        this.projectService = projectService;
     }
 
     @Override
@@ -87,6 +93,34 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         user.setLastLoginTime(LocalDateTime.now().format(formatter));
         user.setLastLoginIp(ip);
+        return this.updateById(user);
+    }
+
+    @Override
+    public Object getCurrentProject(Long projectId) {
+        Project project = projectService.getById(projectId);
+        if (project == null) {
+            return null;
+        }
+        Map<String, Object> result = new HashMap<>();
+        result.put("id", project.getId());
+        result.put("name", project.getName());
+        result.put("code", project.getCode());
+        return result;
+    }
+
+    @Override
+    public Boolean setCurrentProject(Long userId, Long projectId) {
+        User user = this.getById(userId);
+        if (user == null) {
+            throw new BusinessException("用户不存在");
+        }
+        // 验证项目是否存在
+        Project project = projectService.getById(projectId);
+        if (project == null) {
+            throw new BusinessException("项目不存在");
+        }
+        user.setCurrentProjectId(projectId);
         return this.updateById(user);
     }
 }

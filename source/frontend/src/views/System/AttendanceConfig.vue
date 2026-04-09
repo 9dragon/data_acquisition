@@ -204,8 +204,8 @@ const removeShift = (index: number) => {
 const handleSave = async () => {
   saving.value = true
   try {
-    await systemConfigApi.updateConfig('attendance.check_times', JSON.stringify(checkTimesConfig))
-    await systemConfigApi.updateConfig('attendance.watermark', JSON.stringify(watermarkConfig))
+    await systemConfigApi.updateConfig('attendance.check_times', checkTimesConfig)
+    await systemConfigApi.updateConfig('attendance.watermark', watermarkConfig)
     ElMessage.success('保存成功')
   } catch (error) {
     ElMessage.error('保存失败')
@@ -217,8 +217,8 @@ const handleSave = async () => {
 // 加载配置
 const loadConfigs = async () => {
   try {
-    const checkTimes = await systemConfigApi.getConfig('attendance.check_times')
-    const watermark = await systemConfigApi.getConfig('attendance.watermark')
+    const checkTimes = await systemConfigApi.getConfigJson('attendance.check_times')
+    const watermark = await systemConfigApi.getConfigJson('attendance.watermark')
 
     if (checkTimes) {
       Object.assign(checkTimesConfig, checkTimes)
@@ -227,6 +227,7 @@ const loadConfigs = async () => {
       Object.assign(watermarkConfig, watermark)
     }
   } catch (error) {
+    console.error('加载配置失败:', error)
     ElMessage.error('加载配置失败')
   }
 }

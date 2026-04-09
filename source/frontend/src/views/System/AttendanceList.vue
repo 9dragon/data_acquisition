@@ -56,6 +56,7 @@
         border
         stripe
       >
+        <el-table-column prop="projectName" label="项目" width="150" show-overflow-tooltip />
         <el-table-column prop="userName" label="用户姓名" width="120" />
         <el-table-column prop="checkInTime" label="签到时间" width="160">
           <template #default="{ row }">
@@ -70,15 +71,15 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="address" label="位置" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="location" label="位置" min-width="200" show-overflow-tooltip />
         <el-table-column prop="photoUrl" label="照片" width="100">
           <template #default="{ row }">
             <el-image
               v-if="row.watermarkPhotoUrl || row.photoUrl"
               :src="row.watermarkPhotoUrl || row.photoUrl"
-              :preview-src-list="[row.watermarkPhotoUrl || row.photoUrl]"
               fit="cover"
-              style="width: 60px; height: 60px; border-radius: 4px;"
+              style="width: 60px; height: 60px; border-radius: 4px; cursor: pointer;"
+              @click="openPreview(row.watermarkPhotoUrl || row.photoUrl)"
             />
           </template>
         </el-table-column>
@@ -148,6 +149,23 @@
         </el-descriptions-item>
       </el-descriptions>
     </el-dialog>
+
+    <!-- 图片预览对话框 -->
+    <el-dialog
+      v-model="previewVisible"
+      :show-close="true"
+      width="80%"
+      top="5vh"
+      class="image-preview-dialog"
+      destroy-on-close
+    >
+      <el-image
+        :src="previewUrl"
+        :preview-src-list="[previewUrl]"
+        fit="contain"
+        style="width: 100%; max-height: 80vh;"
+      />
+    </el-dialog>
   </div>
 </template>
 
@@ -156,8 +174,9 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Download } from '@element-plus/icons-vue'
 import { attendanceApi, type AttendanceRecord, type AttendanceQueryParams } from '@/api/attendance'
-import { projectApi } from '@/api/project'
+import { useProjectStore } from '@/stores/project'
 
+const projectStore = useProjectStore()
 const loading = ref(false)
 const recordList = ref<AttendanceRecord[]>([])
 const total = ref(0)
@@ -165,6 +184,15 @@ const projectList = ref<any[]>([])
 const dateRange = ref<[string, string]>([])
 const detailVisible = ref(false)
 const currentRecord = ref<AttendanceRecord | null>(null)
+
+// 图片预览
+const previewVisible = ref(false)
+const previewUrl = ref('')
+
+const openPreview = (url: string) => {
+  previewUrl.value = url
+  previewVisible.value = true
+}
 
 const queryParams = reactive<AttendanceQueryParams>({
   pageNum: 1,
@@ -220,7 +248,19 @@ const handleReset = () => {
 const handleExport = async () => {
   try {
     ElMessage.success('正在导出...')
-    await attendanceApi.export(queryParams)
+    const blob = await attendanceApi.export(queryParams)
+
+    // 创建下载链接
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `签到记录_${new Date().toISOString().slice(0, 10)}.xlsx`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+
+    ElMessage.success('导出成功')
   } catch (error) {
     ElMessage.error('导出失败')
   }
@@ -247,8 +287,8 @@ const formatDateTime = (dateStr?: string) => {
 
 onMounted(() => {
   fetchRecords()
-  projectApi.getAllProjects().then((data: any) => {
-    projectList.value = data
+  projectStore.fetchProjectList().then(() => {
+    projectList.value = projectStore.projectList
   }).catch(() => {
     // 如果API不存在，使用默认数据
     projectList.value = [
@@ -276,5 +316,47 @@ onMounted(() => {
 .el-pagination {
   margin-top: 16px;
   justify-content: flex-end;
+}
+
+/* 修复图片预览层级问题 */
+:deep(.el-image-viewer__wrapper) {
+  z-index: 9999 !important;
+}
+
+:deep(.el-image-viewer__canvas) {
+  z-index: 9999 !important;
+}
+
+:deep(.el-image-viewer__mask) {
+  z-index: 9998 !important;
+}
+
+/* 图片预览对话框样式 */
+.image-preview-dialog {
+  z-index: 10000 !important;
+}
+
+:deep(.image-preview-dialog) {
+  z-index: 10000 !important;
+}
+
+:deep(.image-preview-dialog .el-dialog__wrapper) {
+  z-index: 10000 !important;
+}
+
+:deep(.image-preview-dialog .el-dialog) {
+  background: transparent;
+  box-shadow: none;
+  margin: 0 !important;
+  width: 100%;
+  max-width: 90vw;
+}
+
+:deep(.image-preview-dialog .el-dialog__header) {
+  display: none;
+}
+
+:deep(.image-preview-dialog .el-dialog__body) {
+  padding: 0;
 }
 </style>

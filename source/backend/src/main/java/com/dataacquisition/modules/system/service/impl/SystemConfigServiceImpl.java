@@ -91,12 +91,17 @@ public class SystemConfigServiceImpl extends ServiceImpl<SystemConfigMapper, Sys
 
         if (config != null) {
             config.setConfigValue(configValue);
+            // 如果原有configType为空，根据内容重新判断
+            if (StrUtil.isBlank(config.getConfigType())) {
+                config.setConfigType(JSONUtil.isJson(configValue) ? "JSON" : "STRING");
+            }
             updateById(config);
         } else {
             config = new SystemConfig();
             config.setConfigKey(configKey);
             config.setConfigValue(configValue);
-            config.setConfigType("JSON");
+            // 根据内容判断configType
+            config.setConfigType(JSONUtil.isJson(configValue) ? "JSON" : "STRING");
             save(config);
         }
 

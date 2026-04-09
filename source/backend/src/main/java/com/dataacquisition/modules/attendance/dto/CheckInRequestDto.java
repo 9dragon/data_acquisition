@@ -17,6 +17,10 @@ public class CheckInRequestDto {
     @Schema(description = "项目ID")
     private Long projectId;
 
+    @NotNull(message = "时段索引不能为空")
+    @Schema(description = "时段索引")
+    private Integer shiftIndex;
+
     @Schema(description = "照片Base64或URL")
     private String photo;
 

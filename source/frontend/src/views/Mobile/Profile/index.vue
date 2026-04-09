@@ -2,19 +2,26 @@
   <div class="profile-page">
     <!-- 用户信息 -->
     <div class="user-header">
-      <div class="user-avatar" @click="handleClick('avatar')">
-        <van-image
-          round
-          width="40"
-          height="40"
-          :src="userInfo.avatar || defaultAvatar"
-        />
-        <van-icon name="photograph" class="avatar-edit" />
+      <div class="user-avatar">
+        <van-icon name="user-o" size="40" color="#fff" />
       </div>
-      <div class="user-name">{{ userInfo.name || '未登录' }}</div>
-      <div class="user-meta">
-        <span v-if="userInfo.jobNumber">工号: {{ userInfo.jobNumber }}</span>
-        <span v-if="userInfo.phone">{{ userInfo.phone }}</span>
+      <div class="user-info">
+        <div class="user-name">{{ userInfo.name || userInfo.username || '未登录' }}</div>
+        <div class="user-meta">
+          <span v-if="userInfo.username">用户名: {{ userInfo.username }}</span>
+          <span v-if="userRole">角色: {{ userRole }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 当前项目选择 -->
+    <div class="project-section">
+      <div class="project-label">当前项目</div>
+      <div class="project-selector" @click="showProjectPicker = true">
+        <span :class="{ 'no-project': !currentProject }">
+          {{ currentProject?.name || '请选择项目' }}
+        </span>
+        <van-icon name="arrow-down" />
       </div>
     </div>
 
@@ -52,33 +59,42 @@
         退出登录
       </van-button>
     </div>
+
+    <!-- 项目选择弹窗 -->
+    <van-action-sheet
+      v-model:show="showProjectPicker"
+      title="选择项目"
+      :actions="projectActions"
+      @select="onProjectSelect"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showConfirmDialog, showToast } from 'vant'
 import { useUserStore } from '@/stores/user'
+import { useMobileProjectStore, type MobileProject } from '@/stores/mobileProject'
+import { authApi } from '@/api/auth'
 import { navigateWithFullScreen } from '@/utils/routerHelper'
 
 const router = useRouter()
 const userStore = useUserStore()
-
-// 默认头像
-const defaultAvatar = 'https://fastly.jsdelivr.net/npm/@vant/assets/user-active.png'
+const projectStore = useMobileProjectStore()
 
 // 应用版本
 const appVersion = ref('v1.0.0')
 
 // 用户信息
-const userInfo = ref({
+const userInfo = ref<{ name: string; username: string; roles: Array<{ name: string }> }>({
   name: '',
-  avatar: '',
-  phone: '',
-  jobNumber: '',
-  role: ''
+  username: '',
+  roles: []
 })
+
+// 角色
+const userRole = computed(() => userInfo.value.roles?.[0]?.name || '')
 
 // 统计信息
 const stats = ref({
@@ -86,6 +102,23 @@ const stats = ref({
   taskCount: 0,
   issueCount: 0
 })
+
+// 项目选择
+const showProjectPicker = ref(false)
+const currentProject = computed(() => projectStore.currentProject)
+
+const projectActions = computed(() => {
+  return projectStore.projectList.map(p => ({
+    name: `${p.code} - ${p.name}`,
+    project: p
+  }))
+})
+
+const onProjectSelect = async (action: { project: MobileProject }) => {
+  await projectStore.setCurrentProject(action.project)
+  showProjectPicker.value = false
+  showToast(`已切换到: ${action.project.name}`)
+}
 
 // 跳转路径
 const goToPath = (path: string) => {
@@ -97,9 +130,6 @@ const handleClick = (type: string) => {
   switch (type) {
     case 'info':
       navigateWithFullScreen(router, '/profile/info')
-      break
-    case 'avatar':
-      showToast('头像功能开发中...')
       break
     case 'password':
       navigateWithFullScreen(router, '/profile/password')
@@ -135,17 +165,15 @@ const handleLogout = () => {
 // 加载用户信息
 onMounted(async () => {
   try {
+    await projectStore.fetchProjects()
+    await projectStore.fetchCurrentProject()
+    
     // 获取用户信息
-    // const user = await userStore.fetchUserInfo()
-    // userInfo.value = user
-
-    // 临时数据
-    userInfo.value = {
-      name: '项目成员',
-      avatar: '',
-      phone: '138****8888',
-      jobNumber: 'E001',
-      role: '项目成员'
+    try {
+      const user = await authApi.getUserInfo()
+      userInfo.value = user
+    } catch (error) {
+      console.error('获取用户信息失败:', error)
     }
 
     // 获取统计信息
@@ -168,42 +196,68 @@ onMounted(async () => {
 
 .user-header {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  padding: 12px 16px;
+  padding: 16px;
   background: linear-gradient(135deg, #1989fa 0%, #40a9ff 100%);
   color: #fff;
-  margin-top: 12px;
-  margin-bottom: 12px;
+  margin: 12px;
+  border-radius: 12px;
 }
 
 .user-avatar {
-  position: relative;
-  cursor: pointer;
+  flex-shrink: 0;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.avatar-edit {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 50%;
-  padding: 2px;
-  font-size: 12px;
+.user-info {
+  margin-left: 12px;
 }
 
 .user-name {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: bold;
-  margin-top: 6px;
 }
 
 .user-meta {
   display: flex;
-  gap: 10px;
-  margin-top: 3px;
-  font-size: 11px;
+  gap: 12px;
+  margin-top: 4px;
+  font-size: 12px;
   opacity: 0.9;
+}
+
+.project-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0 16px 16px;
+  padding: 12px 16px;
+  background: #fff;
+  border-radius: 12px;
+}
+
+.project-label {
+  font-size: 14px;
+  color: #666;
+}
+
+.project-selector {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  color: #1989fa;
+  cursor: pointer;
+}
+
+.project-selector .no-project {
+  color: #999;
 }
 
 .stats-section {

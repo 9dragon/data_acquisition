@@ -134,8 +134,8 @@ export const useDingTalkStore = defineStore('dingtalk', () => {
    * 预览图片
    */
   function previewImage(urls: string[], current?: string) {
-    if (isDingTalkEnv.value && (dd as any).device?.image?.preview) {
-      ;(dd as any).device.image.preview({
+    if (isDingTalkEnv.value && (dd as any).biz?.util?.previewImage) {
+      ;(dd as any).biz.util.previewImage({
         urls: urls,
         current: current || urls[0]
       })

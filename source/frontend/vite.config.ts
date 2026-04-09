@@ -13,6 +13,7 @@ export default defineConfig({
   server: {
     port: 3000,
     host: '0.0.0.0',
+    allowedHosts: ['pm.anosi.cn'],
     proxy: {
       '/api': {
         target: 'http://10.0.0.25:8080',

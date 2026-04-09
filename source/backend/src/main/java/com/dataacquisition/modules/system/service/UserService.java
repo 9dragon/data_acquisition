@@ -38,4 +38,14 @@ public interface UserService extends IService<User>, UserDetailsService {
      * 更新用户登录信息
      */
     Boolean updateLoginInfo(Long id, String ip);
+
+    /**
+     * 获取当前项目信息
+     */
+    Object getCurrentProject(Long projectId);
+
+    /**
+     * 设置当前项目
+     */
+    Boolean setCurrentProject(Long userId, Long projectId);
 }

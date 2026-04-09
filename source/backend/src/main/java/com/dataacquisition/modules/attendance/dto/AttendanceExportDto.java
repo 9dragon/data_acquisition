@@ -5,13 +5,16 @@ import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import lombok.Data;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 
 /**
  * 签到记录导出DTO
  */
 @Data
 public class AttendanceExportDto {
+
+    @ExcelProperty("项目")
+    @ColumnWidth(20)
+    private String projectName;
 
     @ExcelProperty("用户姓名")
     @ColumnWidth(15)
@@ -27,7 +30,7 @@ public class AttendanceExportDto {
 
     @ExcelProperty("签到时间")
     @ColumnWidth(15)
-    private LocalTime checkInTime;
+    private String checkInTime;
 
     @ExcelProperty("是否迟到")
     @ColumnWidth(12)
@@ -37,13 +40,12 @@ public class AttendanceExportDto {
     @ColumnWidth(20)
     private String location;
 
-    @ExcelProperty("详细地址")
-    @ColumnWidth(30)
-    private String address;
-
-    @ExcelProperty("照片链接")
-    @ColumnWidth(50)
-    private String photoUrl;
+    /**
+     * 照片字节数组（用于导出图片）
+     */
+    @ExcelProperty("照片")
+    @ColumnWidth(20)
+    private byte[] photo;
 
     @ExcelProperty("备注")
     @ColumnWidth(30)

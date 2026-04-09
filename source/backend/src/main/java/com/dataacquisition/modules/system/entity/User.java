@@ -101,4 +101,10 @@ public class User extends BaseEntity {
      */
     @TableField("job_number")
     private String jobNumber;
+
+    /**
+     * 当前项目ID
+     */
+    @TableField("current_project_id")
+    private Long currentProjectId;
 }

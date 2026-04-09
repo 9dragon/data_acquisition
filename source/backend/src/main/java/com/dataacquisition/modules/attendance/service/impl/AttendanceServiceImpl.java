@@ -11,11 +11,12 @@ import com.dataacquisition.modules.attendance.dto.TodayCheckInStats;
 import com.dataacquisition.modules.attendance.entity.AttendanceRecord;
 import com.dataacquisition.modules.attendance.mapper.AttendanceRecordMapper;
 import com.dataacquisition.modules.attendance.service.AttendanceService;
+import com.dataacquisition.modules.project.entity.Project;
+import com.dataacquisition.modules.project.service.ProjectService;
 import com.dataacquisition.modules.system.entity.User;
 import com.dataacquisition.modules.system.service.SystemConfigService;
 import com.dataacquisition.modules.system.service.UserService;
 import com.dataacquisition.service.MinioService;
-import com.dataacquisition.service.WatermarkService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -40,7 +41,7 @@ public class AttendanceServiceImpl implements AttendanceService {
     private final UserService userService;
     private final MinioService minioService;
     private final SystemConfigService systemConfigService;
-    private final WatermarkService watermarkService;
+    private final ProjectService projectService;
 
     @Override
     @Transactional
@@ -63,30 +64,28 @@ public class AttendanceServiceImpl implements AttendanceService {
             throw new RuntimeException("签到时段配置未设置");
         }
 
+        // 获取前端传递的时段索引
+        Integer shiftIndex = request.getShiftIndex();
+        if (shiftIndex == null || shiftIndex < 0 || shiftIndex > shiftsArray.size()) {
+            throw new RuntimeException("时段索引无效");
+        }
+
+        // 获取对应的时段配置
+        cn.hutool.json.JSONObject shiftConfig;
+        if (shiftIndex == 0) {
+            // 非时段打卡
+            shiftConfig = new cn.hutool.json.JSONObject();
+            shiftConfig.set("name", "非时段打卡");
+            shiftConfig.set("lateTime", null);
+        } else {
+            shiftConfig = shiftsArray.getJSONObject(shiftIndex - 1);
+        }
+
         LocalDateTime now = LocalDateTime.now();
         LocalTime currentTime = now.toLocalTime();
         LocalDate today = now.toLocalDate();
 
-        // 找到当前时段
-        cn.hutool.json.JSONObject currentShiftConfig = null;
-        int shiftIndex = 0;
-        for (int i = 0; i < shiftsArray.size(); i++) {
-            cn.hutool.json.JSONObject shift = shiftsArray.getJSONObject(i);
-            LocalTime startTime = LocalTime.parse(shift.getStr("startTime"));
-            LocalTime endTime = LocalTime.parse(shift.getStr("endTime"));
-
-            if (!currentTime.isBefore(startTime) && !currentTime.isAfter(endTime)) {
-                currentShiftConfig = shift;
-                shiftIndex = i + 1;
-                break;
-            }
-        }
-
-        if (currentShiftConfig == null) {
-            throw new RuntimeException("当前不在任何打卡时段内");
-        }
-
-        // 检查当前时段是否已打卡
+        // 检查该时段今日是否已打卡
         LocalDateTime todayStart = today.atStartOfDay();
         LocalDateTime todayEnd = todayStart.plusDays(1);
 
@@ -96,27 +95,30 @@ public class AttendanceServiceImpl implements AttendanceService {
             .between(AttendanceRecord::getCheckInTime, todayStart, todayEnd));
 
         if (shiftCount > 0) {
-            throw new RuntimeException(currentShiftConfig.getStr("name") + "已打卡");
+            throw new RuntimeException(shiftConfig.getStr("name") + "已打卡");
         }
 
-        // 处理照片上传
-        String originalPhotoUrl = null;
-        String watermarkPhotoUrl = null;
+        // 处理照片上传（前端已添加水印，直接保存）
+        String photoUrl = null;
+        String photoPath = null;
         if (StrUtil.isNotBlank(request.getPhoto())) {
-            // 如果是Base64，上传原始照片到MinIO
+            // 如果是Base64，上传照片到MinIO
             if (request.getPhoto().startsWith("data:image")) {
-                originalPhotoUrl = minioService.uploadBase64Image(request.getPhoto(), "attendance/original");
+                java.util.Map<String, String> uploadResult = minioService.uploadBase64ImageAndReturnPath(request.getPhoto(), "attendance");
+                photoUrl = uploadResult.get("url");
+                photoPath = uploadResult.get("path");
             } else {
-                originalPhotoUrl = request.getPhoto();
+                photoUrl = request.getPhoto();
             }
-
-            // 添加水印
-            watermarkPhotoUrl = addWatermarkToPhoto(originalPhotoUrl, user, request, now);
         }
 
-        // 判断是否迟到
-        LocalTime lateTime = LocalTime.parse(currentShiftConfig.getStr("lateTime"));
-        boolean isLate = currentTime.isAfter(lateTime);
+        // 判断是否迟到（根据配置的lateTime判断，非时段打卡不算迟到）
+        boolean isLate = false;
+        String lateTimeStr = shiftConfig.getStr("lateTime");
+        if (shiftIndex > 0 && lateTimeStr != null) {
+            LocalTime lateTime = LocalTime.parse(lateTimeStr);
+            isLate = currentTime.isAfter(lateTime);
+        }
 
         // 创建签到记录
         AttendanceRecord record = new AttendanceRecord();
@@ -124,9 +126,8 @@ public class AttendanceServiceImpl implements AttendanceService {
         record.setUserId(userId);
         record.setUserName(user.getName());
         record.setCheckInTime(now);
-        record.setPhotoUrl(watermarkPhotoUrl != null ? watermarkPhotoUrl : originalPhotoUrl);
-        record.setOriginalPhotoUrl(originalPhotoUrl);
-        record.setWatermarkPhotoUrl(watermarkPhotoUrl);
+        record.setPhotoUrl(photoUrl);
+        record.setPhotoPath(photoPath);
         record.setLocation(request.getLocation());
         record.setLatitude(request.getLatitude());
         record.setLongitude(request.getLongitude());
@@ -134,44 +135,13 @@ public class AttendanceServiceImpl implements AttendanceService {
         record.setStatus(isLate ? "LATE" : "NORMAL");
         record.setIsLate(isLate ? 1 : 0);
         record.setShiftIndex(shiftIndex);
-        record.setShiftName(currentShiftConfig.getStr("name"));
+        record.setShiftName(shiftConfig.getStr("name"));
         record.setRemark(request.getRemark());
 
         attendanceRecordMapper.insert(record);
 
-        log.info("用户签到成功: userId={}, userName={}, shift={}, isLate={}", userId, user.getName(), currentShiftConfig.getStr("name"), isLate);
+        log.info("用户签到成功: userId={}, userName={}, shift={}, isLate={}", userId, user.getName(), shiftConfig.getStr("name"), isLate);
         return record;
-    }
-
-    /**
-     * 为照片添加水印
-     */
-    private String addWatermarkToPhoto(String photoUrl, User user, CheckInRequestDto request, LocalDateTime checkInTime) {
-        try {
-            // 获取水印配置
-            cn.hutool.json.JSONObject watermarkConfig = systemConfigService.getConfigJson("attendance.watermark");
-            if (watermarkConfig == null || !watermarkConfig.getBool("enabled", true)) {
-                return photoUrl;
-            }
-
-            // 构建水印信息
-            WatermarkService.WatermarkInfo info = new WatermarkService.WatermarkInfo();
-            info.setUserName(user.getName());
-            info.setTime(checkInTime);
-            info.setLocation(request.getLocation());
-            info.setPosition(watermarkConfig.getStr("position"));
-            info.setFontSize(watermarkConfig.getInt("fontSize"));
-            info.setColor(watermarkConfig.getStr("color"));
-            info.setAlpha(watermarkConfig.getDouble("alpha"));
-            info.setShowUser(watermarkConfig.getBool("showUser", true));
-            info.setShowTime(watermarkConfig.getBool("showTime", true));
-            info.setShowLocation(watermarkConfig.getBool("showLocation", true));
-
-            return watermarkService.addWatermark(photoUrl, info);
-        } catch (Exception e) {
-            log.error("添加水印失败", e);
-            return photoUrl;
-        }
     }
 
     @Override
@@ -225,7 +195,19 @@ public class AttendanceServiceImpl implements AttendanceService {
 
         wrapper.orderByDesc(AttendanceRecord::getCheckInTime);
 
-        return attendanceRecordMapper.selectPage(page, wrapper);
+        Page<AttendanceRecord> result = attendanceRecordMapper.selectPage(page, wrapper);
+
+        // 填充项目名称
+        for (AttendanceRecord record : result.getRecords()) {
+            if (record.getProjectId() != null) {
+                Project project = projectService.getById(record.getProjectId());
+                if (project != null) {
+                    record.setProjectName(project.getName());
+                }
+            }
+        }
+
+        return result;
     }
 
     @Override
