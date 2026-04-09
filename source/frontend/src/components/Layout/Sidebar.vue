@@ -33,6 +33,10 @@
           <el-icon><List /></el-icon>
           <span>任务列表</span>
         </el-menu-item>
+        <el-menu-item index="/attendance-list">
+          <el-icon><Document /></el-icon>
+          <span>签到记录</span>
+        </el-menu-item>
       </el-sub-menu>
 
       <!-- 项目管理 -->
@@ -109,23 +113,12 @@
           <el-icon><UserFilled /></el-icon>
           <span>角色管理</span>
         </el-menu-item>
-      </el-sub-menu>
-
-      <!-- 签到管理 -->
-      <el-sub-menu index="attendance">
-        <template #title>
-          <el-icon><Calendar /></el-icon>
-          <span>签到管理</span>
-        </template>
-        <el-menu-item index="/attendance-list">
-          <el-icon><Document /></el-icon>
-          <span>签到记录</span>
-        </el-menu-item>
         <el-menu-item index="/attendance-config">
           <el-icon><Setting /></el-icon>
-          <span>签到配置</span>
+          <span>系统配置</span>
         </el-menu-item>
       </el-sub-menu>
+
     </el-menu>
   </div>
 </template>

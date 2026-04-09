@@ -60,7 +60,8 @@
       "Bash(find /d/work/projects/data_acquisition/source/frontend/src -type d -name *mobile* -o -name *m*)",
       "Bash(find D:/work/projects/data_acquisition/source/backend/src/main/resources/mapper -name *.xml)",
       "Bash(find backend:*)",
-      "Bash(npm list:*)"
+      "Bash(npm list:*)",
+      "Bash(find:*)"
     ]
   }
 }

@@ -1,7 +1,7 @@
 <template>
   <div class="controller-info-step">
     <van-cell-group inset title="控制器信息">
-      <van-field name="isInterfaceOccupied" label="接口是否被占用" required>
+      <van-field name="isInterfaceOccupied" label="接口被占用" required>
         <template #input>
           <van-radio-group v-model="formData.isInterfaceOccupied" direction="horizontal" @change="updateValue">
             <van-radio name="true">是</van-radio>
@@ -25,7 +25,7 @@
         </template>
       </van-field>
 
-      <van-field name="hasTouchScreen" label="是否连接触摸屏" required>
+      <van-field name="hasTouchScreen" label="连接触摸屏" required>
         <template #input>
           <van-radio-group v-model="formData.hasTouchScreen" direction="horizontal" @change="updateValue">
             <van-radio name="true">是</van-radio>
@@ -85,7 +85,10 @@
             v-model="controllerFiles"
             multiple
             :max-count="9"
-            :after-read="(file) => handleAfterRead(file, 'controller')"
+            accept="image/*,video/*"
+            :max-size="100 * 1024 * 1024"
+            :before-read="(file) => beforeRead(file, 'controller')"
+            @oversize="(file) => handleOversize(file, 'controller')"
             @delete="(file) => handleDelete(file, 'controller')"
           />
         </van-collapse-item>
@@ -95,7 +98,10 @@
             v-model="touchscreenFiles"
             multiple
             :max-count="9"
-            :after-read="(file) => handleAfterRead(file, 'touchscreen')"
+            accept="image/*,video/*"
+            :max-size="100 * 1024 * 1024"
+            :before-read="(file) => beforeRead(file, 'touchscreen')"
+            @oversize="(file) => handleOversize(file, 'touchscreen')"
             @delete="(file) => handleDelete(file, 'touchscreen')"
           />
         </van-collapse-item>
@@ -105,7 +111,10 @@
             v-model="cabinetFiles"
             multiple
             :max-count="9"
-            :after-read="(file) => handleAfterRead(file, 'cabinet')"
+            accept="image/*,video/*"
+            :max-size="100 * 1024 * 1024"
+            :before-read="(file) => beforeRead(file, 'cabinet')"
+            @oversize="(file) => handleOversize(file, 'cabinet')"
             @delete="(file) => handleDelete(file, 'cabinet')"
           />
         </van-collapse-item>
@@ -134,8 +143,9 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from 'vue'
-import { showToast, type UploaderFileListItem } from 'vant'
+import { showToast, showLoadingToast, closeToast, type UploaderFileListItem } from 'vant'
 import type { DeviceResearchController } from '@/types/device'
+import { isDingTalk, chooseMedia, type MediaResult } from '@/utils/dingtalk'
 
 interface Props {
   modelValue: DeviceResearchController
@@ -205,18 +215,61 @@ const onControllerBrandConfirm = ({ selectedOptions }: any) => {
   updateValue()
 }
 
-// 处理文件上传
-const handleAfterRead = async (file: UploaderFileListItem | UploaderFileListItem[], type: string) => {
-  const files = Array.isArray(file) ? file : [file]
-
-  for (const item of files) {
-    // TODO: 上传文件到服务器
-    console.log(`上传${type}文件:`, item)
-    // 这里应该调用上传API，例如：
-    // const result = await deviceResearchApi.uploadMedia(item.file as File)
-    // item.url = result.url
+// 处理媒体选择（钉钉环境）
+const handleMediaChoose = async (type: string) => {
+  if (!isDingTalk()) {
+    showToast('请在钉钉中打开应用')
+    return
   }
-  updateMediaUrls()
+
+  showLoadingToast({ message: '加载中...', forbidClick: true })
+
+  try {
+    const results = await chooseMedia({
+      multiple: true,
+      max: 9,
+      type: ['image', 'video']
+    })
+
+    // 转换为 uploader 需要的格式
+    const files = results.map((item: MediaResult) => ({
+      url: item.url,
+      isImage: item.type === 'image',
+      isVideo: item.type === 'video'
+    }))
+
+    // 更新对应类型的文件列表
+    if (type === 'controller') {
+      controllerFiles.value = [...controllerFiles.value, ...files].slice(0, 9)
+    } else if (type === 'touchscreen') {
+      touchscreenFiles.value = [...touchscreenFiles.value, ...files].slice(0, 9)
+    } else if (type === 'cabinet') {
+      cabinetFiles.value = [...cabinetFiles.value, ...files].slice(0, 9)
+    }
+
+    updateMediaUrls()
+    closeToast()
+  } catch (error: any) {
+    closeToast()
+    showToast(error.message || '选择媒体失败')
+  }
+}
+
+// beforeRead 回调 - 拦截默认行为，使用钉钉 API
+const beforeRead = async (file: UploaderFileListItem | UploaderFileListItem[], type: string) => {
+  // 钉钉环境下使用 chooseMedia
+  if (isDingTalk()) {
+    // 阻止默认行为
+    await handleMediaChoose(type)
+    return false
+  }
+  // 非钉钉环境使用默认行为
+  return true
+}
+
+// 处理文件大小超限
+const handleOversize = (file: UploaderFileListItem, type: string) => {
+  showToast(`文件大小不能超过100MB`)
 }
 
 // 处理文件删除
@@ -274,7 +327,7 @@ onMounted(() => {
 defineExpose({
   validate: () => {
     if (formData.isInterfaceOccupied === undefined) {
-      showToast('请选择接口是否被占用')
+      showToast('请选择接口被占用')
       return false
     }
     if (!formData.interfaceType) {
@@ -282,7 +335,7 @@ defineExpose({
       return false
     }
     if (formData.hasTouchScreen === undefined) {
-      showToast('请选择是否连接触摸屏')
+      showToast('请选择连接触摸屏')
       return false
     }
     if (formData.hasTouchScreen === 'true' && !formData.touchScreenBrand) {

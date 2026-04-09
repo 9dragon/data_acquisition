@@ -99,9 +99,9 @@ export interface MediaAttachment {
 
 // 调研控制器信息
 export interface DeviceResearchController {
-  isInterfaceOccupied?: boolean;              // 接口是否被占用
+  isInterfaceOccupied?: boolean;              // 接口被占用
   interfaceType?: 'RJ45' | 'RJ232';           // 控制器接口类型
-  hasTouchScreen?: boolean;                   // 是否连接触摸屏
+  hasTouchScreen?: boolean;                   // 连接触摸屏
   controllerBrand?: string;                   // 控制器品牌
   controllerModel?: string;                   // 控制器型号
   touchScreenBrand?: string;                  // 触摸屏品牌
@@ -141,9 +141,9 @@ export interface DeviceResearch extends BaseEntity {
   deviceManufacturer?: string;          // 设备厂商
 
   // 控制器信息
-  isInterfaceOccupied?: boolean;         // 接口是否被占用
+  isInterfaceOccupied?: boolean;         // 接口被占用
   interfaceType?: string;               // 接口类型
-  hasTouchScreen?: boolean;             // 是否连接触摸屏
+  hasTouchScreen?: boolean;             // 连接触摸屏
   controllerBrand?: string;             // 控制器品牌
   controllerModel?: string;             // 控制器型号
   touchScreenBrand?: string;            // 触摸屏品牌

@@ -2,6 +2,12 @@ package com.dataacquisition.modules.attendance.dto;
 
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
+import com.alibaba.excel.annotation.write.style.ContentRowHeight;
+import com.alibaba.excel.annotation.write.style.HeadRowHeight;
+import com.alibaba.excel.annotation.write.style.ContentStyle;
+import com.alibaba.excel.enums.BooleanEnum;
+import com.alibaba.excel.enums.poi.HorizontalAlignmentEnum;
+import com.alibaba.excel.enums.poi.VerticalAlignmentEnum;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -10,6 +16,8 @@ import java.time.LocalDate;
  * 签到记录导出DTO
  */
 @Data
+@HeadRowHeight(30)      // 表头行高30磅
+@ContentRowHeight(100)   // 内容行行高100磅
 public class AttendanceExportDto {
 
     @ExcelProperty("项目")
@@ -38,6 +46,7 @@ public class AttendanceExportDto {
 
     @ExcelProperty("位置")
     @ColumnWidth(20)
+    @ContentStyle(wrapped = BooleanEnum.TRUE, horizontalAlignment = HorizontalAlignmentEnum.LEFT, verticalAlignment = VerticalAlignmentEnum.CENTER)
     private String location;
 
     /**

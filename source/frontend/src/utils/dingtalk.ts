@@ -386,3 +386,187 @@ export function hideLoading(): void {
     (window as any).vant.Toast.clear()
   }
 }
+
+/**
+ * 媒体选择选项
+ */
+export interface MediaOption {
+  multiple?: boolean;       // 是否多选，默认 true
+  max?: number;             // 最多选择数量
+  type?: ('image' | 'video')[];  // 媒体类型，默认 ['image', 'video']
+}
+
+/**
+ * 媒体选择结果
+ */
+export interface MediaResult {
+  type: 'image' | 'video';  // 媒体类型
+  url: string;              // 媒体路径
+  name?: string;            // 文件名
+  size?: number;            // 文件大小
+}
+
+/**
+ * 选择图片或视频（支持拍照、录像、相册选择）
+ * 使用钉钉 dd.chooseMedia API
+ */
+export function chooseMedia(option?: MediaOption): Promise<MediaResult[]> {
+  return new Promise((resolve, reject) => {
+    if (!isDingTalk()) {
+      // 非钉钉环境，使用文件选择
+      const input = document.createElement('input')
+      input.type = 'file'
+      input.multiple = option?.multiple !== false
+      const types = option?.type || ['image', 'video']
+      if (types.length === 1 && types[0] === 'image') {
+        input.accept = 'image/*'
+      } else if (types.length === 1 && types[0] === 'video') {
+        input.accept = 'video/*'
+      } else {
+        input.accept = 'image/*,video/*'
+      }
+      input.onchange = (e) => {
+        const files = (e.target as HTMLInputElement).files
+        if (files && files.length > 0) {
+          const results: MediaResult[] = []
+          let processed = 0
+          
+          Array.from(files).forEach((file) => {
+            const isVideo = file.type.startsWith('video')
+            const reader = new FileReader()
+            reader.onload = (event) => {
+              results.push({
+                type: isVideo ? 'video' : 'image',
+                url: event.target?.result as string,
+                name: file.name,
+                size: file.size
+              })
+              processed++
+              if (processed === files.length) {
+                resolve(results)
+              }
+            }
+            reader.readAsDataURL(file)
+          })
+        } else {
+          reject(new Error('未选择文件'))
+        }
+      }
+      input.click()
+      return
+    }
+
+    // 钉钉环境
+    configDingTalkJSAPI().then(() => {
+      chooseMediaWithDingTalk(option, resolve, reject)
+    }).catch(reject)
+  })
+}
+
+/**
+ * 使用钉钉选择媒体
+ */
+function chooseMediaWithDingTalk(
+  option: MediaOption | undefined,
+  resolve: (value: MediaResult[]) => void,
+  reject: (reason: any) => void
+) {
+  const handleReady = () => {
+    attemptChooseMedia(option, resolve, reject)
+  }
+
+  if (typeof dd.ready === 'function') {
+    dd.ready(() => {
+      handleReady()
+    })
+    dd.error((err: any) => {
+      reject(new Error('钉钉JSAPI初始化失败'))
+    })
+  } else {
+    handleReady()
+  }
+}
+
+/**
+ * 调用钉钉媒体选择API
+ */
+function attemptChooseMedia(
+  option: MediaOption | undefined,
+  resolve: (value: MediaResult[]) => void,
+  reject: (reason: any) => void
+) {
+  const multiple = option?.multiple !== false
+  const max = option?.max || 9
+  const types = option?.type || ['image', 'video']
+
+  // 转换为钉钉 API 需要的格式
+  const mediaType = types.length === 1 && types[0] === 'video' ? 2 : 1 // 1: 图片, 2: 视频
+
+  // 使用新版 dd.chooseMedia API
+  if (typeof dd.chooseMedia === 'function') {
+    dd.chooseMedia({
+      count: multiple ? max : 1,
+      mediaType: mediaType, // 1: 图片, 2: 视频, 3: 图片和视频
+      type: mediaType,
+      success: (res: any) => {
+        // 新版API返回格式: { results: [{ mediaId, thumbPath, type, name, size }] }
+        const results: MediaResult[] = []
+        
+        if (res.results && Array.isArray(res.results)) {
+          res.results.forEach((item: any) => {
+            results.push({
+              type: item.type === 2 ? 'video' : 'image',
+              url: item.thumbPath || item.mediaId || item.url,
+              name: item.name,
+              size: item.size
+            })
+          })
+        } else if (res.files && Array.isArray(res.files)) {
+          // 兼容旧版格式
+          res.files.forEach((item: any) => {
+            const isVideo = item.type === 'video' || item.mediaType === 2
+            results.push({
+              type: isVideo ? 'video' : 'image',
+              url: item.thumbPath || item.url || item,
+              name: item.name,
+              size: item.size
+            })
+          })
+        }
+        
+        resolve(results)
+      },
+      fail: (err: any) => {
+        reject(new Error(err.errorMessage || '选择媒体失败'))
+      }
+    })
+    return
+  }
+
+  // 降级方案：使用 dd.chooseImage
+  if (typeof dd.chooseImage === 'function' && types.includes('image') && !types.includes('video')) {
+    dd.chooseImage({
+      sourceType: ['album', 'camera'], // 同时支持相册和拍照
+      count: multiple ? max : 1,
+      success: (res: any) => {
+        const results: MediaResult[] = []
+        const filePaths = res.filePaths || (res.url ? [res.url] : [])
+        
+        filePaths.forEach((url: string) => {
+          results.push({
+            type: 'image',
+            url: url
+          })
+        })
+        
+        resolve(results)
+      },
+      fail: (err: any) => {
+        reject(new Error(err.errorMessage || '选择图片失败'))
+      }
+    })
+    return
+  }
+
+  reject(new Error('媒体选择API不可用'))
+}

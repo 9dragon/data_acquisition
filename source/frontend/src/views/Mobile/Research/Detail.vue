@@ -38,7 +38,7 @@
       <van-collapse v-model="activeCollapse" accordion>
         <van-collapse-item title="控制器信息" name="controller">
           <van-cell-group inset>
-            <van-cell title="接口是否被占用">
+            <van-cell title="接口被占用">
               <template #value>
                 <van-tag :type="detail.isInterfaceOccupied ? 'danger' : 'success'">
                   {{ detail.isInterfaceOccupied ? '是' : '否' }}
@@ -46,7 +46,7 @@
               </template>
             </van-cell>
             <van-cell title="接口类型" :value="detail.interfaceType || '-'" />
-            <van-cell title="是否连接触摸屏">
+            <van-cell title="连接触摸屏">
               <template #value>
                 <van-tag :type="detail.hasTouchScreen ? 'success' : 'default'">
                   {{ detail.hasTouchScreen ? '是' : '否' }}

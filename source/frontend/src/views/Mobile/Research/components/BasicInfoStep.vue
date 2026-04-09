@@ -245,38 +245,26 @@ const onManufacturerInputConfirm = () => {
 }
 
 // 初始化
-onMounted(async () => {
+onMounted(() => {
   Object.assign(formData, props.modelValue)
-
-  // 加载车间和设备类型
-  if (currentProject.value?.id) {
-    await Promise.all([loadWorkshops(), loadDeviceTypes()])
-  }
-
-  // 同步项目ID和名称
-  if (currentProject.value?.name) {
-    formData.projectName = currentProject.value.name
-    formData.projectId = currentProject.value.id
-    updateValue()
-  }
 })
 
-// 监听当前项目变化
-watch(currentProject, async (newProject) => {
+// 监听当前项目变化 - 添加 immediate 确保初始化时也执行
+watch(currentProject, async (newProject, oldProject) => {
   if (newProject?.id) {
+    // 同步项目信息
     formData.projectName = newProject.name
     formData.projectId = newProject.id
-    // 清空车间和设备类型选择
-    formData.workshopId = ''
-    formData.workshopName = ''
-    formData.deviceTypeId = ''
-    formData.deviceTypeName = ''
+    
+    // 如果项目切换了（新旧项目ID不同）或选项未加载，则重新加载
+    const projectChanged = oldProject && oldProject.id !== newProject.id
+    if (projectChanged || workshopOptions.value.length === 0) {
+      await Promise.all([loadWorkshops(), loadDeviceTypes()])
+    }
+    
     updateValue()
-
-    // 重新加载车间和设备类型
-    await Promise.all([loadWorkshops(), loadDeviceTypes()])
   }
-}, { deep: true })
+}, { immediate: true })
 
 // 暴露验证方法
 defineExpose({

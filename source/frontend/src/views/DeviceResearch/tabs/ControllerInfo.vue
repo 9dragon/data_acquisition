@@ -6,7 +6,7 @@
     label-width="120px"
     :disabled="disabled"
   >
-    <el-form-item label="接口是否被占用" prop="isInterfaceOccupied">
+    <el-form-item label="接口被占用" prop="isInterfaceOccupied">
       <el-radio-group v-model="formData.isInterfaceOccupied">
         <el-radio :label="true">是</el-radio>
         <el-radio :label="false">否</el-radio>
@@ -24,7 +24,7 @@
       </el-select>
     </el-form-item>
 
-    <el-form-item label="是否连接触摸屏" prop="hasTouchScreen">
+    <el-form-item label="连接触摸屏" prop="hasTouchScreen">
       <el-radio-group v-model="formData.hasTouchScreen">
         <el-radio :label="true">是</el-radio>
         <el-radio :label="false">否</el-radio>
@@ -214,13 +214,13 @@ const formData = reactive<DeviceResearchController>({
 
 const rules: FormRules = {
   isInterfaceOccupied: [
-    { required: true, message: '请选择接口是否被占用', trigger: 'change' }
+    { required: true, message: '请选择接口被占用', trigger: 'change' }
   ],
   interfaceType: [
     { required: true, message: '请选择控制器接口类型', trigger: 'change' }
   ],
   hasTouchScreen: [
-    { required: true, message: '请选择是否连接触摸屏', trigger: 'change' }
+    { required: true, message: '请选择连接触摸屏', trigger: 'change' }
   ],
   controllerBrand: [
     { required: true, message: '请输入控制器品牌', trigger: 'blur' }

@@ -9,7 +9,7 @@ import lombok.Data;
 public class ControllerInfoRequest {
 
     /**
-     * 接口是否被占用
+     * 接口被占用
      */
     private Boolean isInterfaceOccupied;
 
@@ -19,7 +19,7 @@ public class ControllerInfoRequest {
     private String interfaceType;
 
     /**
-     * 是否连接触摸屏
+     * 连接触摸屏
      */
     private Boolean hasTouchScreen;
 

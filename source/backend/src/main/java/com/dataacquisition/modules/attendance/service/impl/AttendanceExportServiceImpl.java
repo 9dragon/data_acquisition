@@ -2,10 +2,7 @@ package com.dataacquisition.modules.attendance.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
-import com.alibaba.excel.write.handler.AbstractSheetWriteHandler;
 import com.alibaba.excel.write.metadata.style.WriteCellStyle;
-import com.alibaba.excel.write.metadata.holder.WriteWorkbookHolder;
-import com.alibaba.excel.write.metadata.holder.WriteSheetHolder;
 import com.alibaba.excel.write.style.HorizontalCellStyleStrategy;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dataacquisition.modules.attendance.dto.AttendanceExportDto;
@@ -69,29 +66,9 @@ public class AttendanceExportServiceImpl implements AttendanceExportService {
 
             HorizontalCellStyleStrategy styleStrategy = new HorizontalCellStyleStrategy(headStyle, contentStyle);
 
-            // 写入Excel
+            // 写入Excel（行高和自动换行通过注解设置）
             EasyExcel.write(response.getOutputStream(), AttendanceExportDto.class)
                 .registerWriteHandler(styleStrategy)
-                .registerWriteHandler(new AbstractSheetWriteHandler() {
-                    @Override
-                    public void afterSheetCreate(WriteWorkbookHolder writeWorkbookHolder, WriteSheetHolder writeSheetHolder) {
-                        // 设置首行（标题行）行高为30
-                        var headerRow = writeSheetHolder.getSheet().getRow(0);
-                        if (headerRow != null) {
-                            headerRow.setHeightInPoints(30);
-                        }
-                        // 设置数据行行高为100（遍历所有行）
-                        var sheet = writeSheetHolder.getSheet();
-                        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
-                            var row = sheet.getRow(i);
-                            if (row != null) {
-                                row.setHeightInPoints(100);
-                            }
-                        }
-                        // 设置位置列（索引5）列宽
-                        writeSheetHolder.getSheet().setColumnWidth(5, 20 * 256);
-                    }
-                })
                 .sheet("签到记录")
                 .doWrite(exportData);
 

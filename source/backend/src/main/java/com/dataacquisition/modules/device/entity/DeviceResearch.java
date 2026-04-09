@@ -50,7 +50,7 @@ public class DeviceResearch extends BaseEntity {
     private String deviceManufacturer;
 
     /**
-     * 控制器接口是否被占用
+     * 控制器接口被占用
      */
     private Boolean isInterfaceOccupied;
 
@@ -60,7 +60,7 @@ public class DeviceResearch extends BaseEntity {
     private String interfaceType;
 
     /**
-     * 是否连接触摸屏
+     * 连接触摸屏
      */
     private Boolean hasTouchScreen;
 
