@@ -169,7 +169,6 @@ const formData = reactive<IssueReportRequest>({
 })
 
 // 选中的显示文本
-const selectedProject = ref('')
 const selectedDevice = ref('')
 
 // 位置信息
@@ -181,13 +180,6 @@ const locationInfo = ref({
 
 // 文件列表
 const fileList = ref<UploaderFileListItem[]>([])
-
-// 项目列表
-const projectList = ref([
-  { text: '项目A', value: 1 },
-  { text: '项目B', value: 2 },
-  { text: '项目C', value: 3 }
-])
 
 // 设备列表
 const deviceList = ref([

@@ -99,7 +99,7 @@
     </van-popup>
 
     <!-- 加载中 -->
-    <van-loading v-else type="spinner" size="24" vertical>
+    <van-loading v-if="!task" type="spinner" size="24" vertical>
       加载中...
     </van-loading>
   </div>
