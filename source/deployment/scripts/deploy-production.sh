@@ -292,10 +292,8 @@ generate_env_file() {
     # 检查是否已有 .env 文件
     if [ -f "$env_file" ]; then
         print_info "加载现有环境变量文件..."
-        # 加载并导出环境变量
-        set -a
-        source "$env_file"
-        set +a
+        # 加载并导出环境变量（grep 过滤掉注释和空行）
+        export $(grep -v '^#' "$env_file" | grep -v '^$' | xargs)
         print_info "环境变量已加载"
         return
     fi
