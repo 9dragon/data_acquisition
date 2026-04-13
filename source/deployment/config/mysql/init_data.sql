@@ -1,3 +1,6 @@
+-- 使用数据库
+USE data_acquisition;
+
 -- ----------------------------
 -- Records of t_system_config
 -- ----------------------------

@@ -14,6 +14,9 @@
  Date: 10/04/2026 15:47:07
 */
 
+-- 使用数据库
+USE data_acquisition;
+
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
