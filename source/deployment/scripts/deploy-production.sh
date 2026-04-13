@@ -250,7 +250,17 @@ EOF
 
 # 生成随机密码
 generate_password() {
-    openssl rand -base32 32 | tr -d "=+/" | cut -c1-32
+    # 使用更兼容的密码生成方式
+    if command -v openssl &> /dev/null; then
+        # 尝试使用 base64 方式（更兼容）
+        openssl rand -base64 32 | tr -d "=+/" | cut -c1-32
+    elif command -v tr &> /dev/null && command -v head &> /dev/null; then
+        # 备用方案：使用 /dev/urandom
+        tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32
+    else
+        # 最后备用方案：固定时间戳+随机数
+        echo "${RANDOM}$(date +%s)${RANDOM}$$" | md5sum | head -c 32
+    fi
 }
 
 # 创建项目目录
@@ -388,14 +398,27 @@ build_images() {
 
     print_info "Git Commit: $git_commit"
 
+    # 检查并安装构建工具
+    check_build_tools
+
     # 构建后端镜像
     print_info "构建后端镜像..."
     cd "${SOURCE_DIR}/backend"
 
-    # 先构建 JAR
-    if [ ! -f "target/*.jar" ]; then
+    # 检查是否需要编译
+    if [ ! -f "target/*.jar" ] || [ ! "$(ls -A target/*.jar 2>/dev/null)" ]; then
         print_info "编译后端项目..."
-        mvn clean package -DskipTests
+        if command -v mvn &> /dev/null; then
+            mvn clean package -DskipTests -q
+        else
+            # 使用 Docker 构建 JAR（避免本地安装 Maven）
+            print_info "使用 Docker 构建后端..."
+            docker run --rm \
+                -v "$(pwd)":/app \
+                -w /app \
+                maven:3.9-eclipse-temurin-17 \
+                mvn clean package -DskipTests -q
+        fi
     fi
 
     docker build \
@@ -415,6 +438,19 @@ build_images() {
         .
 
     print_info "镜像构建完成"
+}
+
+# 检查并安装构建工具
+check_build_tools() {
+    local need_maven=false
+    local need_node=false
+
+    # 检查 Maven（用于后端构建）
+    if ! command -v mvn &> /dev/null; then
+        print_info "Maven 未安装，将使用 Docker 容器构建"
+    fi
+
+    # 检查 Node.js（前端构建在 Docker 内完成，不需要）
 }
 
 # 初始化数据库
