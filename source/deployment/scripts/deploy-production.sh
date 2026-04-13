@@ -538,6 +538,24 @@ start_app_services() {
     print_title "启动应用服务"
 
     cd "$PROJECT_DIR"
+
+    # 验证最新镜像是否构建成功
+    local git_commit=$(cd "$SOURCE_DIR" && git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+    if ! docker image inspect "data-acquisition-backend:${git_commit}" &> /dev/null; then
+        print_error "后端镜像 ${git_commit} 不存在，请先构建镜像"
+        exit 1
+    fi
+
+    # 确保 latest 标签指向最新构建的镜像
+    docker tag "data-acquisition-backend:${git_commit}" data-acquisition-backend:latest
+    docker tag "data-acquisition-frontend:${git_commit}" data-acquisition-frontend:latest
+
+    print_info "使用镜像版本: ${git_commit}"
+
+    # 先停止可能存在的旧容器
+    docker compose -f docker-compose.yml -f docker-compose.prod.yml down
+
+    # 启动服务（使用 prod 配置）
     docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
     print_info "应用服务启动完成"
@@ -614,6 +632,32 @@ EOF
 # 健康检查
 health_check() {
     print_title "健康检查"
+
+    # 等待后端服务启动
+    print_info "等待后端服务启动..."
+    local max_attempts=30
+    local attempt=0
+
+    while [ $attempt -lt $max_attempts ]; do
+        if docker exec data-acquisition-backend curl -f http://localhost:8080/api/v1/actuator/health >/dev/null 2>&1; then
+            break
+        fi
+        attempt=$((attempt + 1))
+        echo -n "."
+        sleep 2
+    done
+    echo ""
+
+    # 验证 Spring Profile
+    print_info "验证 Spring Profile 配置..."
+    local active_profile=$(docker exec data-acquisition-backend env | grep SPRING_PROFILES_ACTIVE | cut -d'=' -f2)
+    if [ "$active_profile" = "prod" ]; then
+        print_info "Spring Profile: ${GREEN}prod${NC} ✓"
+    else
+        print_error "Spring Profile: ${RED}${active_profile}${NC} (应为: prod)"
+        print_error "部署配置可能有问题，请检查 docker-compose.prod.yml"
+        return 1
+    fi
 
     local script_dir="${SOURCE_DIR}/deployment/scripts"
     if [ -f "${script_dir}/health-check.sh" ]; then

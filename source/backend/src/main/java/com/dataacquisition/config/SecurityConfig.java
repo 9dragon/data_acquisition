@@ -73,7 +73,8 @@ public class SecurityConfig {
                                 "/swagger-resources/**",
                                 "/v3/api-docs/**",
                                 "/favicon.ico",
-                                "/error"
+                                "/error",
+                                "/actuator/**"
                         ).permitAll()
                         // 其他请求需要认证
                         .anyRequest().authenticated()
