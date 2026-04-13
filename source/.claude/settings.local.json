@@ -62,7 +62,9 @@
       "Bash(find backend:*)",
       "Bash(npm list:*)",
       "Bash(find:*)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(rm:*)",
+      "Bash(git add:*)"
     ]
   }
 }

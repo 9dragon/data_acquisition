@@ -55,7 +55,8 @@ deployment/
 │   ├── nginx/
 │   │   └── nginx.prod.conf       # 生产环境Nginx配置
 │   └── mysql/
-│       └── init.sql              # 数据库初始化脚本
+│       ├── init_schema.sql       # 数据库结构初始化脚本
+│       └── init_data.sql         # 数据库数据初始化脚本
 ├── docker-compose.yml            # 完整服务编排
 ├── docker-compose.prod.yml       # 生产环境覆盖配置
 ├── .env.production.template      # 环境变量模板

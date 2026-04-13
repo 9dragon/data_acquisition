@@ -496,12 +496,27 @@ init_database() {
     echo ""
 
     # 执行初始化脚本
-    if [ -f "${PROJECT_DIR}/config/mysql/init.sql" ]; then
-        print_info "执行数据库初始化脚本..."
-        docker exec -i data-acquisition-mysql mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" < "${PROJECT_DIR}/config/mysql/init.sql"
-        print_info "数据库初始化完成"
+    local schema_file="${PROJECT_DIR}/config/mysql/init_schema.sql"
+    local data_file="${PROJECT_DIR}/config/mysql/init_data.sql"
+
+    if [ -f "$schema_file" ]; then
+        print_info "执行数据库结构初始化脚本..."
+        docker exec -i data-acquisition-mysql mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" < "$schema_file"
+        print_info "数据库结构初始化完成"
     else
-        print_warning "未找到数据库初始化脚本，跳过"
+        print_warning "未找到数据库结构初始化脚本: $schema_file"
+    fi
+
+    if [ -f "$data_file" ]; then
+        print_info "执行数据库数据初始化脚本..."
+        docker exec -i data-acquisition-mysql mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" < "$data_file"
+        print_info "数据库数据初始化完成"
+    else
+        print_warning "未找到数据库数据初始化脚本: $data_file"
+    fi
+
+    if [ ! -f "$schema_file" ] && [ ! -f "$data_file" ]; then
+        print_warning "未找到任何数据库初始化脚本，跳过"
     fi
 }
 
