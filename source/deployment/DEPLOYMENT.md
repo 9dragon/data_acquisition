@@ -59,7 +59,7 @@ deployment/
 │       └── init_data.sql         # 数据库数据初始化脚本
 ├── docker-compose.yml            # 完整服务编排
 ├── docker-compose.prod.yml       # 生产环境覆盖配置
-├── .env.production.template      # 环境变量模板
+├── .env                          # 环境变量（自动生成）
 └── README.md                     # 本文档
 ```
 
@@ -452,7 +452,7 @@ sudo ./scripts/deploy-production.sh
 
 ### 1. 调整 JVM 参数
 
-编辑 `.env.production`:
+编辑 `.env`:
 
 ```bash
 JAVA_OPTS=-Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200
@@ -500,7 +500,7 @@ A: 检查防火墙设置，确保 80 端口已开放。
 
 ### Q: 数据库连接失败？
 
-A: 检查 `.env.production` 中的密码是否正确，确认 MySQL 容器正在运行。
+A: 检查 `.env` 中的密码是否正确，确认 MySQL 容器正在运行。
 
 ### Q: 如何查看生成的密码？
 

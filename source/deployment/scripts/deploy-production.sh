@@ -32,7 +32,7 @@
 #   (请在部署后立即修改)
 #
 # 生成的文件:
-#   /opt/data-acquisition/.env.production  (环境配置)
+#   /opt/data-acquisition/.env              (环境配置)
 #   /opt/data-acquisition/credentials.txt  (凭证信息，请妥善保管)
 #   /opt/data-acquisition/version.json     (版本信息)
 #
@@ -287,10 +287,16 @@ create_directories() {
 generate_env_file() {
     print_title "生成环境变量文件"
 
-    local env_file="${PROJECT_DIR}/.env.production"
+    local env_file="${PROJECT_DIR}/.env"
 
+    # 检查是否已有 .env 文件
     if [ -f "$env_file" ]; then
-        print_warning "环境变量文件已存在，跳过生成"
+        print_info "加载现有环境变量文件..."
+        # 加载并导出环境变量
+        set -a
+        source "$env_file"
+        set +a
+        print_info "环境变量已加载"
         return
     fi
 
@@ -299,6 +305,15 @@ generate_env_file() {
     local mysql_password=$(generate_password)
     local redis_password=$(generate_password)
     local minio_password=$(generate_password)
+
+    # 导出环境变量供脚本使用
+    export MYSQL_ROOT_PASSWORD="${mysql_root_password}"
+    export MYSQL_DATABASE="data_acquisition"
+    export MYSQL_USER="data_acquisition"
+    export MYSQL_PASSWORD="${mysql_password}"
+    export REDIS_PASSWORD="${redis_password}"
+    export MINIO_ROOT_USER="admin"
+    export MINIO_ROOT_PASSWORD="${minio_password}"
 
     # 创建环境变量文件
     cat > "$env_file" << EOF
