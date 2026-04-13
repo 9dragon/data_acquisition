@@ -61,7 +61,8 @@
       "Bash(find D:/work/projects/data_acquisition/source/backend/src/main/resources/mapper -name *.xml)",
       "Bash(find backend:*)",
       "Bash(npm list:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Read(//tmp/**)"
     ]
   }
 }

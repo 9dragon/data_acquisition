@@ -75,6 +75,57 @@ services:
       timeout: 5s
       retries: 5
 
+  # Backend API（开发环境，生产环境配置见 docker-compose.prod.yml）
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: data-acquisition-backend
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      SPRING_PROFILES_ACTIVE: dev
+    ports:
+      - "8080:8080"
+    networks:
+      - data-acquisition-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Frontend Web（开发环境，生产环境配置见 docker-compose.prod.yml）
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: data-acquisition-frontend
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+    ports:
+      - "3000:80"
+    networks:
+      - data-acquisition-network
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
 networks:
   data-acquisition-network:
     driver: bridge

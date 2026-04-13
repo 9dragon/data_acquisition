@@ -36,12 +36,11 @@ public class SystemConfigController {
 
     /**
      * 获取单个配置
-     * 根据configType返回不同类型：JSON返回解析后的对象，其他返回字符串
+     * 统一返回JSON解析后的对象
      */
     @Operation(summary = "获取单个配置")
     @GetMapping("/{configKey}")
     public Result<Object> getConfig(@PathVariable String configKey) {
-        // 先获取配置实体
         SystemConfig config = systemConfigService.getOne(new LambdaQueryWrapper<SystemConfig>()
             .eq(SystemConfig::getConfigKey, configKey)
             .last("LIMIT 1"));
@@ -50,24 +49,14 @@ public class SystemConfigController {
             return Result.success(null);
         }
 
-        // 根据configType返回不同的数据类型
-        String configType = config.getConfigType();
-        if ("JSON".equalsIgnoreCase(configType)) {
-            // 返回解析后的JSON对象
-            Object jsonObj = systemConfigService.getConfigJson(configKey);
-            // 如果解析失败，返回字符串
-            if (jsonObj == null) {
-                return Result.success(config.getConfigValue());
-            }
-            // 将hutool的JSONObject转换为Map，便于Jackson序列化
-            if (jsonObj instanceof cn.hutool.json.JSONObject) {
-                return Result.success(((cn.hutool.json.JSONObject) jsonObj).toBean(Map.class));
-            }
-            return Result.success(jsonObj);
-        } else {
-            // 返回字符串
+        Object jsonObj = systemConfigService.getConfigJson(configKey);
+        if (jsonObj == null) {
             return Result.success(config.getConfigValue());
         }
+        if (jsonObj instanceof cn.hutool.json.JSONObject) {
+            return Result.success(((cn.hutool.json.JSONObject) jsonObj).toBean(Map.class));
+        }
+        return Result.success(jsonObj);
     }
 
     /**

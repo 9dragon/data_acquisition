@@ -125,6 +125,26 @@
             <el-slider v-model="watermarkConfig.alpha" :min="0" :max="1" :step="0.1" />
           </el-form-item>
 
+          <el-form-item label="背景颜色">
+            <el-color-picker v-model="watermarkConfig.backgroundColor" />
+          </el-form-item>
+
+          <el-divider>图标配置</el-divider>
+
+          <el-form-item label="时间图标">
+            <el-input v-model="watermarkConfig.timeIcon" placeholder="🕐" maxlength="2" style="width: 120px" />
+          </el-form-item>
+
+          <el-form-item label="位置图标">
+            <el-input v-model="watermarkConfig.locationIcon" placeholder="📍" maxlength="2" style="width: 120px" />
+          </el-form-item>
+
+          <el-form-item label="用户图标">
+            <el-input v-model="watermarkConfig.userIcon" placeholder="👤" maxlength="2" style="width: 120px" />
+          </el-form-item>
+
+          <el-divider>显示内容</el-divider>
+
           <el-form-item label="显示内容">
             <el-checkbox-group v-model="watermarkContent">
               <el-checkbox label="showTime">时间</el-checkbox>
@@ -163,9 +183,13 @@ const watermarkConfig = reactive({
   fontSize: 16,
   color: '#FFFFFF',
   alpha: 0.8,
+  backgroundColor: '#000000',
   showTime: true,
   showLocation: true,
-  showUser: true
+  showUser: true,
+  timeIcon: '🕐',
+  locationIcon: '📍',
+  userIcon: '👤'
 })
 
 const watermarkContent = computed({

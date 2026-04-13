@@ -155,9 +155,13 @@ interface WatermarkConfig {
   fontSize: number
   color: string
   alpha: number
+  backgroundColor: string
   showTime: boolean
   showLocation: boolean
   showUser: boolean
+  timeIcon: string
+  locationIcon: string
+  userIcon: string
   [key: string]: any
 }
 
@@ -187,22 +191,43 @@ const watermarkConfig = ref<WatermarkConfig>({
   fontSize: 24,
   color: '#FFFFFF',
   alpha: 0.8,
+  backgroundColor: '#000000',
   showTime: true,
   showLocation: true,
-  showUser: true
+  showUser: true,
+  timeIcon: '🕐',
+  locationIcon: '📍',
+  userIcon: '👤'
 })
 
 // 水印配置转换（适配WatermarkCamera组件）
 const cameraWatermarkConfig = computed(() => {
   const config = watermarkConfig.value
+
+  // 将背景颜色和透明度组合
+  const applyAlphaToColor = (color: string, alphaValue: number): string => {
+    if (color.startsWith('#')) {
+      const r = parseInt(color.slice(1, 3), 16)
+      const g = parseInt(color.slice(3, 5), 16)
+      const b = parseInt(color.slice(5, 7), 16)
+      return `rgba(${r}, ${g}, ${b}, ${alphaValue})`
+    }
+    return color
+  }
+
+  const bgRgba = applyAlphaToColor(config.backgroundColor || '#000000', config.alpha)
+
   return {
     showTime: config.showTime,
     showLocation: config.showLocation,
     showName: config.showUser,
-    backgroundColor: `rgba(0, 0, 0, ${config.alpha})`,
+    backgroundColor: bgRgba,
     textColor: config.color,
     fontSize: config.fontSize,
-    position: config.position
+    position: config.position,
+    timeIcon: config.timeIcon || '🕐',
+    locationIcon: config.locationIcon || '📍',
+    userIcon: config.userIcon || '👤'
   }
 })
 
@@ -329,8 +354,8 @@ const fetchLocation = async () => {
 
 // 拍照
 const takePhoto = () => {
-  // 使用钉钉API拍照并添加水印（避免黑屏问题）
-  takePhotoWithDingTalk()
+  // 直接显示 WatermarkCamera 组件进行拍照
+  showCamera.value = true
 }
 
 // 处理相机组件拍照结果
@@ -341,7 +366,7 @@ const handlePhotoCaptured = (photoData: string) => {
   showToast('拍照成功')
 }
 
-// 钉钉API拍照并添加水印
+// 钉钉API拍照并添加水印（使用WatermarkCamera组件处理）
 const takePhotoWithDingTalk = async () => {
   try {
     showLoadingToast({
@@ -355,10 +380,8 @@ const takePhotoWithDingTalk = async () => {
     // 将图片URL转换为base64
     const base64Image = await urlToBase64(imageUrl)
 
-    // 添加水印
-    const watermarkedImage = await addWatermarkToImage(base64Image)
-
-    photo.value = watermarkedImage
+    // 直接返回图片（水印由组件处理）
+    photo.value = base64Image
     closeToast()
     showToast('拍照成功')
   } catch (error: any) {
@@ -388,147 +411,6 @@ const urlToBase64 = (url: string): Promise<string> => {
       reject(new Error('图片加载失败'))
     }
     img.src = url
-  })
-}
-
-// 为图片添加水印
-const addWatermarkToImage = async (base64Data: string): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    img.onload = () => {
-      const canvas = document.createElement('canvas')
-      canvas.width = img.width
-      canvas.height = img.height
-      const ctx = canvas.getContext('2d')
-      if (!ctx) {
-        reject(new Error('无法创建Canvas上下文'))
-        return
-      }
-
-      // 绘制原图
-      ctx.drawImage(img, 0, 0)
-
-      // 如果水印未启用，直接返回原图
-      if (!watermarkConfig.value.enabled) {
-        const originalData = canvas.toDataURL('image/jpeg', 0.9)
-        resolve(originalData)
-        return
-      }
-
-      // 配置
-      const config = watermarkConfig.value
-
-      // 构建水印文本
-      const watermarkTexts = []
-      if (config.showTime && currentTime.value) watermarkTexts.push(currentTime.value)
-      if (config.showLocation && locationInfo.value.address) watermarkTexts.push(locationInfo.value.address)
-      if (config.showUser && userStore.name) watermarkTexts.push(userStore.name)
-
-      // 如果没有水印内容，直接返回原图
-      if (watermarkTexts.length === 0) {
-        const originalData = canvas.toDataURL('image/jpeg', 0.9)
-        resolve(originalData)
-        return
-      }
-
-      const watermarkText = watermarkTexts.join(' | ')
-
-      // 设置水印样式
-      ctx.font = `bold ${config.fontSize}px Arial`
-      // 颜色和透明度处理
-      const textColor = config.color || '#FFFFFF'
-      const alpha = config.alpha || 0.8
-      // 将十六进制颜色转换为rgba以应用透明度
-      const applyAlphaToColor = (color: string, alphaValue: number): string => {
-        if (color.startsWith('#')) {
-          const r = parseInt(color.slice(1, 3), 16)
-          const g = parseInt(color.slice(3, 5), 16)
-          const b = parseInt(color.slice(5, 7), 16)
-          return `rgba(${r}, ${g}, ${b}, ${alphaValue})`
-        }
-        // 如果已经是rgba或rgb，尝试替换alpha
-        if (color.startsWith('rgba')) {
-          return color.replace(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*[\d\.]+\)/, `rgba($1, $2, $3, ${alphaValue})`)
-        }
-        if (color.startsWith('rgb')) {
-          return `rgba(${color.substring(4, color.length - 1)}, ${alphaValue})`
-        }
-        // 其他格式直接返回，不应用alpha
-        return color
-      }
-      ctx.fillStyle = applyAlphaToColor(textColor, alpha)
-      ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)' // 阴影颜色保持固定
-      ctx.lineWidth = 2
-      ctx.textAlign = 'left'
-
-      // 计算水印位置（根据配置）
-      const padding = 20
-      const maxWidth = canvas.width - (padding * 2) // 最大宽度（左右各留padding）
-      const lineHeight = config.fontSize * 1.2 // 行高
-
-      // 文本换行处理
-      const words = watermarkText.split(' | ')
-      const lines: string[] = []
-      let currentLine = ''
-
-      for (const word of words) {
-        // 如果当前行不为空，添加分隔符
-        const separator = currentLine ? ' | ' : ''
-        const testLine = currentLine + separator + word
-        const metrics = ctx.measureText(testLine)
-
-        if (metrics.width > maxWidth && currentLine) {
-          // 当前行已满，保存并开始新行
-          lines.push(currentLine)
-          currentLine = word
-        } else {
-          currentLine = testLine
-        }
-      }
-      if (currentLine) {
-        lines.push(currentLine)
-      }
-
-      // 如果没有换行，保持单行逻辑
-      if (lines.length === 0) {
-        lines.push(watermarkText)
-      }
-
-      // 计算每行的x坐标和起始y坐标
-      let x = padding
-      let y = canvas.height - padding
-
-      // 根据位置配置调整坐标
-      if (config.position === 'top_left') {
-        y = padding + config.fontSize
-      } else if (config.position === 'top_right') {
-        x = canvas.width - padding
-        y = padding + config.fontSize
-        ctx.textAlign = 'right'
-      } else if (config.position === 'bottom_left') {
-        x = padding
-        y = canvas.height - padding - (lines.length - 1) * lineHeight
-      } else if (config.position === 'bottom_right') {
-        x = canvas.width - padding
-        y = canvas.height - padding - (lines.length - 1) * lineHeight
-        ctx.textAlign = 'right'
-      }
-
-      // 绘制多行水印
-      for (const line of lines) {
-        ctx.strokeText(line, x, y)
-        ctx.fillText(line, x, y)
-        y += lineHeight
-      }
-
-      // 转换为base64
-      const watermarkedData = canvas.toDataURL('image/jpeg', 0.9)
-      resolve(watermarkedData)
-    }
-    img.onerror = (err) => {
-      reject(new Error(`图片加载失败: ${err}`))
-    }
-    img.src = base64Data
   })
 }
 

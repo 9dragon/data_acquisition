@@ -1,53 +1,93 @@
-# 数据采集系统 - 远程服务器部署指南
+# 数据采集系统 - 部署指南
 
 ## 概述
 
-本部署方案使用 Docker Compose 在 Ubuntu 22.04 服务器上一键部署以下组件：
+本部署方案使用 Docker Compose 在服务器上一键部署完整的数据采集系统。
 
-| 组件 | 版本 | 端口 |
+### 部署组件
+
+| 组件 | 版本 | 端口 | 说明 |
+|------|------|------|------|
+| MySQL | 8.0 | 3306 | 数据库 |
+| Redis | 7 | 6379 | 缓存 |
+| MinIO | 最新 | 9000, 9001 | 对象存储 |
+| 后端服务 | latest | 8080 | Spring Boot API |
+| 前端服务 | latest | 80 | Vue Web 界面 |
+
+### 部署脚本说明
+
+| 脚本 | 位置 | 说明 |
 |------|------|------|
-| MySQL | 8.0 | 3306 |
-| Redis | 7 | 6379 |
-| MinIO | 最新 | 9000, 9001 |
+| `deploy.sh` | deployment/ | 部署依赖服务（MySQL/Redis/MinIO）|
+| `deploy-production.sh` | deployment/scripts/ | **完整部署**（依赖+应用），推荐使用 |
+
+> **推荐使用 `deploy-production.sh`**，它会自动安装 Docker 和 Docker Compose，并部署完整系统。
 
 ## 环境要求
 
-- **操作系统**: Ubuntu 22.04 (推荐) 或其他 Debian 系发行版
+- **操作系统**: Ubuntu 20.04+ / Debian 11+ / CentOS 8+
 - **权限**: sudo 权限
 - **网络**: 服务器需要能访问 Docker Hub
-- **内存**: 建议 4GB 以上
-- **磁盘**: 建议 20GB 以上可用空间
+- **内存**: 最低 4GB，推荐 8GB
+- **磁盘**: 最低 20GB，推荐 50GB
+
+**注意**: Docker 和 Docker Compose 会在部署时自动安装，无需预先配置。
 
 ## 快速开始
 
-### 1. 上传文件到服务器
+### 1. 上传项目文件
 
-使用 SFTP 或 scp 命令将以下文件上传到服务器的任意目录（如 `/tmp/deploy/`）：
+将整个项目上传到服务器：
 
 ```bash
-# 使用 scp 上传（在本地执行）
-scp deploy.sh docker-compose.yml .env.template user@your-server:/tmp/deploy/
+# 使用 git clone（推荐）
+git clone <repository-url> /opt/data-acquisition-source
+
+# 或使用 scp 上传
+scp -r deployment/ user@your-server:/tmp/data-acquisition/
 ```
 
 ### 2. 执行部署脚本
 
 ```bash
-# SSH 连接到服务器
-ssh user@your-server
-
-# 进入上传目录
-cd /tmp/deploy
+# 进入脚本目录
+cd /opt/data-acquisition-source/deployment/scripts
 
 # 添加执行权限
-chmod +x deploy.sh
+chmod +x deploy-production.sh
 
 # 执行部署（需要 sudo 权限）
-sudo ./deploy.sh
+sudo ./deploy-production.sh
 ```
 
-### 3. 获取连接凭据
+部署脚本会自动完成：
+1. ✅ 安装 Docker 和 Docker Compose
+2. ✅ 配置国内镜像加速器
+3. ✅ 创建项目目录 `/opt/data-acquisition`
+4. ✅ 生成安全密码
+5. ✅ 构建应用镜像
+6. ✅ 初始化数据库
+7. ✅ 启动所有服务
 
-部署完成后，凭据信息会保存在 `/opt/data-acquisition/credentials.txt`：
+### 3. 访问系统
+
+部署完成后，可以通过以下地址访问：
+
+| 服务 | 地址 | 说明 |
+|------|------|------|
+| 前端页面 | http://your-server-ip | Web 界面 |
+| 后端 API | http://your-server-ip:8080/api/v1 | API 接口 |
+| MinIO 控制台 | http://your-server-ip:9001 | 对象存储管理 |
+
+**默认账号**:
+- 用户名: `admin`
+- 密码: `admin123`
+
+> ⚠️ **安全提示**: 部署后请立即修改默认密码！
+
+### 4. 获取连接凭据
+
+所有服务的凭据信息保存在 `/opt/data-acquisition/credentials.txt`：
 
 ```bash
 sudo cat /opt/data-acquisition/credentials.txt
@@ -65,21 +105,140 @@ sudo rm /opt/data-acquisition/credentials.txt
 
 ## 服务管理
 
+### 使用管理脚本
+
+统一管理脚本 `manage.sh` 提供了所有常用操作：
+
+```bash
+cd /opt/data-acquisition
+
+# 启动服务
+sudo ./scripts/manage.sh start
+
+# 停止服务
+sudo ./scripts/manage.sh stop
+
+# 重启服务
+sudo ./scripts/manage.sh restart
+
+# 查看状态
+sudo ./scripts/manage.sh status
+
+# 查看日志
+sudo ./scripts/manage.sh logs
+sudo ./scripts/manage.sh logs backend
+
+# 健康检查
+sudo ./scripts/manage.sh health
+
+# 执行备份
+sudo ./scripts/manage.sh backup
+
+# 查看版本信息
+sudo ./scripts/manage.sh version
+
+# 进入容器
+sudo ./scripts/manage.sh exec mysql
+sudo ./scripts/manage.sh exec redis
+```
+
 ### 项目目录结构
 
 ```
 /opt/data-acquisition/
-├── docker-compose.yml      # Docker 编排文件
-├── .env                    # 环境变量（包含密码）
-├── credentials.txt         # 凭据信息（部署后应删除）
-├── data/                   # 数据持久化目录
-│   ├── mysql/             # MySQL 数据文件
-│   ├── redis/             # Redis 数据文件
-│   └── minio/             # MinIO 数据文件
-└── config/                # 配置文件（可选）
-    ├── mysql/
-    └── redis/
+├── docker-compose.yml          # Docker 编排文件
+├── docker-compose.prod.yml     # 生产环境配置
+├── .env.production             # 环境变量（包含密码）
+├── credentials.txt             # 凭据信息（部署后应删除）
+├── version.json                # 版本信息
+├── scripts/                    # 管理脚本
+│   ├── manage.sh              # 统一管理
+│   ├── update-production.sh   # 系统更新
+│   ├── backup.sh              # 备份
+│   ├── rollback.sh            # 回滚
+│   └── health-check.sh        # 健康检查
+├── data/                      # 数据持久化目录
+│   ├── mysql/                # MySQL 数据文件
+│   ├── redis/                # Redis 数据文件
+│   └── minio/                # MinIO 数据文件
+├── logs/                      # 日志目录
+│   ├── backend/              # 后端日志
+│   └── nginx/                # Nginx 日志
+└── backups/                   # 备份目录
 ```
+
+## 系统更新
+
+### 自动更新（推荐）
+
+```bash
+cd /opt/data-acquisition-source/deployment/scripts
+sudo ./update-production.sh
+```
+
+更新脚本会自动：
+1. 创建备份
+2. 拉取最新代码
+3. 构建新版本镜像
+4. 滚动更新（零停机）
+5. 健康检查验证
+6. 清理旧镜像
+
+如果更新失败，会自动回滚到上一个版本。
+
+## 备份与恢复
+
+### 执行备份
+
+```bash
+cd /opt/data-acquisition
+sudo ./scripts/backup.sh
+```
+
+备份内容包括：
+- 数据库（完整 SQL 导出）
+- MinIO 数据
+- 配置文件
+- 版本信息
+
+### 恢复备份
+
+```bash
+cd /opt/data-acquisition
+sudo ./scripts/rollback.sh
+```
+
+然后按提示选择要恢复的备份版本。
+
+## 连接验证
+
+### MySQL
+
+```bash
+# 使用管理脚本
+sudo ./scripts/manage.sh exec mysql
+
+# 或直接连接
+docker exec -it data-acquisition-mysql mysql -u data_acquisition -p
+```
+
+### Redis
+
+```bash
+# 使用管理脚本
+sudo ./scripts/manage.sh exec redis
+
+# 测试连接
+docker exec -it data-acquisition-redis redis-cli -a your_password ping
+# 输出: PONG
+```
+
+### MinIO
+
+- **API 地址**: `http://your-server-ip:9000`
+- **控制台地址**: `http://your-server-ip:9001`
+
+使用 `credentials.txt` 中的用户名和密码登录控制台。
 
 ### 常用命令
 
@@ -142,56 +301,80 @@ docker exec -it data-acquisition-redis redis-cli -a your_password ping
 
 使用 `credentials.txt` 中的用户名和密码登录控制台。
 
+## 健康检查
+
+```bash
+cd /opt/data-acquisition
+sudo ./scripts/health-check.sh
+```
+
+检查内容包括：
+- Docker 服务状态
+- MySQL 连接
+- Redis 连接
+- MinIO 服务
+- 后端 API
+- 前端服务
+
 ## 防火墙配置
 
-如果使用 `ufw` 防火墙，部署脚本会自动配置。手动配置如下：
+### 生产环境（推荐）
+
+仅开放必要端口：
 
 ```bash
 # 开放端口
-sudo ufw allow 3306/tcp  # MySQL
-sudo ufw allow 6379/tcp  # Redis
-sudo ufw allow 9000/tcp  # MinIO API
-sudo ufw allow 9001/tcp  # MinIO Console
+sudo ufw allow 80/tcp    # 前端 HTTP
+sudo ufw allow 443/tcp   # 前端 HTTPS
+
+# 启用防火墙
+sudo ufw enable
 
 # 查看状态
 sudo ufw status
 ```
 
+### 开发环境
+
+如需直接访问数据库和 MinIO，开放相应端口：
+
+```bash
+sudo ufw allow 3306/tcp  # MySQL
+sudo ufw allow 6379/tcp  # Redis
+sudo ufw allow 9000/tcp  # MinIO API
+sudo ufw allow 9001/tcp  # MinIO Console
+sudo ufw allow 8080/tcp  # 后端 API
+```
+
 ## 生产环境建议
 
 1. **修改默认密码**: 部署后立即修改所有默认密码
-2. **限制访问**: 配置防火墙只允许特定 IP 访问
-3. **备份策略**: 定期备份 `/opt/data-acquisition/data/` 目录
-4. **监控告警**: 配置容器健康检查和告警
-5. **SSL/TLS**: 生产环境建议启用 HTTPS
+2. **配置 HTTPS**: 使用 Let's Encrypt 免费证书
+3. **限制访问**: 防火墙只开放 80/443 端口
+4. **定期备份**: 使用 `backup.sh` 定期执行备份
+5. **监控告警**: 配置健康检查和告警通知
+6. **日志管理**: 定期清理或归档日志文件
 
-## 备份与恢复
-
-### 备份
+### 配置 HTTPS
 
 ```bash
-# 创建备份目录
-sudo mkdir -p /opt/backups/data-acquisition
+# 安装 certbot
+sudo apt-get install certbot
 
-# 备份数据目录
-sudo tar -czf /opt/backups/data-acquisition/data-$(date +%Y%m%d).tar.gz -C /opt/data-acquisition data
+# 获取证书
+sudo certbot certonly --standalone -d your-domain.com
 
-# 备份环境配置
-sudo cp /opt/data-acquisition/.env /opt/backups/data-acquisition/.env-$(date +%Y%m%d)
+# 配置 Nginx 使用证书
+# 编辑 config/nginx/nginx.prod.conf
 ```
 
-### 恢复
+### 性能优化
+
+编辑 `/opt/data-acquisition/.env.production`：
 
 ```bash
-# 停止服务
-cd /opt/data-acquisition
-docker compose down
-
-# 恢复数据
-sudo tar -xzf /opt/backups/data-acquisition/data-20250120.tar.gz -C /opt/data-acquisition
-
-# 启动服务
-docker compose up -d
+# JVM 参数调整
+JAVA_OPTS=-Xms1g -Xmx2g -XX:+UseG1GC
 ```
 
 ## 故障排查
@@ -199,86 +382,114 @@ docker compose up -d
 ### 服务无法启动
 
 ```bash
-# 查看详细日志
-docker compose logs -f
+# 查看所有服务状态
+sudo ./scripts/manage.sh status
 
-# 检查端口占用
-sudo netstat -tulpn | grep -E '3306|6379|9000|9001'
+# 查看服务日志
+sudo ./scripts/manage.sh logs
 
-# 检查磁盘空间
-df -h
+# 健康检查
+sudo ./scripts/manage.sh health
 ```
 
 ### 容器反复重启
 
 ```bash
 # 查看容器详情
-docker inspect data-acquisition-mysql
+docker inspect data-acquisition-backend
 
-# 检查健康状态
-docker compose ps
+# 查看容器日志
+docker logs data-acquisition-backend
+```
+
+### 磁盘空间不足
+
+```bash
+# 清理旧镜像
+sudo ./scripts/manage.sh cleanup
+
+# 查看磁盘使用
+df -h
 ```
 
 ### 密码丢失
 
-重新生成密码：
+查看 `/opt/data-acquisition/.env.production` 或重新生成：
 
 ```bash
 cd /opt/data-acquisition
 
 # 停止服务
-docker compose down
+sudo ./scripts/manage.sh stop
 
-# 重新生成 .env（使用 deploy.sh 或手动编辑）
+# 重新生成密码
+# 编辑 .env.production 文件
 
 # 启动服务
-docker compose up -d
+sudo ./scripts/manage.sh start
 ```
 
-## 后端配置
+## 版本回滚
 
-将后端 `application-prod.yml` 配置更新为：
+### 交互式回滚
 
-```yaml
-spring:
-  datasource:
-    url: jdbc:mysql://your-server-ip:3306/data_acquisition?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
-    username: data_acquisition
-    password: your_mysql_password
-  data:
-    redis:
-      host: your-server-ip
-      port: 6379
-      password: your_redis_password
+```bash
+cd /opt/data-acquisition
+sudo ./scripts/rollback.sh
+```
 
-minio:
-  endpoint: http://your-server-ip:9000
-  accessKey: your_minio_user
-  secretKey: your_minio_password
-  bucketName: data-acquisition
+### 自动回滚到上一版本
+
+```bash
+sudo ./scripts/rollback.sh --auto
+```
+
+### 列出可用版本
+
+```bash
+sudo ./scripts/rollback.sh --list
 ```
 
 ## 卸载
 
 ```bash
-# 停止并删除容器
+# 停止所有服务
 cd /opt/data-acquisition
-docker compose down
+sudo ./scripts/manage.sh stop
 
-# 删除数据和配置
+# 停止并删除容器
+docker compose -f docker-compose.yml -f docker-compose.prod.yml down
+
+# 删除项目和数据
 sudo rm -rf /opt/data-acquisition
 
 # 删除防火墙规则（如已配置）
-sudo ufw delete allow 3306/tcp
-sudo ufw delete allow 6379/tcp
-sudo ufw delete allow 9000/tcp
-sudo ufw delete allow 9001/tcp
+sudo ufw delete allow 80/tcp
+sudo ufw delete allow 443/tcp
 ```
 
-## 支持
+## 常见问题
 
-如有问题，请检查：
-1. Docker 服务是否正常运行
-2. 端口是否被占用
-3. 防火墙是否正确配置
-4. 磁盘空间是否充足
+### Q: 部署后无法访问前端？
+
+A: 检查防火墙设置，确保 80 端口已开放。
+
+### Q: 数据库连接失败？
+
+A: 检查 `.env.production` 中的密码是否正确，确认 MySQL 容器正在运行。
+
+### Q: 如何查看生成的密码？
+
+A: 查看 `/opt/data-acquisition/credentials.txt` 文件。
+
+### Q: 更新失败怎么办？
+
+A: 查看日志确定失败原因，使用 `rollback.sh` 回滚到上一版本。
+
+### Q: 如何扩展为多实例部署？
+
+A: 使用 Docker Swarm 或 Kubernetes，配置负载均衡器。
+
+## 完整文档
+
+更多详细信息请参考 [DEPLOYMENT.md](./DEPLOYMENT.md)

@@ -1,0 +1,87 @@
+version: '3.8'
+
+# 生产环境应用服务配置
+# 使用方式: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+  # 后端服务
+  backend:
+    image: data-acquisition-backend:${BACKEND_IMAGE_TAG:-latest}
+    container_name: data-acquisition-backend
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      # 数据库配置
+      DB_HOST: ${DB_HOST:-mysql}
+      DB_USERNAME: ${DB_USERNAME:-data_acquisition}
+      DB_PASSWORD: ${DB_PASSWORD}
+      # Redis配置
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      # MinIO配置
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-http://minio:9000}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME:-data-acquisition}
+      # 钉钉配置
+      DINGTALK_APP_KEY: ${DINGTALK_APP_KEY:-}
+      DINGTALK_APP_SECRET: ${DINGTALK_APP_SECRET:-}
+      DINGTALK_AGENT_ID: ${DINGTALK_AGENT_ID:-}
+      DINGTALK_CORP_ID: ${DINGTALK_CORP_ID:-}
+      DINGTALK_SYNC_ENABLED: ${DINGTALK_SYNC_ENABLED:-false}
+      # JVM参数
+      JAVA_OPTS: ${JAVA_OPTS:--Xms512m -Xmx1024m -XX:+UseG1GC}
+      # Spring Profile
+      SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./logs/backend:/var/log/data-acquisition
+    networks:
+      - data-acquisition-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "7"
+
+  # 前端服务
+  frontend:
+    image: data-acquisition-frontend:${FRONTEND_IMAGE_TAG:-latest}
+    container_name: data-acquisition-frontend
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - data-acquisition-network
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "30"

@@ -89,27 +89,24 @@ public class SystemConfigServiceImpl extends ServiceImpl<SystemConfigMapper, Sys
             .eq(SystemConfig::getConfigKey, configKey)
             .last("LIMIT 1"));
 
+        String jsonValue = JSONUtil.isJson(configValue) ? configValue : JSONUtil.toJsonStr(configValue);
+
         if (config != null) {
-            config.setConfigValue(configValue);
-            // 如果原有configType为空，根据内容重新判断
-            if (StrUtil.isBlank(config.getConfigType())) {
-                config.setConfigType(JSONUtil.isJson(configValue) ? "JSON" : "STRING");
-            }
+            config.setConfigValue(jsonValue);
+            config.setConfigType("JSON");
             updateById(config);
         } else {
             config = new SystemConfig();
             config.setConfigKey(configKey);
-            config.setConfigValue(configValue);
-            // 根据内容判断configType
-            config.setConfigType(JSONUtil.isJson(configValue) ? "JSON" : "STRING");
+            config.setConfigValue(jsonValue);
+            config.setConfigType("JSON");
             save(config);
         }
 
-        // 清除缓存
         String cacheKey = CONFIG_CACHE_PREFIX + configKey;
         redisTemplate.delete(cacheKey);
 
-        log.info("更新配置: {} = {}", configKey, configValue);
+        log.info("更新配置: {} = {}", configKey, jsonValue);
     }
 
     @Override
