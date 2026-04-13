@@ -215,6 +215,7 @@ configure_docker_mirror() {
 
     # 检查是否已配置
     if [ -f "$daemon_config" ] && grep -q "registry-mirrors" "$daemon_config"; then
+        print_info "Docker 镜像加速器已配置"
         return
     fi
 
@@ -226,8 +227,12 @@ configure_docker_mirror() {
     cat > "$daemon_config" <<EOF
 {
   "registry-mirrors": [
-    "https://docker.1ms.run",
     "https://docker.xuanyuan.me",
+    "https://docker.1ms.run",
+    "https://dockerpull.org",
+    "https://dockerhub.icu",
+    "https://docker.chenby.cn",
+    "https://docker.awsl9527.cn",
     "https://docker.m.daocloud.io",
     "https://dockerproxy.com",
     "https://docker.mirrors.ustc.edu.cn",
@@ -402,25 +407,38 @@ build_images() {
     check_build_tools
 
     # 构建后端镜像
-    print_info "构建后端镜像..."
+    print_info "准备构建后端镜像..."
     cd "${SOURCE_DIR}/backend"
 
     # 检查是否需要编译
-    if [ ! -f "target/*.jar" ] || [ ! "$(ls -A target/*.jar 2>/dev/null)" ]; then
+    local jar_files=$(ls target/*.jar 2>/dev/null | wc -l)
+    if [ ! -d "target" ] || [ "$jar_files" -eq 0 ]; then
         print_info "编译后端项目..."
         if command -v mvn &> /dev/null; then
-            mvn clean package -DskipTests -q
+            print_info "使用本地 Maven 编译..."
+            mvn clean package -DskipTests
         else
             # 使用 Docker 构建 JAR（避免本地安装 Maven）
-            print_info "使用 Docker 构建后端..."
+            print_info "使用 Docker 构建后端 JAR..."
+            print_info "  (首次运行需要拉取 Maven 镜像，可能需要几分钟)"
+
+            # 检查 Maven 镜像是否存在
+            if ! docker image inspect maven:3.9-eclipse-temurin-17 &> /dev/null; then
+                print_info "  正在拉取 maven:3.9-eclipse-temurin-17 镜像..."
+                print_info "  镜像大小约 500MB，请耐心等待..."
+            fi
+
             docker run --rm \
                 -v "$(pwd)":/app \
                 -w /app \
                 maven:3.9-eclipse-temurin-17 \
-                mvn clean package -DskipTests -q
+                mvn clean package -DskipTests
         fi
+    else
+        print_info "使用现有的 JAR 文件"
     fi
 
+    print_info "构建后端 Docker 镜像..."
     docker build \
         -t "data-acquisition-backend:${git_commit}" \
         -t "data-acquisition-backend:latest" \
@@ -428,7 +446,7 @@ build_images() {
         .
 
     # 构建前端镜像
-    print_info "构建前端镜像..."
+    print_info "构建前端 Docker 镜像..."
     cd "${SOURCE_DIR}/frontend"
 
     docker build \
@@ -522,6 +540,49 @@ EOF
     print_info "版本信息已保存"
 }
 
+# 保存源码位置信息
+save_source_info() {
+    print_info "保存源码位置信息..."
+
+    local source_info_file="${PROJECT_DIR}/source-info.json"
+
+    # 获取 Git 信息（如果源码是 Git 仓库）
+    local git_remote="unknown"
+    local git_branch="unknown"
+    local git_commit="unknown"
+
+    if [ -d "${SOURCE_DIR}/.git" ]; then
+        git_remote=$(cd "$SOURCE_DIR" && git remote get-url origin 2>/dev/null || echo "unknown")
+        git_branch=$(cd "$SOURCE_DIR" && git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+        git_commit=$(cd "$SOURCE_DIR" && git rev-parse HEAD 2>/dev/null || echo "unknown")
+    fi
+
+    # 计算源码相对于部署目录的路径
+    # 首次部署时：源码在 ../.. 相对于脚本位置
+    # 部署后：源码可能在不同位置，记录相对路径
+    local relative_path_from_project=""
+    if [[ "$SOURCE_DIR" == "$PROJECT_DIR"* ]]; then
+        # 源码在部署目录内或子目录中
+        relative_path_from_project="${SOURCE_DIR#$PROJECT_DIR}"
+    fi
+
+    # 保存路径信息
+    cat > "$source_info_file" << EOF
+{
+  "sourceDir": "$SOURCE_DIR",
+  "sourceType": "absolute",
+  "deployTime": "$(date -Iseconds)",
+  "gitRemote": "$git_remote",
+  "gitBranch": "$git_branch",
+  "gitCommit": "$git_commit",
+  "note": "如源码位置变化，请使用 --source-dir 参数指定新位置"
+}
+EOF
+
+    print_info "源码位置已记录: $source_info_file"
+    print_info "  源码目录: $SOURCE_DIR"
+}
+
 # 健康检查
 health_check() {
     print_title "健康检查"
@@ -582,6 +643,7 @@ main() {
     init_database
     start_app_services
     save_version_info
+    save_source_info
 
     # 健康检查
     if health_check; then

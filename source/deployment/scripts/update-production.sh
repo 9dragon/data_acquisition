@@ -5,18 +5,22 @@
 # 功能: 更新应用版本，支持自动回滚
 #
 # 使用方法:
-#   sudo ./update-production.sh
+#   sudo ./update-production.sh [--source-dir <path>]
 #
 # 更新流程:
-#   1. 创建备份（数据库、配置、版本信息）
-#   2. 拉取最新代码
-#   3. 构建新版本镜像（使用 Git commit hash 作为 tag）
-#   4. 停止应用服务（保留依赖服务）
-#   5. 更新数据库（如有迁移脚本）
-#   6. 启动新版本应用
-#   7. 健康检查验证
-#   8. 清理旧镜像（保留最近3个版本）
-#   9. 失败则自动回滚
+#   1. 读取源码位置（从记录或参数）
+#   2. 创建备份（数据库、配置、版本信息）
+#   3. 拉取最新代码
+#   4. 构建新版本镜像（使用 Git commit hash 作为 tag）
+#   5. 停止应用服务（保留依赖服务）
+#   6. 更新数据库（如有迁移脚本）
+#   7. 启动新版本应用
+#   8. 健康检查验证
+#   9. 清理旧镜像（保留最近3个版本）
+#   10. 失败则自动回滚
+#
+# 参数:
+#   --source-dir <path>  手动指定源码目录
 #
 # 停机时间: 约 30-60 秒（单实例）
 #
@@ -25,7 +29,9 @@
 #   也可以手动执行: sudo ./rollback.sh
 #
 # 注意事项:
-#   - 确保当前没有未提交的代码更改
+#   - 默认从首次部署记录的源码位置拉取代码
+#   - 如果源码位置变化，使用 --source-dir 参数指定
+#   - 确保源码目录是 Git 仓库
 #   - 更新前会自动创建备份
 #   - 保留最近 3 个版本的 Docker 镜像
 #
@@ -43,8 +49,9 @@ NC='\033[0m'
 # 项目配置
 PROJECT_NAME="data-acquisition"
 PROJECT_DIR="/opt/${PROJECT_NAME}"
-SOURCE_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+SOURCE_DIR=""  # 将从 source-info.json 或参数读取
 BACKUP_DIR="${PROJECT_DIR}/backups"
+GIT_SOURCE_DIR=""  # 手动指定的源码目录
 
 # 打印信息
 print_info() {
@@ -89,6 +96,71 @@ check_project_dir() {
     fi
 }
 
+# 解析命令行参数
+parse_arguments() {
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --source-dir)
+                GIT_SOURCE_DIR="$2"
+                shift 2
+                ;;
+            *)
+                print_error "未知参数: $1"
+                echo "使用方法: sudo ./update-production.sh [--source-dir <path>]"
+                exit 1
+                ;;
+        esac
+    done
+}
+
+# 读取源码位置信息
+load_source_info() {
+    # 如果手动指定了源码目录
+    if [ -n "$GIT_SOURCE_DIR" ]; then
+        SOURCE_DIR="$GIT_SOURCE_DIR"
+        print_info "使用指定的源码目录: $SOURCE_DIR"
+
+        if [ ! -d "$SOURCE_DIR" ]; then
+            print_error "指定的源码目录不存在: $SOURCE_DIR"
+            exit 1
+        fi
+        return
+    fi
+
+    # 从文件读取源码位置
+    local source_info_file="${PROJECT_DIR}/source-info.json"
+
+    if [ ! -f "$source_info_file" ]; then
+        print_error "未找到源码信息文件: $source_info_file"
+        print_error "无法确定源码位置来拉取更新"
+        print_info ""
+        print_info "解决方案:"
+        print_info "  1. 确保已通过 deploy-production.sh 部署系统"
+        print_info "  2. 或使用 --source-dir 参数手动指定源码目录"
+        print_info ""
+        print_info "示例:"
+        print_info "  sudo ./update-production.sh --source-dir /path/to/source"
+        exit 1
+    fi
+
+    # 读取源码目录
+    SOURCE_DIR=$(grep -o '"sourceDir":"[^"]*"' "$source_info_file" | cut -d'"' -f4)
+
+    if [ -z "$SOURCE_DIR" ]; then
+        print_error "无法从 source-info.json 读取源码目录"
+        exit 1
+    fi
+
+    if [ ! -d "$SOURCE_DIR" ]; then
+        print_error "源码目录不存在: $SOURCE_DIR"
+        print_info "源码位置可能在部署后发生了变化"
+        print_info "请使用 --source-dir 参数手动指定源码目录"
+        exit 1
+    fi
+
+    print_info "源码位置: $SOURCE_DIR"
+}
+
 # 创建备份
 create_backup() {
     print_step "创建备份..."
@@ -114,10 +186,17 @@ pull_code() {
 
     cd "$SOURCE_DIR"
 
+    # 检查是否是 Git 仓库
+    if [ ! -d ".git" ]; then
+        print_warning "$SOURCE_DIR 不是 Git 仓库"
+        print_info "跳过代码拉取，使用现有代码构建"
+        return
+    fi
+
     # 检查是否有未提交的更改
     if [ -n "$(git status --porcelain)" ]; then
         print_warning "工作目录有未提交的更改"
-        read -p "是否继续？(y/n) " -n 1 -r
+        read -p "是否继续更新？(y/n) " -n 1 -r
         echo
         if [[ ! $REPLY =~ ^[Yy]$ ]]; then
             print_info "取消更新"
@@ -125,13 +204,24 @@ pull_code() {
         fi
     fi
 
+    # 获取当前分支
+    local current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "master")
+    print_info "当前分支: $current_branch"
+
     # 拉取最新代码
-    git pull origin master || {
-        print_error "拉取代码失败"
-        exit 1
+    print_info "从远程仓库拉取最新代码..."
+    git fetch origin || {
+        print_error "git fetch 失败"
+        return 1
     }
 
-    print_info "代码已更新到最新版本"
+    git pull origin "$current_branch" || {
+        print_error "git pull 失败"
+        return 1
+    }
+
+    local new_commit=$(git rev-parse --short HEAD)
+    print_info "代码已更新: $new_commit"
 }
 
 # 构建新镜像
@@ -333,9 +423,15 @@ EOF
 main() {
     print_title "数据采集系统 - 更新部署"
 
+    # 解析参数
+    parse_arguments "$@"
+
     # 检查权限
     check_root
     check_project_dir
+
+    # 读取源码位置
+    load_source_info
 
     # 执行更新步骤
     create_backup

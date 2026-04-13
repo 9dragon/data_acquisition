@@ -177,19 +177,67 @@ sudo ./scripts/manage.sh exec redis
 ### 自动更新（推荐）
 
 ```bash
-cd /opt/data-acquisition-source/deployment
-sudo ./scripts/update-production.sh
+cd /opt/data-acquisition/scripts
+sudo ./update-production.sh
 ```
 
 更新脚本会自动完成：
-1. 创建备份
-2. 拉取最新代码
+1. 从记录的源码位置拉取最新代码
+2. 创建备份
 3. 构建新版本镜像
 4. 滚动更新（零停机）
 5. 健康检查
 6. 清理旧镜像
 
 如果更新失败，会自动回滚到上一个版本。
+
+### 源码位置
+
+首次部署时，源码位置会被记录到：
+```
+/opt/data-acquisition/source-info.json
+```
+
+该文件包含以下信息：
+- `sourceDir` - 源码目录路径
+- `gitRemote` - Git 仓库地址
+- `gitBranch` - 当前分支
+- `gitCommit` - 当前提交哈希
+- `deployTime` - 部署时间
+
+### 首次部署目录结构
+
+```
+工作目录 (如 /opt/data-acquisition-source/):
+├── backend/                  # 后端源码
+├── frontend/                 # 前端源码
+└── deployment/
+    └── scripts/
+        └── deploy-production.sh  # 部署脚本
+```
+
+首次部署时，脚本会：
+1. 从脚本位置 `deployment/scripts/` 向上两级定位源码根目录
+2. 记录源码的绝对路径到 `source-info.json`
+
+### 源码位置变化时
+
+如果源码位置变化，可以手动指定：
+```bash
+sudo ./update-production.sh --source-dir /new/path/to/source
+```
+
+### 手动指定源码目录
+
+当以下情况时，需要手动指定源码目录：
+- 源码被移动到其他位置
+- 使用不同的源码目录进行更新
+- `source-info.json` 文件丢失
+
+```bash
+# 手动指定源码目录
+sudo ./update-production.sh --source-dir /path/to/source
+```
 
 ### 手动更新步骤
 
@@ -337,6 +385,57 @@ sudo docker compose ps
 
 # 资源使用情况
 sudo docker stats
+```
+
+### 源码位置问题
+
+#### 问题：更新时提示 "未找到源码信息文件"
+
+**原因**：`source-info.json` 文件不存在或损坏。
+
+**解决方案**：
+```bash
+# 方案1: 重新记录源码信息（使用首次部署时的源码位置）
+# 首先找到源码位置，然后重新部署或手动指定
+
+# 方案2: 使用 --source-dir 参数手动指定
+sudo ./update-production.sh --source-dir /path/to/source
+```
+
+#### 问题：更新时提示 "源码目录不存在"
+
+**原因**：源码位置在部署后发生了变化。
+
+**解决方案**：
+```bash
+# 使用 --source-dir 参数指定新的源码位置
+sudo ./update-production.sh --source-dir /new/path/to/source
+
+# 或者重新部署以更新源码位置记录
+```
+
+#### 问题：git pull 失败
+
+**原因**：
+1. 网络问题，无法访问 Git 仓库
+2. 认证问题，HTTPS 凭证或 SSH 密钥配置不正确
+3. 权限问题，没有读取或写入源码的权限
+
+**解决方案**：
+```bash
+# 检查网络连接
+ping github.com
+
+# 检查 Git 远程地址
+cd /path/to/source
+git remote -v
+
+# 配置 Git 凭证（HTTPS 方式）
+git config credential.helper store
+
+# 配置 SSH 密钥（SSH 方式）
+ssh-keygen -t rsa -b 4096
+# 将公钥添加到 Git 仓库的 SSH keys
 ```
 
 ### 重置服务

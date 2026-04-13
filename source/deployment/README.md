@@ -50,7 +50,7 @@ scp -r deployment/ user@your-server:/tmp/data-acquisition/
 ### 2. 执行部署脚本
 
 ```bash
-# 进入脚本目录
+# 进入脚本目录（脚本相对于源码根目录在 deployment/scripts/）
 cd /opt/data-acquisition-source/deployment/scripts
 
 # 添加执行权限
@@ -68,6 +68,24 @@ sudo ./deploy-production.sh
 5. ✅ 构建应用镜像
 6. ✅ 初始化数据库
 7. ✅ 启动所有服务
+
+### 目录结构说明
+
+```
+项目目录 (首次部署时的工作目录):
+/opt/data-acquisition-source/
+├── backend/                  # 后端源码
+├── frontend/                 # 前端源码
+├── deployment/
+│   ├── scripts/
+│   │   └── deploy-production.sh  # 从这里运行部署脚本
+│   └── config/
+└── ...
+```
+
+脚本会自动：
+1. 从 `deployment/scripts/` 向上两级定位源码根目录
+2. 记录源码位置到 `/opt/data-acquisition/source-info.json`
 
 ### 3. 访问系统
 
@@ -172,19 +190,29 @@ sudo ./scripts/manage.sh exec redis
 ### 自动更新（推荐）
 
 ```bash
-cd /opt/data-acquisition-source/deployment/scripts
+cd /opt/data-acquisition/scripts
 sudo ./update-production.sh
 ```
 
 更新脚本会自动：
-1. 创建备份
-2. 拉取最新代码
+1. 从记录的源码位置拉取最新代码
+2. 创建备份
 3. 构建新版本镜像
 4. 滚动更新（零停机）
 5. 健康检查验证
 6. 清理旧镜像
 
 如果更新失败，会自动回滚到上一个版本。
+
+### 源码位置说明
+
+首次部署时，源码位置会被自动记录到 `/opt/data-acquisition/source-info.json`。
+
+如果源码位置发生变化，可以手动指定：
+
+```bash
+sudo ./update-production.sh --source-dir /new/path/to/source
+```
 
 ## 备份与恢复
 
