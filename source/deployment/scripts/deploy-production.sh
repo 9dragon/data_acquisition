@@ -423,32 +423,27 @@ build_images() {
     print_info "准备构建后端镜像..."
     cd "${SOURCE_DIR}/backend"
 
-    # 检查是否需要编译
-    local jar_files=$(ls target/*.jar 2>/dev/null | wc -l)
-    if [ ! -d "target" ] || [ "$jar_files" -eq 0 ]; then
-        print_info "编译后端项目..."
-        if command -v mvn &> /dev/null; then
-            print_info "使用本地 Maven 编译..."
-            mvn clean package -DskipTests
-        else
-            # 使用 Docker 构建 JAR（避免本地安装 Maven）
-            print_info "使用 Docker 构建后端 JAR..."
-            print_info "  (首次运行需要拉取 Maven 镜像，可能需要几分钟)"
-
-            # 检查 Maven 镜像是否存在
-            if ! docker image inspect maven:3.9-amazoncorretto-17-alpine &> /dev/null; then
-                print_info "  正在拉取 maven:3.9-amazoncorretto-17-alpine 镜像..."
-                print_info "  镜像大小约 400MB，请耐心等待..."
-            fi
-
-            docker run --rm \
-                -v "$(pwd)":/app \
-                -w /app \
-                maven:3.9-amazoncorretto-17-alpine \
-                mvn clean package -DskipTests
-        fi
+    # 始终重新编译以确保使用最新代码
+    print_info "编译后端项目（确保使用最新代码）..."
+    if command -v mvn &> /dev/null; then
+        print_info "使用本地 Maven 编译..."
+        mvn clean package -DskipTests
     else
-        print_info "使用现有的 JAR 文件"
+        # 使用 Docker 构建 JAR（避免本地安装 Maven）
+        print_info "使用 Docker 构建后端 JAR..."
+        print_info "  (首次运行需要拉取 Maven 镜像，可能需要几分钟)"
+
+        # 检查 Maven 镜像是否存在
+        if ! docker image inspect maven:3.9-amazoncorretto-17-alpine &> /dev/null; then
+            print_info "  正在拉取 maven:3.9-amazoncorretto-17-alpine 镜像..."
+            print_info "  镜像大小约 400MB，请耐心等待..."
+        fi
+
+        docker run --rm \
+            -v "$(pwd)":/app \
+            -w /app \
+            maven:3.9-amazoncorretto-17-alpine \
+            mvn clean package -DskipTests
     fi
 
     print_info "构建后端 Docker 镜像..."
