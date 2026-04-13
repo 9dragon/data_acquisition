@@ -335,12 +335,12 @@ MINIO_BUCKET_NAME=data-acquisition
 # ========== 后端配置 ==========
 DB_HOST=mysql
 DB_USERNAME=data_acquisition
-DB_PASSWORD=\${MYSQL_PASSWORD}
+DB_PASSWORD=${mysql_password}
 REDIS_HOST=redis
-REDIS_PASSWORD=\${REDIS_PASSWORD}
+REDIS_PASSWORD=${redis_password}
 MINIO_ENDPOINT=http://minio:9000
-MINIO_ACCESS_KEY=\${MINIO_ROOT_USER}
-MINIO_SECRET_KEY=\${MINIO_ROOT_PASSWORD}
+MINIO_ACCESS_KEY=admin
+MINIO_SECRET_KEY=${minio_password}
 
 # ========== 钉钉配置（可选，按需填写）==========
 DINGTALK_APP_KEY=
