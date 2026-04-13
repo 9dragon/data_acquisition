@@ -64,7 +64,8 @@
       "Bash(find:*)",
       "Read(//tmp/**)",
       "Bash(rm:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)"
     ]
   }
 }
