@@ -509,6 +509,7 @@ init_database() {
 
     if [ -f "$schema_file" ]; then
         print_info "执行数据库结构初始化脚本..."
+        echo "完整命令: docker exec -i data-acquisition-mysql mysql -uroot -p\"${MYSQL_ROOT_PASSWORD}\" < \"$schema_file\""
         docker exec -i data-acquisition-mysql mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" < "$schema_file"
         print_info "数据库结构初始化完成"
     else
@@ -517,6 +518,7 @@ init_database() {
 
     if [ -f "$data_file" ]; then
         print_info "执行数据库数据初始化脚本..."
+        echo "完整命令: docker exec -i data-acquisition-mysql mysql -uroot -p\"${MYSQL_ROOT_PASSWORD}\" < \"$data_file\""
         docker exec -i data-acquisition-mysql mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" < "$data_file"
         print_info "数据库数据初始化完成"
     else
