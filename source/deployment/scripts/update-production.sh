@@ -130,8 +130,13 @@ load_source_info() {
     # 从文件读取源码位置
     local source_info_file="${PROJECT_DIR}/source-info.json"
 
+    print_info "查找源码信息文件: $source_info_file"
+
     if [ ! -f "$source_info_file" ]; then
         print_error "未找到源码信息文件: $source_info_file"
+        print_info "项目目录: $PROJECT_DIR"
+        print_info "当前目录内容:"
+        ls -la "$PROJECT_DIR" 2>/dev/null || echo "  (无法列出目录)"
         print_error "无法确定源码位置来拉取更新"
         print_info ""
         print_info "解决方案:"
@@ -143,11 +148,21 @@ load_source_info() {
         exit 1
     fi
 
+    print_info "源码信息文件存在，读取内容..."
+    print_info "文件内容:"
+    cat "$source_info_file" | while read line; do
+        print_info "  $line"
+    done
+
     # 读取源码目录
     SOURCE_DIR=$(grep -o '"sourceDir":"[^"]*"' "$source_info_file" | cut -d'"' -f4)
 
+    print_info "读取到的源码目录: '$SOURCE_DIR'"
+
     if [ -z "$SOURCE_DIR" ]; then
         print_error "无法从 source-info.json 读取源码目录"
+        print_info "请检查文件格式是否正确"
+        print_info "预期格式: {\"sourceDir\":\"/path/to/source\"}"
         exit 1
     fi
 
