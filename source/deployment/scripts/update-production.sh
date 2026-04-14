@@ -154,15 +154,15 @@ load_source_info() {
         print_info "  $line"
     done
 
-    # 读取源码目录
-    SOURCE_DIR=$(grep -o '"sourceDir":"[^"]*"' "$source_info_file" | cut -d'"' -f4)
+    # 读取源码目录（兼容带空格的 JSON 格式）
+    SOURCE_DIR=$(grep -o '"sourceDir"[[:space:]]*:[[:space:]]*"[^"]*"' "$source_info_file" | sed 's/.*: *"\([^"]*\)".*/\1/')
 
     print_info "读取到的源码目录: '$SOURCE_DIR'"
 
     if [ -z "$SOURCE_DIR" ]; then
         print_error "无法从 source-info.json 读取源码目录"
         print_info "请检查文件格式是否正确"
-        print_info "预期格式: {\"sourceDir\":\"/path/to/source\"}"
+        print_info "预期格式: {\"sourceDir\": \"/path/to/source\"}"
         exit 1
     fi
 
