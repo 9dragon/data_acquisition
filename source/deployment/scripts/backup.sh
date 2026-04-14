@@ -10,7 +10,7 @@
 # 备份内容:
 #   - MySQL 数据库 (完整 SQL 导出)
 #   - MinIO 对象存储数据
-#   - 环境配置文件 (.env.production)
+#   - 环境配置文件 (.env)
 #   - 版本信息 (version.json)
 #   - Docker Compose 配置
 #
@@ -76,10 +76,10 @@ backup_database() {
     local backup_file="${BACKUP_DIR}/${BACKUP_NAME}/database.sql"
 
     # 读取密码
-    if [ -f "${PROJECT_DIR}/.env.production" ]; then
-        source "${PROJECT_DIR}/.env.production"
+    if [ -f "${PROJECT_DIR}/.env" ]; then
+        source "${PROJECT_DIR}/.env"
     else
-        print_error "未找到 .env.production 文件"
+        print_error "未找到 .env 文件"
         exit 1
     fi
 
@@ -126,8 +126,8 @@ backup_config() {
     mkdir -p "$config_backup_dir"
 
     # 复制环境变量文件
-    if [ -f "${PROJECT_DIR}/.env.production" ]; then
-        cp "${PROJECT_DIR}/.env.production" "$config_backup_dir/"
+    if [ -f "${PROJECT_DIR}/.env" ]; then
+        cp "${PROJECT_DIR}/.env" "$config_backup_dir/"
     fi
 
     # 复制 docker-compose 文件

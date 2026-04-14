@@ -182,7 +182,7 @@ rollback_by_backup() {
         print_info "恢复数据库..."
 
         # 加载密码
-        source "${PROJECT_DIR}/.env.production"
+        source "${PROJECT_DIR}/.env"
 
         docker exec -i data-acquisition-mysql mysql \
             -u"${MYSQL_USER}" \
@@ -193,9 +193,9 @@ rollback_by_backup() {
     fi
 
     # 恢复配置
-    if [ -f "${temp_dir}/${backup_name}/config/.env.production" ]; then
+    if [ -f "${temp_dir}/${backup_name}/config/.env" ]; then
         print_info "恢复配置文件..."
-        cp "${temp_dir}/${backup_name}/config/.env.production" "${PROJECT_DIR}/.env.production"
+        cp "${temp_dir}/${backup_name}/config/.env" "${PROJECT_DIR}/.env"
     fi
 
     # 清理临时文件

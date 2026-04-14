@@ -20,10 +20,10 @@
 #   1 = 有服务异常
 #
 # 环境变量:
-#   自动从以下位置查找 .env.production:
-#   - $(dirname "$0")/../.env.production
-#   - /opt/data-acquisition/.env.production
-#   - $(dirname "$0")/../../.env.production
+#   自动从以下位置查找 .env:
+#   - $(dirname "$0")/../.env
+#   - /opt/data-acquisition/.env
+#   - $(dirname "$0")/../../.env
 #
 # 使用场景:
 #   - 部署后验证服务状态
@@ -209,20 +209,20 @@ main() {
 
     # 加载环境变量（支持多路径查找）
     ENV_FILE=""
-    if [ -f "$(dirname "$0")/../.env.production" ]; then
-        ENV_FILE="$(dirname "$0")/../.env.production"
-    elif [ -f "/opt/data-acquisition/.env.production" ]; then
-        ENV_FILE="/opt/data-acquisition/.env.production"
-    elif [ -f "$(dirname "$0")/../../.env.production" ]; then
-        ENV_FILE="$(dirname "$0")/../../.env.production"
+    if [ -f "$(dirname "$0")/../.env" ]; then
+        ENV_FILE="$(dirname "$0")/../.env"
+    elif [ -f "/opt/data-acquisition/.env" ]; then
+        ENV_FILE="/opt/data-acquisition/.env"
+    elif [ -f "$(dirname "$0")/../../.env" ]; then
+        ENV_FILE="$(dirname "$0")/../../.env"
     fi
 
     if [ -z "$ENV_FILE" ]; then
-        echo -e "${RED}错误: 未找到 .env.production 文件${NC}"
+        echo -e "${RED}错误: 未找到 .env 文件${NC}"
         echo -e "${YELLOW}已尝试的路径:${NC}"
-        echo "  - $(dirname "$0")/../.env.production"
-        echo "  - /opt/data-acquisition/.env.production"
-        echo "  - $(dirname "$0")/../../.env.production"
+        echo "  - $(dirname "$0")/../.env"
+        echo "  - /opt/data-acquisition/.env"
+        echo "  - $(dirname "$0")/../../.env"
         exit 1
     fi
 

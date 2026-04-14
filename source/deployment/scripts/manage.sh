@@ -36,7 +36,7 @@
 #
 # 注意事项:
 #   - 部分命令需要 sudo 权限
-#   - exec 命令需要 .env.production 文件存在
+#   - exec 命令需要 .env 文件存在
 #   - 日志查看使用 Ctrl+C 退出
 #
 ##############################################################################
@@ -218,7 +218,7 @@ exec_container() {
     fi
 
     # 加载环境变量（用于 MySQL 和 Redis 连接）
-    local env_file="${PROJECT_DIR}/.env.production"
+    local env_file="${PROJECT_DIR}/.env"
     if [ -f "$env_file" ]; then
         export $(grep -v '^#' "$env_file" | xargs)
     fi
@@ -231,13 +231,13 @@ exec_container() {
         docker exec -it "$container_name" sh
     elif [ "$service" = "mysql" ]; then
         if [ -z "${MYSQL_USER}" ] || [ -z "${MYSQL_PASSWORD}" ] || [ -z "${MYSQL_DATABASE}" ]; then
-            print_error "数据库环境变量未加载，请检查 .env.production 文件"
+            print_error "数据库环境变量未加载，请检查 .env 文件"
             exit 1
         fi
         docker exec -it "$container_name" mysql -u"${MYSQL_USER}" -p"${MYSQL_PASSWORD}" "${MYSQL_DATABASE}"
     elif [ "$service" = "redis" ]; then
         if [ -z "${REDIS_PASSWORD}" ]; then
-            print_error "Redis 密码环境变量未加载，请检查 .env.production 文件"
+            print_error "Redis 密码环境变量未加载，请检查 .env 文件"
             exit 1
         fi
         docker exec -it "$container_name" redis-cli -a "${REDIS_PASSWORD}"
