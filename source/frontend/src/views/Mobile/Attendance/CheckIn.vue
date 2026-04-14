@@ -121,20 +121,6 @@
       </div>
     </div>
 
-    <!-- 相机弹窗 - 使用全屏div替代van-popup -->
-    <teleport to="body">
-      <div v-if="showCamera" class="camera-fullscreen">
-        <WatermarkCamera
-          :user-name="userStore.name"
-          :time="currentTime"
-          :location="locationInfo.address"
-          :watermark-config="cameraWatermarkConfig"
-          @photo-captured="handlePhotoCaptured"
-          @cancel="showCamera = false"
-        />
-      </div>
-    </teleport>
-
   </div>
 </template>
 
@@ -146,7 +132,7 @@ import { attendanceApi, type ShiftInfo } from '@/api/attendance'
 import { systemConfigApi } from '@/api/systemConfig'
 import { getLocation, type LocationInfo, chooseImage, previewImage as ddPreviewImage } from '@/utils/dingtalk'
 import { useUserStore } from '@/stores/user'
-import WatermarkCamera from '@/components/WatermarkCamera.vue'
+import { addWatermarkToImage, type WatermarkData, type CanvasWatermarkOptions } from '@/utils/watermark'
 
 // 水印配置接口
 interface WatermarkConfig {
@@ -199,40 +185,6 @@ const watermarkConfig = ref<WatermarkConfig>({
   locationIcon: '📍',
   userIcon: '👤'
 })
-
-// 水印配置转换（适配WatermarkCamera组件）
-const cameraWatermarkConfig = computed(() => {
-  const config = watermarkConfig.value
-
-  // 将背景颜色和透明度组合
-  const applyAlphaToColor = (color: string, alphaValue: number): string => {
-    if (color.startsWith('#')) {
-      const r = parseInt(color.slice(1, 3), 16)
-      const g = parseInt(color.slice(3, 5), 16)
-      const b = parseInt(color.slice(5, 7), 16)
-      return `rgba(${r}, ${g}, ${b}, ${alphaValue})`
-    }
-    return color
-  }
-
-  const bgRgba = applyAlphaToColor(config.backgroundColor || '#000000', config.alpha)
-
-  return {
-    showTime: config.showTime,
-    showLocation: config.showLocation,
-    showName: config.showUser,
-    backgroundColor: bgRgba,
-    textColor: config.color,
-    fontSize: config.fontSize,
-    position: config.position,
-    timeIcon: config.timeIcon || '🕐',
-    locationIcon: config.locationIcon || '📍',
-    userIcon: config.userIcon || '👤'
-  }
-})
-
-// 相机弹窗
-const showCamera = ref(false)
 
 // 位置信息
 const locationInfo = ref<LocationInfo>({
@@ -352,41 +304,45 @@ const fetchLocation = async () => {
   }
 }
 
-// 拍照
-const takePhoto = () => {
-  // 直接显示 WatermarkCamera 组件进行拍照
-  showCamera.value = true
-}
-
-// 处理相机组件拍照结果
-const handlePhotoCaptured = (photoData: string) => {
-  console.log('接收带水印图片数据，长度:', photoData?.length)
-  photo.value = photoData
-  showCamera.value = false
-  showToast('拍照成功')
-}
-
-// 钉钉API拍照并添加水印（使用WatermarkCamera组件处理）
-const takePhotoWithDingTalk = async () => {
+// 拍照 - 直接调起相机，无中间黑屏
+const takePhoto = async () => {
   try {
-    showLoadingToast({
-      message: '拍照中...',
-      forbidClick: true
-    })
+    showLoadingToast({ message: '拍照中...', forbidClick: true })
 
-    // 使用钉钉API拍照
-    const imageUrl = await chooseImage()
+    // 调起相机（钉钉环境用 dd.chooseImage，浏览器用 file input）
+    let imageData = await chooseImage()
 
-    // 将图片URL转换为base64
-    const base64Image = await urlToBase64(imageUrl)
+    // 钉钉环境返回 URL，需转为 base64
+    if (imageData && !imageData.startsWith('data:')) {
+      imageData = await urlToBase64(imageData)
+    }
 
-    // 直接返回图片（水印由组件处理）
-    photo.value = base64Image
+    // Canvas 绘制水印
+    const watermarkData: WatermarkData = {
+      time: currentTime.value,
+      address: locationInfo.value.address || '',
+      latitude: locationInfo.value.latitude || 0,
+      longitude: locationInfo.value.longitude || 0,
+      userName: userStore.name || ''
+    }
+    const watermarkOptions: CanvasWatermarkOptions = {
+      showTime: watermarkConfig.value.showTime,
+      showLocation: watermarkConfig.value.showLocation,
+      showName: watermarkConfig.value.showUser,
+      backgroundColor: `rgba(0, 0, 0, ${watermarkConfig.value.alpha})`,
+      textColor: watermarkConfig.value.color,
+      fontSize: watermarkConfig.value.fontSize
+    }
+    const watermarkedImage = await addWatermarkToImage(imageData, watermarkData, watermarkOptions)
+
+    photo.value = watermarkedImage
     closeToast()
     showToast('拍照成功')
   } catch (error: any) {
     closeToast()
-    showToast(error.message || '拍照失败')
+    if (error.message !== '未选择文件') {
+      showToast(error.message || '拍照失败')
+    }
   }
 }
 
@@ -756,16 +712,6 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 4px;
-}
-
-.camera-fullscreen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 9999;
-  background: #000;
 }
 
 </style>

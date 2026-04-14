@@ -223,15 +223,37 @@ pull_code() {
     local current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "master")
     print_info "当前分支: $current_branch"
 
+    # 检查 Git 凭据存储配置
+    local has_credential_helper=$(git config --global credential.helper)
+    if [ -z "$has_credential_helper" ]; then
+        print_warning "未检测到 Git credential.helper 配置"
+        print_info ""
+        print_info "如果仓库需要认证，请先配置凭据存储："
+        print_info "  git config --global credential.helper store"
+        print_info ""
+        print_info "配置后首次拉取需要输入用户名密码，之后会自动保存"
+        print_info ""
+        read -p "是否继续更新？(y/n) " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            print_info "取消更新"
+            exit 0
+        fi
+    fi
+
     # 拉取最新代码
     print_info "从远程仓库拉取最新代码..."
     git fetch origin || {
         print_error "git fetch 失败"
+        print_info "如果认证失败，请配置 Git 凭据存储："
+        print_info "  git config --global credential.helper store"
         return 1
     }
 
     git pull origin "$current_branch" || {
         print_error "git pull 失败"
+        print_info "如果认证失败，请配置 Git 凭据存储："
+        print_info "  git config --global credential.helper store"
         return 1
     }
 
