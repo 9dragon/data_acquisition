@@ -201,9 +201,9 @@ pull_code() {
 
     cd "$SOURCE_DIR"
 
-    # 检查是否是 Git 仓库
-    if [ ! -d ".git" ]; then
-        print_warning "$SOURCE_DIR 不是 Git 仓库"
+    # 检查是否在 Git 仓库内（支持子目录）
+    if ! git rev-parse --is-inside-work-tree &> /dev/null; then
+        print_warning "$SOURCE_DIR 不在 Git 仓库内"
         print_info "跳过代码拉取，使用现有代码构建"
         return
     fi
