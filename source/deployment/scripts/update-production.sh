@@ -282,18 +282,25 @@ build_new_images() {
     else
         # 使用 Docker 构建 JAR（避免本地安装 Maven）
         print_info "使用 Docker 构建后端 JAR..."
-        print_info "  (首次运行需要拉取 Maven 镜像，可能需要几分钟)"
 
-        # 检查 Maven 镜像是否存在
-        if ! docker image inspect maven:3.9-amazoncorretto-17-alpine &> /dev/null; then
-            print_info "  正在拉取 maven:3.9-amazoncorretto-17-alpine 镜像..."
+        local maven_image="maven:3.9-amazoncorretto-17-alpine"
+
+        # 检查 Maven 镜像是否存在，不存在则拉取
+        if ! docker image inspect "$maven_image" &> /dev/null; then
+            print_info "Maven 镜像不存在，正在拉取 $maven_image ..."
             print_info "  镜像大小约 400MB，请耐心等待..."
+            docker pull "$maven_image" || {
+                print_error "Maven 镜像拉取失败"
+                return 1
+            }
+        else
+            print_info "Maven 镜像已存在: $maven_image"
         fi
 
         docker run --rm \
             -v "$(pwd)":/app \
             -w /app \
-            maven:3.9-amazoncorretto-17-alpine \
+            "$maven_image" \
             mvn clean package -DskipTests -q
     fi
 
