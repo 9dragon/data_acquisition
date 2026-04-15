@@ -17,8 +17,8 @@ RUN npm run build
 # 生产环境
 FROM nginx:alpine
 
-# 安装curl用于健康检查
-RUN apk add --no-cache curl
+# 安装curl用于健康检查和tzdata用于时区支持
+RUN apk add --no-cache curl tzdata
 
 # 复制构建产物到Nginx
 COPY --from=builder /app/dist /usr/share/nginx/html

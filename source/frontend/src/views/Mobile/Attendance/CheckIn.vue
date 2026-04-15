@@ -306,6 +306,15 @@ const fetchLocation = async () => {
 
 // 拍照 - 直接调起相机，无中间黑屏
 const takePhoto = async () => {
+  if (!locationInfo.value.latitude || locationInfo.value.latitude === 0) {
+    showToast('请先获取位置信息')
+    await fetchLocation()
+    if (!locationInfo.value.latitude || locationInfo.value.latitude === 0) {
+      showToast('无法获取位置，请检查定位权限')
+      return
+    }
+  }
+
   try {
     showLoadingToast({ message: '拍照中...', forbidClick: true })
 

@@ -81,6 +81,7 @@ minio:
   accessKey: minioadmin
   secretKey: minioadmin
   bucketName: data-acquisition
+  public-endpoint: ${MINIO_PUBLIC_ENDPOINT:}
 
 # Knife4j配置
 knife4j:

@@ -21,6 +21,7 @@ minio:
   accessKey: ${MINIO_ACCESS_KEY:65RD1skNPDqG}
   secretKey: ${MINIO_SECRET_KEY:9VQaHWcHU27t2tYC}
   bucketName: ${MINIO_BUCKET_NAME:data-acquisition}
+  public-endpoint: ${MINIO_PUBLIC_ENDPOINT:https://pm.anosi.cn/minio}
 
 dingtalk:
   app-key: ${DINGTALK_APP_KEY:}

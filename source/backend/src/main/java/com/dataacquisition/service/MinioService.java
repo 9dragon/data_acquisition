@@ -31,6 +31,9 @@ public class MinioService {
     @Value("${minio.endpoint:}")
     private String endpoint;
 
+    @Value("${minio.public-endpoint:}")
+    private String publicEndpoint;
+
     /**
      * 上传文件
      *
@@ -152,10 +155,20 @@ public class MinioService {
                     .expiry(7, TimeUnit.DAYS)
                     .build()
             );
+
+            // 如果配置了公开地址，替换内部endpoint为公开地址
+            if (publicEndpoint != null && !publicEndpoint.isEmpty()) {
+                url = url.replace(endpoint, publicEndpoint);
+            }
+
             return url;
         } catch (Exception e) {
             log.error("获取文件URL失败", e);
-            return endpoint + "/" + bucketName + "/" + fileName;
+            String fallbackUrl = endpoint + "/" + bucketName + "/" + fileName;
+            if (publicEndpoint != null && !publicEndpoint.isEmpty()) {
+                fallbackUrl = fallbackUrl.replace(endpoint, publicEndpoint);
+            }
+            return fallbackUrl;
         }
     }
 

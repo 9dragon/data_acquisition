@@ -108,9 +108,11 @@ public class AttendanceController {
      */
     @Operation(summary = "获取今日签到统计")
     @GetMapping("/today-stats")
-    public Result<TodayCheckInStats> getTodayStats(@AuthenticationPrincipal UserDetails userDetails) {
+    public Result<TodayCheckInStats> getTodayStats(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Parameter(description = "项目ID") @RequestParam(required = false) Long projectId) {
         User user = getCurrentUser(userDetails);
-        TodayCheckInStats stats = attendanceService.getTodayStats(user.getId());
+        TodayCheckInStats stats = attendanceService.getTodayStats(user.getId(), projectId);
         return Result.success(stats);
     }
 

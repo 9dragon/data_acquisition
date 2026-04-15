@@ -3,7 +3,7 @@ FROM amazoncorretto:17-alpine3.19
 LABEL maintainer="support@example.com"
 
 # 安装curl用于健康检查
-RUN apk add --no-cache curl
+RUN apk add --no-cache curl tzdata
 
 WORKDIR /app
 

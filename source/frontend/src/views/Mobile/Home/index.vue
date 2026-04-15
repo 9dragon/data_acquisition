@@ -66,9 +66,11 @@ import { showToast, showLoadingToast, closeToast } from 'vant'
 import { attendanceApi } from '@/api/attendance'
 import { mobileTaskApi } from '@/api/task'
 import { mobileIssueApi } from '@/api/issue'
+import { useMobileProjectStore } from '@/stores/mobileProject'
 import { navigateWithFullScreen } from '@/utils/routerHelper'
 
 const router = useRouter()
+const projectStore = useMobileProjectStore()
 
 // 今日签到统计
 const checkedShifts = ref(0)
@@ -138,9 +140,18 @@ const goToCheckIn = () => {
 // 检查今日签到
 const checkTodayAttendance = async () => {
   try {
-    const stats = await attendanceApi.getTodayStats()
-    checkedShifts.value = stats.checkedShifts || 0
-    totalShifts.value = stats.totalShifts || 0
+    if (!projectStore.currentProject) {
+      await projectStore.fetchCurrentProject()
+    }
+
+    if (projectStore.currentProject) {
+      const stats = await attendanceApi.getTodayStats(projectStore.currentProject.id)
+      checkedShifts.value = stats.checkedShifts || 0
+      totalShifts.value = stats.totalShifts || 0
+    } else {
+      checkedShifts.value = 0
+      totalShifts.value = 0
+    }
   } catch (error) {
     console.error('检查签到状态失败:', error)
     checkedShifts.value = 0

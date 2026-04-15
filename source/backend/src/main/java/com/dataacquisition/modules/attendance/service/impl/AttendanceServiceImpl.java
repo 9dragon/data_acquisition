@@ -161,7 +161,9 @@ public class AttendanceServiceImpl implements AttendanceService {
 
         wrapper.orderByDesc(AttendanceRecord::getCheckInTime);
 
-        return attendanceRecordMapper.selectPage(page, wrapper);
+        Page<AttendanceRecord> result = attendanceRecordMapper.selectPage(page, wrapper);
+        refreshPhotoUrls(result);
+        return result;
     }
 
     @Override
@@ -207,12 +209,15 @@ public class AttendanceServiceImpl implements AttendanceService {
             }
         }
 
+        refreshPhotoUrls(result);
         return result;
     }
 
     @Override
     public AttendanceRecord getById(Long id) {
-        return attendanceRecordMapper.selectById(id);
+        AttendanceRecord record = attendanceRecordMapper.selectById(id);
+        refreshPhotoUrl(record);
+        return record;
     }
 
     @Override
@@ -221,7 +226,7 @@ public class AttendanceServiceImpl implements AttendanceService {
     }
 
     @Override
-    public TodayCheckInStats getTodayStats(Long userId) {
+    public TodayCheckInStats getTodayStats(Long userId, Long projectId) {
         // 获取签到配置
         cn.hutool.json.JSONObject config = systemConfigService.getConfigJson("attendance.check_times");
         if (config == null) {
@@ -239,10 +244,14 @@ public class AttendanceServiceImpl implements AttendanceService {
         LocalDateTime todayStart = today.atStartOfDay();
         LocalDateTime todayEnd = todayStart.plusDays(1);
 
-        List<AttendanceRecord> todayRecords = attendanceRecordMapper.selectList(new LambdaQueryWrapper<AttendanceRecord>()
-            .eq(AttendanceRecord::getUserId, userId)
-            .between(AttendanceRecord::getCheckInTime, todayStart, todayEnd)
-            .orderByAsc(AttendanceRecord::getCheckInTime));
+        LambdaQueryWrapper<AttendanceRecord> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(AttendanceRecord::getUserId, userId);
+        queryWrapper.between(AttendanceRecord::getCheckInTime, todayStart, todayEnd);
+        if (projectId != null) {
+            queryWrapper.eq(AttendanceRecord::getProjectId, projectId);
+        }
+        queryWrapper.orderByAsc(AttendanceRecord::getCheckInTime);
+        List<AttendanceRecord> todayRecords = attendanceRecordMapper.selectList(queryWrapper);
 
         // 构建统计结果
         TodayCheckInStats stats = new TodayCheckInStats();
@@ -311,5 +320,29 @@ public class AttendanceServiceImpl implements AttendanceService {
     @Override
     public int getAttendanceDayCount(Long userId) {
         return attendanceRecordMapper.countDistinctDaysByUserId(userId);
+    }
+
+    /**
+     * 刷新签到记录的照片预签名URL
+     */
+    private void refreshPhotoUrl(AttendanceRecord record) {
+        if (record != null && StrUtil.isNotBlank(record.getPhotoPath())) {
+            try {
+                record.setPhotoUrl(minioService.getFileUrl(record.getPhotoPath()));
+            } catch (Exception e) {
+                log.warn("刷新照片URL失败: {}", record.getPhotoPath(), e);
+            }
+        }
+    }
+
+    /**
+     * 批量刷新签到记录的照片预签名URL
+     */
+    private void refreshPhotoUrls(Page<AttendanceRecord> page) {
+        if (page != null && page.getRecords() != null) {
+            for (AttendanceRecord record : page.getRecords()) {
+                refreshPhotoUrl(record);
+            }
+        }
     }
 }

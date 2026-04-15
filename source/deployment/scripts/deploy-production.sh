@@ -341,6 +341,8 @@ REDIS_PASSWORD=${redis_password}
 MINIO_ENDPOINT=http://minio:9000
 MINIO_ACCESS_KEY=admin
 MINIO_SECRET_KEY=${minio_password}
+# MinIO公开访问地址（用于生成预签名URL，需替换为实际域名）
+MINIO_PUBLIC_ENDPOINT=http://localhost:9000
 
 # ========== 钉钉配置（可选，按需填写）==========
 DINGTALK_APP_KEY=

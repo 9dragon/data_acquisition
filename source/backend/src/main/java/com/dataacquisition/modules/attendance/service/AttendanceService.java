@@ -57,9 +57,10 @@ public interface AttendanceService {
      * 获取今日签到统计
      *
      * @param userId 用户ID
+     * @param projectId 项目ID（可选）
      * @return 今日统计
      */
-    TodayCheckInStats getTodayStats(Long userId);
+    TodayCheckInStats getTodayStats(Long userId, Long projectId);
 
     /**
      * 获取签到配置
