@@ -51,7 +51,13 @@ public class AttendanceExportServiceImpl implements AttendanceExportService {
             response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
             response.setCharacterEncoding("utf-8");
 
-            String fileName = "签到记录_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+            String fileName;
+            if (query.getStartDate() != null && query.getEndDate() != null) {
+                DateTimeFormatter dateFmt = DateTimeFormatter.ofPattern("yyyyMMdd");
+                fileName = "签到记录_" + query.getStartDate().format(dateFmt) + "-" + query.getEndDate().format(dateFmt);
+            } else {
+                fileName = "签到记录_全部";
+            }
             response.setHeader("Content-disposition",
                 "attachment;filename*=utf-8''" + URLEncoder.encode(fileName, StandardCharsets.UTF_8) + ".xlsx");
 

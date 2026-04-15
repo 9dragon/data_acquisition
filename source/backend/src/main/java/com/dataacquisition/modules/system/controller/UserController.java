@@ -168,4 +168,14 @@ public class UserController {
         userService.setCurrentProject(user.getId(), projectId);
         return Result.success();
     }
+
+    /**
+     * 切换用户状态
+     */
+    @Operation(summary = "切换用户状态")
+    @PutMapping("/{id}/toggle-status")
+    public Result<Void> toggleStatus(@PathVariable Long id) {
+        userService.toggleStatus(id);
+        return Result.success();
+    }
 }

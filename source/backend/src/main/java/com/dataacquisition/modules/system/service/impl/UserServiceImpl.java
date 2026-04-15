@@ -150,4 +150,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 .map(u -> new OptionDto(u.getId(), u.getName()))
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public Boolean toggleStatus(Long id) {
+        User user = this.getById(id);
+        if (user == null) {
+            throw new BusinessException("用户不存在");
+        }
+        user.setStatus(user.getStatus() == 1 ? 0 : 1);
+        return this.updateById(user);
+    }
 }

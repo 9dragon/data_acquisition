@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -39,10 +41,17 @@ public class AuthController {
         String username = request.get("username");
         String password = request.get("password");
 
-        // 认证
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(username, password)
-        );
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(username, password)
+            );
+        } catch (LockedException e) {
+            return Result.error(1002, "账号已被禁用，请联系管理员");
+        } catch (BadCredentialsException e) {
+            return Result.error(1003, "用户名或密码错误");
+        } catch (Exception e) {
+            return Result.error(1004, "登录失败：" + e.getMessage());
+        }
 
         // 获取用户信息
         User user = userService.getByUsername(username);

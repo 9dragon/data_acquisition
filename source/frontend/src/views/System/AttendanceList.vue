@@ -237,14 +237,31 @@ const handleReset = () => {
 // 导出
 const handleExport = async () => {
   try {
+    // 同步日期范围到查询参数
+    if (dateRange.value && dateRange.value.length === 2) {
+      queryParams.startDate = dateRange.value[0]
+      queryParams.endDate = dateRange.value[1]
+    } else {
+      queryParams.startDate = undefined
+      queryParams.endDate = undefined
+    }
+
     ElMessage.success('正在导出...')
     const blob = await attendanceApi.export(queryParams)
+
+    // 根据日期范围生成文件名
+    let fileName: string
+    if (queryParams.startDate && queryParams.endDate) {
+      fileName = `签到记录_${queryParams.startDate}至${queryParams.endDate}.xlsx`
+    } else {
+      fileName = '签到记录_全部.xlsx'
+    }
 
     // 创建下载链接
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `签到记录_${new Date().toISOString().slice(0, 10)}.xlsx`
+    link.download = fileName
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)

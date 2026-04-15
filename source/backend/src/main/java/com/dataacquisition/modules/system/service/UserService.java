@@ -56,4 +56,9 @@ public interface UserService extends IService<User>, UserDetailsService {
      * 获取用户选项列表（用于下拉选择器）
      */
     List<OptionDto> getUserOptions(String keyword);
+
+    /**
+     * 切换用户状态
+     */
+    Boolean toggleStatus(Long id);
 }

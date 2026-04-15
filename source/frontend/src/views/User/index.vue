@@ -27,15 +27,18 @@
 
       <!-- 数据表格 -->
       <el-table :data="tableData" :loading="loading" border stripe>
-        <el-table-column prop="username" label="用户名" width="150" />
+        <el-table-column prop="username" label="用户名" width="180" />
         <el-table-column prop="name" label="姓名" width="120" />
         <el-table-column prop="email" label="邮箱" min-width="200" />
         <el-table-column prop="phone" label="手机号" width="130" />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="row.status === 1 ? 'success' : 'danger'">
-              {{ row.status === 1 ? '启用' : '禁用' }}
-            </el-tag>
+            <el-switch
+              v-model="row.status"
+              :active-value="1"
+              :inactive-value="0"
+              @change="handleToggleStatus(row)"
+            />
           </template>
         </el-table-column>
         <el-table-column prop="lastLoginTime" label="最后登录" width="160" />
@@ -140,6 +143,30 @@ function handleDelete(row: any) {
     ElMessage.success('删除成功')
     handleQuery()
   }).catch(() => {})
+}
+
+function handleToggleStatus(row: any) {
+  const action = row.status === 1 ? '启用' : '禁用'
+  const hint = row.status === 1 
+    ? `启用后用户将可以正常登录系统` 
+    : `禁用后用户将无法登录系统`
+
+  ElMessageBox.confirm(
+    `<p><strong>确定要${action}用户"${row.name}"吗？</strong></p><p>${hint}</p>`,
+    '切换状态',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+      dangerouslyUseHTMLString: true
+    }
+  ).then(async () => {
+    await http.put(`/users/${row.id}/toggle-status`)
+    ElMessage.success(`用户已${action}`)
+  }).catch(() => {
+    row.status = row.status === 1 ? 0 : 1
+    handleQuery()
+  })
 }
 
 onMounted(() => {
