@@ -2,6 +2,11 @@ import axios from 'axios'
 import type { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 import type { ApiResponse } from '@/types/common'
 import { ElMessage } from 'element-plus'
+import router from '@/router'
+import { isDingTalkFullScreen } from '@/utils/routerHelper'
+
+// 401跳转锁，防止并发请求时重复跳转
+let isRedirecting = false
 
 // 创建axios实例
 const request: AxiosInstance = axios.create({
@@ -54,9 +59,21 @@ request.interceptors.response.use(
 
       switch (status) {
         case 401:
-          ElMessage.error('未授权，请先登录')
+          ElMessage.error('登录已过期，请重新登录')
           localStorage.removeItem('token')
-          window.location.href = '/login'
+          if (isRedirecting) break
+          isRedirecting = true
+          // 根据当前路径判断设备类型，跳转对应登录页
+          if (window.location.pathname.startsWith('/mobile')) {
+            const query: Record<string, string> = { redirect: window.location.pathname + window.location.search }
+            if (isDingTalkFullScreen()) {
+              query.dd_full_screen = 'true'
+            }
+            router.push({ path: '/mobile/login', query })
+          } else {
+            router.push({ path: '/login', query: { redirect: window.location.pathname + window.location.search } })
+          }
+          setTimeout(() => { isRedirecting = false }, 3000)
           break
         case 403:
           ElMessage.error('无权访问')

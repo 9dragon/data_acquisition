@@ -150,22 +150,12 @@
       </el-descriptions>
     </el-dialog>
 
-    <!-- 图片预览对话框 -->
-    <el-dialog
-      v-model="previewVisible"
-      :show-close="true"
-      width="80%"
-      top="5vh"
-      class="image-preview-dialog"
-      destroy-on-close
-    >
-      <el-image
-        :src="previewUrl"
-        :preview-src-list="[previewUrl]"
-        fit="contain"
-        style="width: 100%; max-height: 80vh;"
-      />
-    </el-dialog>
+    <!-- 图片预览 -->
+    <el-image-viewer
+      v-if="previewVisible"
+      :url-list="[previewUrl]"
+      @close="previewVisible = false"
+    />
   </div>
 </template>
 
@@ -316,47 +306,5 @@ onMounted(() => {
 .el-pagination {
   margin-top: 16px;
   justify-content: flex-end;
-}
-
-/* 修复图片预览层级问题 */
-:deep(.el-image-viewer__wrapper) {
-  z-index: 9999 !important;
-}
-
-:deep(.el-image-viewer__canvas) {
-  z-index: 9999 !important;
-}
-
-:deep(.el-image-viewer__mask) {
-  z-index: 9998 !important;
-}
-
-/* 图片预览对话框样式 */
-.image-preview-dialog {
-  z-index: 10000 !important;
-}
-
-:deep(.image-preview-dialog) {
-  z-index: 10000 !important;
-}
-
-:deep(.image-preview-dialog .el-dialog__wrapper) {
-  z-index: 10000 !important;
-}
-
-:deep(.image-preview-dialog .el-dialog) {
-  background: transparent;
-  box-shadow: none;
-  margin: 0 !important;
-  width: 100%;
-  max-width: 90vw;
-}
-
-:deep(.image-preview-dialog .el-dialog__header) {
-  display: none;
-}
-
-:deep(.image-preview-dialog .el-dialog__body) {
-  padding: 0;
 }
 </style>

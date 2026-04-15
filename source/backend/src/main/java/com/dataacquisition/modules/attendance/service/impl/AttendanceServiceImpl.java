@@ -307,4 +307,9 @@ public class AttendanceServiceImpl implements AttendanceService {
         }
         return config;
     }
+
+    @Override
+    public int getAttendanceDayCount(Long userId) {
+        return attendanceRecordMapper.countDistinctDaysByUserId(userId);
+    }
 }

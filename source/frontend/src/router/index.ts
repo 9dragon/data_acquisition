@@ -3,6 +3,7 @@ import type { RouteRecordRaw } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { getDefaultRoute } from '@/utils/device'
 import { isDingTalkFullScreen } from '@/utils/routerHelper'
+import { authApi } from '@/api/auth'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -264,13 +265,30 @@ const router = createRouter({
 })
 
 // 路由守卫
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
   const token = localStorage.getItem('token')
 
   // 设置页面标题
   if (to.meta.title) {
     document.title = `${to.meta.title} - 工业数据采集项目管理系统`
+  }
+
+  // 有token但无用户信息时，自动获取
+  if (token && !userStore.userInfo) {
+    try {
+      const info = await authApi.getUserInfo()
+      userStore.setUserInfo(info)
+    } catch {
+      // token过期，清除并跳转登录页
+      localStorage.removeItem('token')
+      if (to.path.startsWith('/mobile')) {
+        next({ path: '/mobile/login', query: { redirect: to.fullPath } })
+      } else {
+        next({ path: '/login', query: { redirect: to.fullPath } })
+      }
+      return
+    }
   }
 
   // 检查是否需要登录
@@ -283,7 +301,7 @@ router.beforeEach((to, from, next) => {
         : { redirect: to.fullPath }
       next({ path: '/mobile/login', query })
     } else {
-      next('/login')
+      next({ path: '/login', query: { redirect: to.fullPath } })
     }
   } else if (to.path === '/login' && token) {
     // PC端已登录用户访问登录页，根据设备类型跳转

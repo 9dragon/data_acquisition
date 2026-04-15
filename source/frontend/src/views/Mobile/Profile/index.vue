@@ -77,6 +77,7 @@ import { showConfirmDialog, showToast } from 'vant'
 import { useUserStore } from '@/stores/user'
 import { useMobileProjectStore, type MobileProject } from '@/stores/mobileProject'
 import { authApi } from '@/api/auth'
+import { mobileStatsApi } from '@/api/mobileStats'
 import { navigateWithFullScreen } from '@/utils/routerHelper'
 
 const router = useRouter()
@@ -177,10 +178,10 @@ onMounted(async () => {
     }
 
     // 获取统计信息
-    stats.value = {
-      attendanceDays: 15,
-      taskCount: 8,
-      issueCount: 3
+    try {
+      stats.value = await mobileStatsApi.getMyStats()
+    } catch (error) {
+      console.error('获取统计信息失败:', error)
     }
   } catch (error) {
     console.error('加载用户信息失败:', error)

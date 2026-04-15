@@ -67,4 +67,12 @@ public interface AttendanceService {
      * @return 配置信息
      */
     Object getConfig();
+
+    /**
+     * 统计用户签到天数（按日期去重）
+     *
+     * @param userId 用户ID
+     * @return 签到天数
+     */
+    int getAttendanceDayCount(Long userId);
 }

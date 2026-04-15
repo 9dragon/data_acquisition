@@ -1,9 +1,14 @@
 package com.dataacquisition.config;
 
+import com.dataacquisition.common.response.Result;
+import com.dataacquisition.common.response.ResultCode;
 import com.dataacquisition.security.JwtAuthenticationFilter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -78,6 +83,24 @@ public class SecurityConfig {
                         ).permitAll()
                         // 其他请求需要认证
                         .anyRequest().authenticated()
+                )
+
+                // 异常处理 - 未认证返回401 JSON，权限不足返回403 JSON
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                            response.setCharacterEncoding("UTF-8");
+                            Result<Void> result = Result.error(ResultCode.UNAUTHORIZED);
+                            new ObjectMapper().writeValue(response.getOutputStream(), result);
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                            response.setCharacterEncoding("UTF-8");
+                            Result<Void> result = Result.error(ResultCode.FORBIDDEN);
+                            new ObjectMapper().writeValue(response.getOutputStream(), result);
+                        })
                 )
 
                 // 添加JWT过滤器
