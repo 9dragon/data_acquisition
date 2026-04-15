@@ -5,7 +5,7 @@
 # 功能: 更新应用版本，支持自动回滚
 #
 # 使用方法:
-#   sudo ./update-production.sh [--source-dir <path>]
+#   sudo ./update-production.sh [--source-dir <path>] [--cache-hours <hours>]
 #
 # 更新流程:
 #   1. 读取源码位置（从记录或参数）
@@ -21,6 +21,7 @@
 #
 # 参数:
 #   --source-dir <path>  手动指定源码目录
+#   --cache-hours <n>    凭据缓存时间（-1=永久保存，0=不保存，>0=缓存N小时）
 #
 # 停机时间: 约 30-60 秒（单实例）
 #
@@ -52,6 +53,7 @@ PROJECT_DIR="/opt/${PROJECT_NAME}"
 SOURCE_DIR=""  # 将从 source-info.json 或参数读取
 BACKUP_DIR="${PROJECT_DIR}/backups"
 GIT_SOURCE_DIR=""  # 手动指定的源码目录
+GIT_CACHE_HOURS=""  # 凭据缓存时间（-1=永久保存，0=不保存，>0=缓存N小时）
 
 # 打印信息
 print_info() {
@@ -104,9 +106,14 @@ parse_arguments() {
                 GIT_SOURCE_DIR="$2"
                 shift 2
                 ;;
+            --cache-hours)
+                GIT_CACHE_HOURS="$2"
+                shift 2
+                ;;
             *)
                 print_error "未知参数: $1"
-                echo "使用方法: sudo ./update-production.sh [--source-dir <path>]"
+                echo "使用方法: sudo ./update-production.sh [--source-dir <path>] [--cache-hours <hours>]"
+                echo "  --cache-hours: 凭据缓存时间（-1=永久保存，0=不保存，>0=缓存N小时）"
                 exit 1
                 ;;
         esac
@@ -195,6 +202,60 @@ create_backup() {
     print_info "备份完成"
 }
 
+# 配置 Git 凭据存储
+configure_git_credentials() {
+    # 如果已通过命令行参数指定缓存时间，直接使用
+    if [ -n "$GIT_CACHE_HOURS" ]; then
+        case "$GIT_CACHE_HOURS" in
+            -1)
+                git config --global credential.helper store
+                print_info "凭据存储模式: 永久保存"
+                return
+                ;;
+            0)
+                print_info "凭据存储模式: 不保存"
+                return
+                ;;
+            *)
+                local timeout_seconds=$((GIT_CACHE_HOURS * 3600))
+                git config --global credential.helper "cache --timeout=${timeout_seconds}"
+                print_info "凭据存储模式: 缓存 ${GIT_CACHE_HOURS} 小时"
+                return
+                ;;
+        esac
+    fi
+
+    # 交互式选择凭据存储方式
+    echo ""
+    echo "请选择 Git 凭据存储方式:"
+    echo "  1. 永久保存（凭据写入 ~/.git-credentials，不过期）"
+    echo "  2. 临时缓存（自定义缓存时间，过期后需重新输入）"
+    echo "  3. 不保存（每次都需要输入用户名和密码）"
+    echo ""
+    read -p "请选择 [1/2/3，默认 1]: " cred_choice
+    cred_choice=${cred_choice:-1}
+
+    case "$cred_choice" in
+        1)
+            git config --global credential.helper store
+            print_info "凭据存储模式: 永久保存"
+            ;;
+        2)
+            read -p "请输入缓存时间（小时，默认 24）: " cache_hours
+            cache_hours=${cache_hours:-24}
+            local timeout_seconds=$((cache_hours * 3600))
+            git config --global credential.helper "cache --timeout=${timeout_seconds}"
+            print_info "凭据存储模式: 缓存 ${cache_hours} 小时"
+            ;;
+        3)
+            print_info "凭据存储模式: 不保存"
+            ;;
+        *)
+            print_warning "无效选择，默认不保存凭据"
+            ;;
+    esac
+}
+
 # 拉取最新代码
 pull_code() {
     print_step "拉取最新代码..."
@@ -223,28 +284,19 @@ pull_code() {
     local current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "master")
     print_info "当前分支: $current_branch"
 
-    # 检查/配置 Git 凭据存储
-    if ! git config --global credential.helper | grep -q "store"; then
-        print_info "Git 凭据存储未配置"
-        print_info "请输入凭据缓存时间（小时），输入 0 表示仅本次有效："
-        read -p "缓存时间（小时，默认24）: " cache_hours
-        cache_hours=${cache_hours:-24}
+    # 配置 Git 凭据存储
+    configure_git_credentials
 
-        if [ "$cache_hours" = "0" ]; then
-            git config --global credential.helper store
-            print_info "凭据存储已配置（无缓存）"
-        else
-            local timeout_seconds=$((cache_hours * 3600))
-            git config --global credential.helper "store --timeout=${timeout_seconds}"
-            print_info "凭据存储已配置（缓存 ${cache_hours} 小时）"
-        fi
-    fi
-
-    # 拉取最新代码
+    # 拉取最新代码（先 fetch 触发凭据保存，再 merge 避免双重输入）
     print_info "从远程仓库拉取最新代码..."
-    git pull --ff-only origin "$current_branch" || {
-        print_error "git pull 失败"
-        print_info "如果认证失败，请确保已正确配置 Git 凭据存储"
+    git fetch origin "$current_branch" || {
+        print_error "git fetch 失败"
+        print_info "如果认证失败，请检查 Git 凭据配置"
+        return 1
+    }
+    git merge --ff-only "origin/$current_branch" || {
+        print_error "git merge 失败"
+        print_info "可能存在本地与远程的冲突"
         return 1
     }
 
