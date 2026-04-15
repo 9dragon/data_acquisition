@@ -331,11 +331,19 @@ const takePhoto = async () => {
       showName: watermarkConfig.value.showUser,
       backgroundColor: `rgba(0, 0, 0, ${watermarkConfig.value.alpha})`,
       textColor: watermarkConfig.value.color,
-      fontSize: watermarkConfig.value.fontSize
+      fontSize: watermarkConfig.value.fontSize,
+      position: watermarkConfig.value.position,
+      timeIcon: watermarkConfig.value.timeIcon || '🕐',
+      locationIcon: watermarkConfig.value.locationIcon || '📍',
+      userIcon: watermarkConfig.value.userIcon || '👤'
     }
-    const watermarkedImage = await addWatermarkToImage(imageData, watermarkData, watermarkOptions)
 
-    photo.value = watermarkedImage
+    let finalImage = imageData
+    if (watermarkConfig.value.enabled) {
+      finalImage = await addWatermarkToImage(imageData, watermarkData, watermarkOptions)
+    }
+
+    photo.value = finalImage
     closeToast()
     showToast('拍照成功')
   } catch (error: any) {
