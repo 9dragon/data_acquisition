@@ -69,6 +69,7 @@
     <van-floating-bubble
       icon="plus"
       magnetic="x"
+      :offset="{ x: 24, y: -80 }"
       @click="goToCreate"
     />
 

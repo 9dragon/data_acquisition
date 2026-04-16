@@ -149,7 +149,7 @@ export const mobileIssueApi = {
   /**
    * 获取我的问题列表
    */
-  myList: (params: { status?: IssueStatus; pageNum: number; pageSize: number }): Promise<{ records: MobileIssue[]; total: number }> => {
+  myList: (params: { status?: IssueStatus; projectId?: number; pageNum: number; pageSize: number }): Promise<{ records: MobileIssue[]; total: number }> => {
     return http.get('/mobile/issues/my', { params })
   },
 

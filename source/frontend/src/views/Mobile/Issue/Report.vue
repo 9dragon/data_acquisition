@@ -127,7 +127,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast, showLoadingToast, closeToast, type UploaderFileListItem } from 'vant'
 import { mobileIssueApi, type IssueReportRequest, type IssuePriority } from '@/api/issue'

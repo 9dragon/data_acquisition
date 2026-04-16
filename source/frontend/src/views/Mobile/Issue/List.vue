@@ -59,6 +59,7 @@
       icon="plus"
       axis="xy"
       magnetic="x"
+      :offset="{ x: 24, y: -80 }"
       @click="goToReport"
     />
 
@@ -68,11 +69,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { mobileIssueApi, type MobileIssue, type IssueStatus } from '@/api/issue'
+import { useMobileProjectStore } from '@/stores/mobileProject'
 
 const router = useRouter()
+const projectStore = useMobileProjectStore()
+const currentProject = computed(() => projectStore.currentProject)
 
 // 当前选中的状态
 const activeStatus = ref<IssueStatus | ''>('')
@@ -80,6 +84,7 @@ const activeStatus = ref<IssueStatus | ''>('')
 // 查询参数
 const queryParams = reactive({
   status: undefined as IssueStatus | undefined,
+  projectId: undefined as number | undefined,
   pageNum: 1,
   pageSize: 10
 })
@@ -231,7 +236,11 @@ const onRefresh = () => {
 }
 
 // 初始化加载
-onMounted(() => {
+onMounted(async () => {
+  await projectStore.fetchCurrentProject()
+  if (currentProject.value?.id) {
+    queryParams.projectId = currentProject.value.id
+  }
   isFirstLoad.value = false
   onLoad()
 })
