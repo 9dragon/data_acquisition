@@ -13,7 +13,7 @@
 
     <van-cell-group inset title="基础信息">
       <van-field
-        :value="workshopDisplayName"
+        :model-value="workshopDisplayName"
         name="workshop"
         label="所属车间"
         placeholder="请选择车间"
@@ -24,7 +24,7 @@
         @click="showWorkshopPicker = true"
       />
       <van-field
-        :value="deviceTypeDisplayName"
+        :model-value="deviceTypeDisplayName"
         name="deviceType"
         label="设备类型"
         placeholder="请选择设备类型"

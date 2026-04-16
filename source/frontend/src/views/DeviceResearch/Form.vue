@@ -173,10 +173,10 @@ const workshopOptions = computed(() => {
 })
 
 const deviceTypeOptions = computed(() => {
-  // 如果没有选中项目，显示所有设备类型
+  // 如果选中了项目，显示该项目专属的 + 通用类型（无项目归属）；否则显示所有
   const types = deviceResearchStore.currentResearch?.projectId
     ? deviceTypeStore.deviceTypeList.filter(
-        t => t.projectId === deviceResearchStore.currentResearch?.projectId
+        t => !t.projectId || t.projectId === deviceResearchStore.currentResearch?.projectId
       )
     : deviceTypeStore.deviceTypeList
   return types.map(t => ({ label: t.name, value: t.name }))

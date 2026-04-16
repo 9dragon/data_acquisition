@@ -157,9 +157,11 @@ public class DeviceTypeServiceImpl extends ServiceImpl<DeviceTypeMapper, DeviceT
     public List<OptionDto> getDeviceTypeOptions(Long projectId, String keyword) {
         LambdaQueryWrapper<DeviceType> wrapper = new LambdaQueryWrapper<>();
 
-        // 项目筛选
+        // 项目筛选：返回该项目专属的 + 通用类型（projectId为空）
         if (projectId != null) {
-            wrapper.eq(DeviceType::getProjectId, projectId);
+            wrapper.and(w -> w.eq(DeviceType::getProjectId, projectId)
+                    .or()
+                    .isNull(DeviceType::getProjectId));
         }
 
         // 关键词搜索
