@@ -27,7 +27,7 @@
                 <el-button link type="primary" :icon="View" @click="handleView(row)">
                   查看
                 </el-button>
-                <el-button v-if="row.status === 'assigned'" link type="primary" :icon="Promotion" @click="handleStart(row)">
+                <el-button v-if="row.status === 'open'" link type="primary" :icon="Promotion" @click="handleStart(row)">
                   开始处理
                 </el-button>
                 <el-button v-if="row.status === 'in_progress'" link type="success" :icon="CircleCheck" @click="handleResolve(row)">
@@ -195,7 +195,6 @@ function getPriorityType(priority: string) {
 function getStatusType(status: string) {
   const map: Record<string, string> = {
     open: 'danger',
-    assigned: 'warning',
     in_progress: 'primary',
     resolved: 'success',
     closed: 'info'

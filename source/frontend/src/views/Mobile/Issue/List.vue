@@ -59,7 +59,7 @@
       icon="plus"
       axis="xy"
       magnetic="x"
-      :offset="{ x: 24, y: -80 }"
+      :offset="{ x: 24, y: 80 }"
       @click="goToReport"
     />
 
@@ -126,7 +126,6 @@ const getPriorityText = (priority: string) => {
 const getStatusType = (status: string) => {
   const typeMap: Record<string, string> = {
     open: 'warning',
-    assigned: 'primary',
     in_progress: 'primary',
     resolved: 'success',
     closed: 'default'
@@ -138,7 +137,6 @@ const getStatusType = (status: string) => {
 const getStatusText = (status: string) => {
   const textMap: Record<string, string> = {
     open: '待处理',
-    assigned: '已分配',
     in_progress: '处理中',
     resolved: '已解决',
     closed: '已关闭'

@@ -244,7 +244,6 @@ function getPriorityType(priority: string) {
 function getStatusType(status: string) {
   const map: Record<string, string> = {
     open: 'danger',
-    assigned: 'warning',
     in_progress: 'primary',
     resolved: 'success',
     closed: 'info'

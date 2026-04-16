@@ -1,40 +1,28 @@
 <template>
   <div class="issue-stats">
     <el-row :gutter="20">
-      <el-col :span="4">
+      <el-col :span="6">
         <el-card class="stat-card">
           <div class="stat-value">{{ stats.total }}</div>
           <div class="stat-label">问题总数</div>
         </el-card>
       </el-col>
-      <el-col :span="4">
+      <el-col :span="6">
         <el-card class="stat-card">
           <div class="stat-value" style="color: #f56c6c">{{ stats.open }}</div>
           <div class="stat-label">待处理</div>
         </el-card>
       </el-col>
-      <el-col :span="4">
-        <el-card class="stat-card">
-          <div class="stat-value" style="color: #e6a23c">{{ stats.assigned }}</div>
-          <div class="stat-label">已分配</div>
-        </el-card>
-      </el-col>
-      <el-col :span="4">
+      <el-col :span="6">
         <el-card class="stat-card">
           <div class="stat-value" style="color: #409eff">{{ stats.inProgress }}</div>
-          <div class="stat-label">进行中</div>
+          <div class="stat-label">处理中</div>
         </el-card>
       </el-col>
-      <el-col :span="4">
+      <el-col :span="6">
         <el-card class="stat-card">
           <div class="stat-value" style="color: #67c23a">{{ stats.resolved }}</div>
           <div class="stat-label">已解决</div>
-        </el-card>
-      </el-col>
-      <el-col :span="4">
-        <el-card class="stat-card">
-          <div class="stat-value" style="color: #909399">{{ stats.closed }}</div>
-          <div class="stat-label">已关闭</div>
         </el-card>
       </el-col>
     </el-row>
@@ -79,7 +67,6 @@ import * as echarts from 'echarts'
 const stats = reactive({
   total: 0,
   open: 0,
-  assigned: 0,
   inProgress: 0,
   resolved: 0,
   closed: 0,
@@ -105,7 +92,6 @@ async function loadStats() {
     const data = await issueApi.getStats()
     stats.total = data?.total || 0
     stats.open = data?.open || 0
-    stats.assigned = data?.assigned || 0
     stats.inProgress = data?.inProgress || 0
     stats.resolved = data?.resolved || 0
     stats.closed = data?.closed || 0
@@ -178,8 +164,7 @@ function initCharts() {
         radius: '70%',
         data: [
           { value: stats.open, name: '待处理', itemStyle: { color: '#f56c6c' } },
-          { value: stats.assigned, name: '已分配', itemStyle: { color: '#e6a23c' } },
-          { value: stats.inProgress, name: '进行中', itemStyle: { color: '#409eff' } },
+          { value: stats.inProgress, name: '处理中', itemStyle: { color: '#409eff' } },
           { value: stats.resolved, name: '已解决', itemStyle: { color: '#67c23a' } },
           { value: stats.closed, name: '已关闭', itemStyle: { color: '#909399' } }
         ]

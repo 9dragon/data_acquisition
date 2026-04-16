@@ -144,6 +144,17 @@ const formData = reactive<DeviceResearchBasic>({ ...props.modelValue })
 const workshopDisplayName = computed(() => formData.workshopName || '请选择')
 const deviceTypeDisplayName = computed(() => formData.deviceTypeName || '请选择')
 
+// 监听 props.modelValue 变化，同步到 formData
+watch(() => props.modelValue, (newVal) => {
+  if (newVal) {
+    Object.keys(newVal).forEach(key => {
+      if (newVal[key as keyof DeviceResearchBasic] !== undefined) {
+        (formData as any)[key] = newVal[key as keyof DeviceResearchBasic]
+      }
+    })
+  }
+}, { deep: true })
+
 // 监听变化
 const updateValue = () => {
   emit('update:modelValue', { ...formData })

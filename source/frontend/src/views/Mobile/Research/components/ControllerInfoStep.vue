@@ -4,8 +4,8 @@
       <van-field name="isInterfaceOccupied" label="接口被占用" required>
         <template #input>
           <van-radio-group v-model="formData.isInterfaceOccupied" direction="horizontal" @change="updateValue">
-            <van-radio name="true">是</van-radio>
-            <van-radio name="false">否</van-radio>
+            <van-radio :value="true">是</van-radio>
+            <van-radio :value="false">否</van-radio>
           </van-radio-group>
         </template>
       </van-field>
@@ -28,14 +28,14 @@
       <van-field name="hasTouchScreen" label="连接触摸屏" required>
         <template #input>
           <van-radio-group v-model="formData.hasTouchScreen" direction="horizontal" @change="updateValue">
-            <van-radio name="true">是</van-radio>
-            <van-radio name="false">否</van-radio>
+            <van-radio :value="true">是</van-radio>
+            <van-radio :value="false">否</van-radio>
           </van-radio-group>
         </template>
       </van-field>
 
       <van-field
-        v-if="formData.hasTouchScreen === 'true'"
+        v-if="formData.hasTouchScreen === true"
         v-model="formData.touchScreenBrand"
         name="touchScreenBrand"
         label="触摸屏品牌"

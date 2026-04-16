@@ -114,7 +114,7 @@
       <el-form>
         <el-form-item label="新状态">
           <el-select v-model="newStatus" placeholder="请选择" style="width: 100%">
-            <el-option v-for="opt in ISSUE_STATUS_OPTIONS" :key="opt.value" :label="opt.label" :value="opt.value" />
+            <el-option v-for="opt in nextStatusOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="备注">
@@ -159,8 +159,22 @@ const newStatus = ref('')
 const statusRemark = ref('')
 
 const canEdit = computed(() => issue.value.status !== 'closed')
-const canAssign = computed(() => issue.value.status === 'open' || issue.value.status === 'assigned')
+const canAssign = computed(() => issue.value.status !== 'closed')
 const canChangeStatus = computed(() => issue.value.status !== 'closed')
+
+// 当前可流转的目标状态
+const nextStatusOptions = ref<{ label: string; value: string }[]>([])
+
+async function loadNextStatuses() {
+  try {
+    const statuses = await issueApi.getNextStatuses(issue.value.id)
+    nextStatusOptions.value = statuses
+      .map(s => ISSUE_STATUS_OPTIONS.find(o => o.value === s))
+      .filter(Boolean) as { label: string; value: string }[]
+  } catch (e) {
+    nextStatusOptions.value = []
+  }
+}
 
 onMounted(() => {
   loadData()
@@ -178,6 +192,7 @@ async function loadData() {
     issue.value = issueRes
     comments.value = commentsRes.records || commentsRes.data || commentsRes || []
     statusHistory.value = historyRes.records || historyRes.data || historyRes || []
+    loadNextStatuses()
   } catch (e) {
     console.error('加载失败', e)
   }
@@ -272,7 +287,6 @@ function getPriorityType(priority: string) {
 function getStatusType(status: string) {
   const map: Record<string, string> = {
     open: 'danger',
-    assigned: 'warning',
     in_progress: 'primary',
     resolved: 'success',
     closed: 'info'

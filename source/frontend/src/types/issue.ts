@@ -4,7 +4,7 @@ export type IssueType = 'device' | 'plan' | 'technical' | 'resource' | 'other';
 
 export type IssuePriority = 'low' | 'medium' | 'high' | 'urgent';
 
-export type IssueStatus = 'open' | 'assigned' | 'in_progress' | 'resolved' | 'closed' | 'reopened';
+export type IssueStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
 
 export interface Issue extends BaseEntity {
   title: string;
@@ -67,7 +67,6 @@ export interface IssueStatusHistory {
 export interface IssueStats {
   total: number;
   open: number;
-  assigned: number;
   inProgress: number;
   resolved: number;
   closed: number;
@@ -93,8 +92,7 @@ export const ISSUE_PRIORITY_OPTIONS = [
 
 export const ISSUE_STATUS_OPTIONS = [
   { label: '待处理', value: 'open' },
-  { label: '已分配', value: 'assigned' },
-  { label: '进行中', value: 'in_progress' },
+  { label: '处理中', value: 'in_progress' },
   { label: '已解决', value: 'resolved' },
   { label: '已关闭', value: 'closed' }
 ];

@@ -39,4 +39,6 @@ public interface IssueService {
     List<Issue> getMyCc(Long userId);
 
     Map<String, Object> getStats();
+
+    List<String> getNextStatuses(Long id);
 }

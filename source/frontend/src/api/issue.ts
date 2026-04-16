@@ -70,6 +70,10 @@ export const issueApi = {
     return http.get<IssueStatusHistory[]>(`/issues/${id}/history`)
   },
 
+  getNextStatuses(id: number) {
+    return http.get<string[]>(`/issues/${id}/next-statuses`)
+  },
+
   myTodo(userId: number) {
     return http.get<Issue[]>(`/issues/my/todo?userId=${userId}`)
   },
@@ -92,7 +96,7 @@ export const issueApi = {
 /**
  * 问题状态
  */
-export type IssueStatus = 'open' | 'assigned' | 'in_progress' | 'resolved' | 'closed'
+export type IssueStatus = 'open' | 'in_progress' | 'resolved' | 'closed'
 
 /**
  * 问题优先级

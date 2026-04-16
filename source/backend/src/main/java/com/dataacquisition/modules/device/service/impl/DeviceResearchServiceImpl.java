@@ -20,8 +20,12 @@ public class DeviceResearchServiceImpl extends ServiceImpl<DeviceResearchMapper,
 
     @Override
     public Page<DeviceResearch> pageResearch(Page<DeviceResearch> page, Long projectId, String workshopId, String deviceTypeId) {
-        // 使用新的关联查询方法
         return baseMapper.pageResearchWithNames(page, projectId, workshopId, deviceTypeId);
+    }
+
+    @Override
+    public DeviceResearch getById(Long id) {
+        return baseMapper.selectByIdWithNames(id);
     }
 
     @Override

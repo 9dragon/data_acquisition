@@ -19,9 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Service
@@ -34,6 +32,30 @@ public class IssueServiceImpl implements IssueService {
     private final ObjectMapper objectMapper;
 
     private static final AtomicLong codeGenerator = new AtomicLong(System.currentTimeMillis() % 100000);
+
+    /** 合法流转规则：key=当前状态, value=可流转到的状态列表 */
+    private static final Map<String, Set<String>> TRANSITION_RULES = Map.of(
+        "open",        Set.of("in_progress"),
+        "in_progress", Set.of("resolved", "open"),
+        "resolved",    Set.of("closed", "in_progress"),
+        "closed",      Collections.emptySet()
+    );
+
+    private void validateTransition(String from, String to) {
+        Set<String> allowed = TRANSITION_RULES.get(from);
+        if (allowed == null || !allowed.contains(to)) {
+            throw new RuntimeException(
+                String.format("不允许从 [%s] 转换到 [%s]", getStatusName(from), getStatusName(to)));
+        }
+    }
+
+    private String getStatusName(String status) {
+        Map<String, String> names = Map.of(
+            "open", "待处理", "in_progress", "处理中",
+            "resolved", "已解决", "closed", "已关闭"
+        );
+        return names.getOrDefault(status, status);
+    }
 
     @Override
     public Page<Issue> pageIssues(IssueQueryDTO query) {
@@ -82,10 +104,6 @@ public class IssueServiceImpl implements IssueService {
         issue.setUpdatedBy(reporterId);
         issueMapper.insert(issue);
 
-        if (dto.getAssigneeId() != null) {
-            updateStatus(issue.getId(), "assigned", reporterId, "创建问题并分配负责人");
-        }
-
         return issue;
     }
 
@@ -123,17 +141,9 @@ public class IssueServiceImpl implements IssueService {
             throw new RuntimeException("问题不存在");
         }
 
-        String oldStatus = issue.getStatus();
         issue.setAssigneeId(assigneeId);
-        
-        if ("open".equals(oldStatus)) {
-            issue.setStatus("assigned");
-        }
-        
         issue.setUpdatedAt(LocalDateTime.now());
         issueMapper.updateById(issue);
-
-        addStatusHistory(id, oldStatus, "assigned", operatorId, "分配负责人");
 
         return getById(id);
     }
@@ -147,6 +157,7 @@ public class IssueServiceImpl implements IssueService {
         }
 
         String oldStatus = issue.getStatus();
+        validateTransition(oldStatus, status);
         issue.setStatus(status);
         issue.setUpdatedAt(LocalDateTime.now());
 
@@ -192,8 +203,11 @@ public class IssueServiceImpl implements IssueService {
     public List<Issue> getMyTodo(Long userId) {
         IssueQueryDTO query = new IssueQueryDTO();
         query.setAssigneeId(userId);
-        query.setStatus("assigned");
-        return issueMapper.selectIssueList(query);
+        // 查询分配给我的待处理和处理中的问题
+        List<Issue> all = issueMapper.selectIssueList(query);
+        return all.stream()
+                .filter(i -> "open".equals(i.getStatus()) || "in_progress".equals(i.getStatus()))
+                .toList();
     }
 
     @Override
@@ -229,15 +243,13 @@ public class IssueServiceImpl implements IssueService {
         
         Map<String, Object> stats = new HashMap<>();
         stats.put("total", allIssues.size());
-        
+
         long openCount = allIssues.stream().filter(i -> "open".equals(i.getStatus())).count();
-        long assignedCount = allIssues.stream().filter(i -> "assigned".equals(i.getStatus())).count();
         long inProgressCount = allIssues.stream().filter(i -> "in_progress".equals(i.getStatus())).count();
         long resolvedCount = allIssues.stream().filter(i -> "resolved".equals(i.getStatus())).count();
         long closedCount = allIssues.stream().filter(i -> "closed".equals(i.getStatus())).count();
-        
+
         stats.put("open", openCount);
-        stats.put("assigned", assignedCount);
         stats.put("inProgress", inProgressCount);
         stats.put("resolved", resolvedCount);
         stats.put("closed", closedCount);
@@ -263,6 +275,16 @@ public class IssueServiceImpl implements IssueService {
     }
 
     private void loadIssueRelations(Issue issue) {
+    }
+
+    @Override
+    public List<String> getNextStatuses(Long id) {
+        Issue issue = issueMapper.selectById(id);
+        if (issue == null) {
+            throw new RuntimeException("问题不存在");
+        }
+        Set<String> next = TRANSITION_RULES.get(issue.getStatus());
+        return next != null ? new ArrayList<>(next) : Collections.emptyList();
     }
 
     private void addStatusHistory(Long issueId, String fromStatus, String toStatus, Long operatorId, String remark) {

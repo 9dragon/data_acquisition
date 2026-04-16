@@ -142,6 +142,13 @@ public class IssueController {
         return Result.success(history);
     }
 
+    @Operation(summary = "获取可流转的目标状态")
+    @GetMapping("/{id}/next-statuses")
+    public Result<List<String>> getNextStatuses(@PathVariable Long id) {
+        List<String> nextStatuses = issueService.getNextStatuses(id);
+        return Result.success(nextStatuses);
+    }
+
     @Operation(summary = "我的待处理问题")
     @GetMapping("/my/todo")
     public Result<List<Issue>> myTodo(@RequestParam Long userId) {

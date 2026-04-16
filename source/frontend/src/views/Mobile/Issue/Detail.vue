@@ -52,15 +52,45 @@
       </van-cell-group>
 
       <!-- 操作按钮 -->
-      <div class="action-buttons" v-if="issue.status !== 'closed' && issue.status !== 'resolved'">
+      <div class="action-buttons" v-if="issue.status !== 'closed'">
         <van-button
+          v-if="issue.status === 'open'"
           type="primary"
+          size="large"
+          round
+          block
+          @click="handleStart"
+        >
+          开始处理
+        </van-button>
+        <van-button
+          v-if="issue.status === 'in_progress'"
+          type="success"
           size="large"
           round
           block
           @click="handleResolve"
         >
           标记已解决
+        </van-button>
+        <van-button
+          v-if="issue.status === 'resolved'"
+          type="primary"
+          size="large"
+          round
+          block
+          @click="handleClose"
+        >
+          关闭问题
+        </van-button>
+        <van-button
+          v-if="issue.status === 'resolved'"
+          size="large"
+          round
+          block
+          @click="handleReopen"
+        >
+          重新打开
         </van-button>
       </div>
     </div>
@@ -76,18 +106,18 @@
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { showToast, showConfirmDialog } from 'vant'
-import { mobileIssueApi, type MobileIssue } from '@/api/issue'
+import { mobileIssueApi, issueApi, type MobileIssue } from '@/api/issue'
 
 const router = useRouter()
 const route = useRoute()
 
 const issue = ref<MobileIssue>()
+const currentUserId = Number(localStorage.getItem('userId')) || 1
 
 // 获取状态类型
 const getStatusType = (status: string) => {
   const typeMap: Record<string, string> = {
     open: 'warning',
-    assigned: 'primary',
     in_progress: 'primary',
     resolved: 'success',
     closed: 'default'
@@ -99,7 +129,6 @@ const getStatusType = (status: string) => {
 const getStatusText = (status: string) => {
   const textMap: Record<string, string> = {
     open: '待处理',
-    assigned: '已分配',
     in_progress: '处理中',
     resolved: '已解决',
     closed: '已关闭'
@@ -155,17 +184,68 @@ const formatDate = (dateStr?: string) => {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 }
 
+// 开始处理
+const handleStart = () => {
+  showConfirmDialog({
+    title: '确认操作',
+    message: '确定要开始处理此问题吗？'
+  }).then(async () => {
+    try {
+      await issueApi.updateStatus(issue.value!.id, 'in_progress', currentUserId, '开始处理')
+      showToast('已开始处理')
+      loadData()
+    } catch (e: any) {
+      showToast(e.message || '操作失败')
+    }
+  }).catch(() => {})
+}
+
 // 标记已解决
 const handleResolve = () => {
   showConfirmDialog({
     title: '确认操作',
     message: '确定要将此问题标记为已解决吗？'
-  }).then(() => {
-    showToast('功能开发中...')
-    // TODO: 调用API更新状态
-  }).catch(() => {
-    // 取消
-  })
+  }).then(async () => {
+    try {
+      await issueApi.updateStatus(issue.value!.id, 'resolved', currentUserId, '问题已解决')
+      showToast('已标记为解决')
+      loadData()
+    } catch (e: any) {
+      showToast(e.message || '操作失败')
+    }
+  }).catch(() => {})
+}
+
+// 关闭问题
+const handleClose = () => {
+  showConfirmDialog({
+    title: '确认操作',
+    message: '确定要关闭此问题吗？'
+  }).then(async () => {
+    try {
+      await issueApi.updateStatus(issue.value!.id, 'closed', currentUserId, '关闭问题')
+      showToast('已关闭')
+      loadData()
+    } catch (e: any) {
+      showToast(e.message || '操作失败')
+    }
+  }).catch(() => {})
+}
+
+// 重新打开
+const handleReopen = () => {
+  showConfirmDialog({
+    title: '确认操作',
+    message: '确定要重新打开此问题吗？'
+  }).then(async () => {
+    try {
+      await issueApi.updateStatus(issue.value!.id, 'in_progress', currentUserId, '重新打开')
+      showToast('已重新打开')
+      loadData()
+    } catch (e: any) {
+      showToast(e.message || '操作失败')
+    }
+  }).catch(() => {})
 }
 
 // 加载问题详情

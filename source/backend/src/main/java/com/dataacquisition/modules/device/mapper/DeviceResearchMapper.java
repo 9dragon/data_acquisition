@@ -39,4 +39,20 @@ public interface DeviceResearchMapper extends BaseMapper<DeviceResearch> {
             @Param("workshopId") String workshopId,
             @Param("deviceTypeId") String deviceTypeId
     );
+
+    /**
+     * 根据ID查询调研详情（关联查询名称）
+     */
+    @Select("SELECT dr.*, " +
+            "       p.name as project_name, " +
+            "       dt.name as device_type_name, " +
+            "       w.name as workshop_name, " +
+            "       u.name as researcher_name " +
+            "FROM t_device_research dr " +
+            "LEFT JOIN t_project p ON dr.project_id = p.id " +
+            "LEFT JOIN t_device_type dt ON dr.device_type_id = dt.id " +
+            "LEFT JOIN t_workshop w ON dr.workshop_id = w.id " +
+            "LEFT JOIN t_user u ON dr.researcher_id = u.id " +
+            "WHERE dr.id = #{id} AND dr.deleted = 0")
+    DeviceResearch selectByIdWithNames(@Param("id") Long id);
 }

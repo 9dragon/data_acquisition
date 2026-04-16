@@ -16,6 +16,11 @@ public interface DeviceResearchService extends IService<DeviceResearch> {
     Page<DeviceResearch> pageResearch(Page<DeviceResearch> page, Long projectId, String workshopId, String deviceTypeId);
 
     /**
+     * 根据ID获取调研详情（关联查询）
+     */
+    DeviceResearch getById(Long id);
+
+    /**
      * 创建调研
      */
     DeviceResearchResponse createResearch(DeviceResearchRequest request);
