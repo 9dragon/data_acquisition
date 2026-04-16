@@ -251,35 +251,16 @@ configure_git_credentials() {
         esac
     fi
 
-    # 交互式选择凭据存储方式
-    echo ""
-    echo "请选择 Git 凭据存储方式:"
-    echo "  1. 永久保存（凭据写入 ~/.git-credentials，不过期）"
-    echo "  2. 临时缓存（自定义缓存时间，过期后需重新输入）"
-    echo "  3. 不保存（每次都需要输入用户名和密码）"
-    echo ""
-    read -p "请选择 [1/2/3，默认 1]: " cred_choice
-    cred_choice=${cred_choice:-1}
+    # 检查是否已配置凭据存储，已配置则直接复用
+    local current_helper=$(git config --global credential.helper 2>/dev/null || true)
+    if [ -n "$current_helper" ]; then
+        print_info "凭据存储模式: 已配置 ($current_helper)"
+        return
+    fi
 
-    case "$cred_choice" in
-        1)
-            git config --global credential.helper store
-            print_info "凭据存储模式: 永久保存"
-            ;;
-        2)
-            read -p "请输入缓存时间（小时，默认 24）: " cache_hours
-            cache_hours=${cache_hours:-24}
-            local timeout_seconds=$((cache_hours * 3600))
-            git config --global credential.helper "cache --timeout=${timeout_seconds}"
-            print_info "凭据存储模式: 缓存 ${cache_hours} 小时"
-            ;;
-        3)
-            print_info "凭据存储模式: 不保存"
-            ;;
-        *)
-            print_warning "无效选择，默认不保存凭据"
-            ;;
-    esac
+    # 未配置则默认永久保存（生产服务器适用）
+    git config --global credential.helper store
+    print_info "凭据存储模式: 永久保存（默认）"
 }
 
 # 拉取最新代码

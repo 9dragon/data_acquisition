@@ -20,7 +20,9 @@
         allow-clear
       >
         <el-option label="RJ45" value="RJ45" />
-        <el-option label="RJ232" value="RJ232" />
+        <el-option label="RS232" value="RS232" />
+        <el-option label="RS422" value="RS422" />
+        <el-option label="RS485" value="RS485" />
       </el-select>
     </el-form-item>
 

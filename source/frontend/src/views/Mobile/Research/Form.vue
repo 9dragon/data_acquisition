@@ -281,14 +281,33 @@ const loadResearchDetail = async (id: number) => {
     })
 
     // 加载控制器信息
-    if (detail.controller) {
-      Object.assign(controllerData, detail.controller)
-    }
+    Object.assign(controllerData, {
+      isInterfaceOccupied: detail.isInterfaceOccupied,
+      interfaceType: detail.interfaceType,
+      hasTouchScreen: detail.hasTouchScreen,
+      controllerBrand: detail.controllerBrand,
+      controllerModel: detail.controllerModel,
+      touchScreenBrand: detail.touchScreenBrand,
+      hasPointTable: detail.hasPointTable,
+      hasPlcSource: detail.hasPlcSource,
+      hasTouchScreenSource: detail.hasTouchScreenSource,
+      controllerPhotos: detail.controllerPhotos,
+      controllerVideos: detail.controllerVideos,
+      touchscreenPhotos: detail.touchscreenPhotos,
+      touchscreenVideos: detail.touchscreenVideos,
+      cabinetPhotos: detail.cabinetPhotos,
+      cabinetVideos: detail.cabinetVideos
+    })
 
     // 加载采集信息
-    if (detail.collection) {
-      Object.assign(collectionData, detail.collection)
-    }
+    Object.assign(collectionData, {
+      collectDeviceStatus: detail.collectDeviceStatus,
+      collectProcessParams: detail.collectProcessParams,
+      dataItems: detail.dataItems,
+      dataItemsDetail: detail.dataItemsDetail,
+      collectProduction: detail.collectProduction,
+      collectEnergy: detail.collectEnergy
+    })
 
     // 根据进度设置当前步骤
     const progress = detail.researchProgress || 0

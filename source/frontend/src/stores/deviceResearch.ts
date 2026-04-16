@@ -3,11 +3,35 @@ import { ref, computed } from 'vue'
 import { deviceResearchApi } from '@/api/deviceResearch'
 import type { DeviceResearch } from '@/types/device'
 
+const LAST_WORKSHOP_KEY = 'last_selected_workshop'
+
+function loadLastWorkshop() {
+  try {
+    const saved = localStorage.getItem(LAST_WORKSHOP_KEY)
+    return saved ? JSON.parse(saved) : null
+  } catch {
+    return null
+  }
+}
+
+function saveLastWorkshop(workshop: { workshopId: string; workshopName: string } | null) {
+  try {
+    if (workshop) {
+      localStorage.setItem(LAST_WORKSHOP_KEY, JSON.stringify(workshop))
+    } else {
+      localStorage.removeItem(LAST_WORKSHOP_KEY)
+    }
+  } catch {
+    // ignore
+  }
+}
+
 export const useDeviceResearchStore = defineStore('deviceResearch', () => {
   // 状态
   const researchList = ref<DeviceResearch[]>([])
   const currentResearch = ref<DeviceResearch | null>(null)
   const loading = ref(false)
+  const lastSelectedWorkshop = ref<{ workshopId: string; workshopName: string } | null>(loadLastWorkshop())
 
   // 计算属性
   const researchCount = computed(() => researchList.value.length)
@@ -147,11 +171,17 @@ export const useDeviceResearchStore = defineStore('deviceResearch', () => {
     currentResearch.value = research
   }
 
+  function setLastSelectedWorkshop(workshop: { workshopId: string; workshopName: string } | null) {
+    lastSelectedWorkshop.value = workshop
+    saveLastWorkshop(workshop)
+  }
+
   return {
     researchList,
     currentResearch,
     loading,
     researchCount,
+    lastSelectedWorkshop,
     fetchList,
     fetchById,
     fetchByDeviceId,
@@ -162,6 +192,7 @@ export const useDeviceResearchStore = defineStore('deviceResearch', () => {
     calculateProgress,
     remove,
     resetCurrent,
-    setCurrent
+    setCurrent,
+    setLastSelectedWorkshop
   }
 })

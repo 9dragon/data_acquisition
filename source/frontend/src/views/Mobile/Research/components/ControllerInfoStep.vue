@@ -66,15 +66,23 @@
         placeholder="请输入控制器型号（选填）"
       />
 
-      <van-field name="hasPointTable" label="提供的资料">
-        <template #input>
-          <van-checkbox-group v-model="providedMaterials" direction="vertical" @change="updateMaterials">
-            <van-checkbox name="hasPointTable">是否提供点位表</van-checkbox>
-            <van-checkbox name="hasPlcSource">是否提供PLC源程序</van-checkbox>
-            <van-checkbox name="hasTouchScreenSource">是否提供触摸屏源程序</van-checkbox>
-          </van-checkbox-group>
-        </template>
-      </van-field>
+      <van-cell-group inset title="提供的资料">
+        <van-cell center title="点位表">
+          <template #right-icon>
+            <van-switch v-model="formData.hasPointTable" size="20" @change="updateValue" />
+          </template>
+        </van-cell>
+        <van-cell center title="PLC源程序">
+          <template #right-icon>
+            <van-switch v-model="formData.hasPlcSource" size="20" @change="updateValue" />
+          </template>
+        </van-cell>
+        <van-cell center title="触摸屏源程序">
+          <template #right-icon>
+            <van-switch v-model="formData.hasTouchScreenSource" size="20" @change="updateValue" />
+          </template>
+        </van-cell>
+      </van-cell-group>
     </van-cell-group>
 
     <!-- 多媒体资料上传 -->
@@ -160,9 +168,6 @@ const emit = defineEmits<Emits>()
 
 const formData = reactive<DeviceResearchController>({ ...props.modelValue })
 
-// 提供的资料
-const providedMaterials = ref<string[]>([])
-
 // 多媒体文件
 const controllerFiles = ref<UploaderFileListItem[]>([])
 const touchscreenFiles = ref<UploaderFileListItem[]>([])
@@ -176,19 +181,13 @@ const updateValue = () => {
   emit('update:modelValue', { ...formData })
 }
 
-// 更新提供的资料
-const updateMaterials = () => {
-  formData.hasPointTable = providedMaterials.value.includes('hasPointTable')
-  formData.hasPlcSource = providedMaterials.value.includes('hasPlcSource')
-  formData.hasTouchScreenSource = providedMaterials.value.includes('hasTouchScreenSource')
-  updateValue()
-}
-
 // 接口类型选择器
 const showInterfaceTypePicker = ref(false)
 const interfaceTypeOptions = [
   { text: 'RJ45', value: 'RJ45' },
-  { text: 'RJ232', value: 'RJ232' }
+  { text: 'RS232', value: 'RS232' },
+  { text: 'RS422', value: 'RS422' },
+  { text: 'RS485', value: 'RS485' }
 ]
 
 const onInterfaceTypeConfirm = ({ selectedOptions }: any) => {
@@ -295,11 +294,6 @@ const updateMediaUrls = () => {
 onMounted(() => {
   Object.assign(formData, props.modelValue)
 
-  // 初始化提供的资料
-  if (formData.hasPointTable) providedMaterials.value.push('hasPointTable')
-  if (formData.hasPlcSource) providedMaterials.value.push('hasPlcSource')
-  if (formData.hasTouchScreenSource) providedMaterials.value.push('hasTouchScreenSource')
-
   // 初始化媒体文件
   try {
     if (formData.controllerPhotos) {
@@ -358,9 +352,5 @@ defineExpose({
 
 :deep(.van-cell-group) {
   margin-bottom: 12px;
-}
-
-:deep(.van-checkbox) {
-  margin-bottom: 8px;
 }
 </style>

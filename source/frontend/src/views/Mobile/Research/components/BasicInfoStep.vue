@@ -118,6 +118,7 @@
 import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { showToast } from 'vant'
 import { useMobileProjectStore } from '@/stores/mobileProject'
+import { useDeviceResearchStore } from '@/stores/deviceResearch'
 import { workshopApi, type Workshop } from '@/api/workshop'
 import { deviceTypeApi, type DeviceType } from '@/api/deviceType'
 import type { DeviceResearchBasic } from '@/types/device'
@@ -134,6 +135,7 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const projectStore = useMobileProjectStore()
+const deviceResearchStore = useDeviceResearchStore()
 const currentProject = computed(() => projectStore.currentProject)
 
 const formData = reactive<DeviceResearchBasic>({ ...props.modelValue })
@@ -170,6 +172,11 @@ const onWorkshopConfirm = ({ selectedOptions }: any) => {
   formData.workshopId = selectedOptions[0].value
   formData.workshopName = selectedOptions[0].text
   showWorkshopPicker.value = false
+  // 保存选择的车间
+  deviceResearchStore.setLastSelectedWorkshop({
+    workshopId: formData.workshopId,
+    workshopName: formData.workshopName
+  })
   updateValue()
 }
 
@@ -247,6 +254,12 @@ const onManufacturerInputConfirm = () => {
 // 初始化
 onMounted(() => {
   Object.assign(formData, props.modelValue)
+  // 新建模式时，自动填充上一次选择的车间
+  if (!formData.workshopId && deviceResearchStore.lastSelectedWorkshop) {
+    formData.workshopId = deviceResearchStore.lastSelectedWorkshop.workshopId
+    formData.workshopName = deviceResearchStore.lastSelectedWorkshop.workshopName
+    updateValue()
+  }
 })
 
 // 监听当前项目变化 - 添加 immediate 确保初始化时也执行
