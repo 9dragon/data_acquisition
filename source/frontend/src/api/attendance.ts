@@ -153,7 +153,7 @@ export const attendanceApi = {
   /**
    * 获取今日签到统计
    */
-  getTodayStats: (projectId: number): Promise<TodayCheckInStats> => {
+  getTodayStats: (projectId?: number): Promise<TodayCheckInStats> => {
     return http.get('/attendance/today-stats', { params: { projectId } })
   },
 

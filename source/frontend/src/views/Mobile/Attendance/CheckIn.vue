@@ -414,7 +414,7 @@ const updateTime = () => {
 // 获取今日打卡统计
 const fetchTodayStats = async () => {
   try {
-    const stats = await attendanceApi.getTodayStats()
+    const stats = await attendanceApi.getTodayStats(selectedProjectId.value)
     totalCount.value = stats.totalShifts
     checkedCount.value = stats.checkedShifts
     shifts.value = stats.pendingShifts || []
