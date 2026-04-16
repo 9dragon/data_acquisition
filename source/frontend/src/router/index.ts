@@ -136,7 +136,7 @@ const routes: RouteRecordRaw[] = [
         path: 'attendance-config',
         name: 'AttendanceConfig',
         component: () => import('@/views/System/AttendanceConfig.vue'),
-        meta: { title: '签到配置', icon: 'Setting' }
+        meta: { title: '系统配置', icon: 'Setting' }
       },
       {
         path: 'attendance-list',

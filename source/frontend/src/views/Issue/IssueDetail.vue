@@ -33,7 +33,7 @@
             </el-descriptions-item>
             <el-descriptions-item label="报告人">{{ issue.reporterName }}</el-descriptions-item>
             <el-descriptions-item label="负责人">{{ issue.assigneeName || '-' }}</el-descriptions-item>
-            <el-descriptions-item label="预计解决时间">{{ issue.dueDate || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="期望解决时间">{{ issue.dueDate || '-' }}</el-descriptions-item>
             <el-descriptions-item label="创建时间">{{ formatDateTime(issue.createTime) }}</el-descriptions-item>
             <el-descriptions-item label="解决时间" v-if="issue.resolvedAt">{{ formatDateTime(issue.resolvedAt) }}</el-descriptions-item>
             <el-descriptions-item label="关闭时间" v-if="issue.closedAt">{{ formatDateTime(issue.closedAt) }}</el-descriptions-item>

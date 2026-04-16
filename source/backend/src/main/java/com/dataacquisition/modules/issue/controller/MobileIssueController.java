@@ -48,6 +48,7 @@ public class MobileIssueController {
     @GetMapping("/my")
     public Result<Map<String, Object>> getMyIssues(
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) Long projectId,
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize,
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -58,7 +59,11 @@ public class MobileIssueController {
             new com.dataacquisition.modules.issue.dto.IssueQueryDTO();
         query.setPageNum(pageNum);
         query.setPageSize(pageSize);
-        query.setAssigneeId(user.getId());
+        query.setReporterId(user.getId());
+
+        if (projectId != null) {
+            query.setProjectId(projectId);
+        }
 
         // 根据状态筛选
         if (status != null && !status.isEmpty()) {

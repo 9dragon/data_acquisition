@@ -50,7 +50,7 @@
         </el-select>
       </el-form-item>
 
-      <el-form-item label="预计解决时间">
+      <el-form-item label="期望解决时间">
         <el-date-picker
           v-model="form.dueDate"
           type="date"

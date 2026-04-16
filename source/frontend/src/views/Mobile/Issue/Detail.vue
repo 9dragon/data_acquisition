@@ -25,7 +25,7 @@
       <!-- 时间信息 -->
       <van-cell-group title="时间信息" inset>
         <van-cell title="上报时间" :value="formatDateTime(issue.createdAt)" />
-        <van-cell title="截止日期" :value="formatDate(issue.dueDate)" v-if="issue.dueDate" />
+        <van-cell title="期望解决时间" :value="formatDate(issue.dueDate)" v-if="issue.dueDate" />
         <van-cell title="解决时间" :value="formatDateTime(issue.resolvedAt)" v-if="issue.resolvedAt" />
         <van-cell title="关闭时间" :value="formatDateTime(issue.closedAt)" v-if="issue.closedAt" />
       </van-cell-group>

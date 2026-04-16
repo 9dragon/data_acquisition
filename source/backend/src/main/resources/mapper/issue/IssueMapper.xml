@@ -20,8 +20,8 @@
             i.resolved_at,
             i.closed_at,
             i.closed_reason,
-            i.create_time,
-            i.update_time,
+            i.created_at,
+            i.updated_at,
             p.name AS project_name,
             d.name AS device_name,
             r.name AS reporter_name,
@@ -63,18 +63,18 @@
             AND i.create_time &lt;= #{query.endDate}
         </if>
         ORDER BY 
-            CASE WHEN #{query.sortOrder} = 'asc' THEN 
+            CASE WHEN #{query.sortOrder} = 'asc' THEN
                 CASE #{query.sortField}
                     WHEN 'priority' THEN CASE i.priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 ELSE 4 END
-                    WHEN 'create_time' THEN i.create_time
-                    ELSE i.create_time
+                    WHEN 'create_time' THEN i.created_at
+                    ELSE i.created_at
                 END
             END ASC,
-            CASE WHEN #{query.sortOrder} = 'desc' OR #{query.sortOrder} IS NULL OR #{query.sortOrder} = '' THEN 
+            CASE WHEN #{query.sortOrder} = 'desc' OR #{query.sortOrder} IS NULL OR #{query.sortOrder} = '' THEN
                 CASE #{query.sortField}
                     WHEN 'priority' THEN CASE i.priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 ELSE 4 END
-                    WHEN 'create_time' THEN i.create_time
-                    ELSE i.create_time
+                    WHEN 'create_time' THEN i.created_at
+                    ELSE i.created_at
                 END
             END DESC
     </select>

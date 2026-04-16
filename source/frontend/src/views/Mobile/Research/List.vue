@@ -66,12 +66,9 @@
     </van-pull-refresh>
 
     <!-- 浮动新建按钮 -->
-    <van-floating-bubble
-      icon="plus"
-      magnetic="x"
-      :offset="{ x: 24, y: 80 }"
-      @click="goToCreate"
-    />
+    <div class="fab-container" @click="goToCreate">
+      <van-icon name="plus" size="24" color="#fff" />
+    </div>
 
     <!-- 空状态 -->
     <van-empty v-if="list.length === 0 && !loading" description="暂无调研记录" />
@@ -323,5 +320,22 @@ onMounted(async () => {
 .research-date {
   font-size: 12px;
   color: #999;
+}
+
+/* 浮动新建按钮 */
+.fab-container {
+  position: fixed;
+  right: 24px;
+  bottom: 70px;
+  width: 48px;
+  height: 48px;
+  background: #1989fa;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(25, 137, 250, 0.4);
+  z-index: 999;
+  cursor: pointer;
 }
 </style>

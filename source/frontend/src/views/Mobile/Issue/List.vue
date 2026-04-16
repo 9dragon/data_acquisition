@@ -37,10 +37,6 @@
           </div>
           <div class="issue-title">{{ issue.title }}</div>
           <div class="issue-info">
-            <span v-if="issue.projectName" class="info-item">
-              <van-icon name="folder-o" />
-              {{ issue.projectName }}
-            </span>
             <span v-if="issue.deviceName" class="info-item">
               <van-icon name="monitor-o" />
               {{ issue.deviceName }}
@@ -48,20 +44,25 @@
           </div>
           <div class="issue-footer">
             <span class="issue-date">{{ formatDate(issue.createdAt) }}</span>
-            <span class="issue-reporter">{{ issue.reporterName }}</span>
+            <div class="footer-users">
+              <span v-if="issue.assigneeName" class="info-item">
+                <van-icon name="manager-o" />
+                {{ issue.assigneeName }}
+              </span>
+              <span v-if="issue.reporterName" class="info-item">
+                <van-icon name="user-o" />
+                {{ issue.reporterName }}
+              </span>
+            </div>
           </div>
         </div>
       </van-list>
     </van-pull-refresh>
 
     <!-- 浮动按钮 - 上报问题 -->
-    <van-floating-bubble
-      icon="plus"
-      axis="xy"
-      magnetic="x"
-      :offset="{ x: 24, y: 80 }"
-      @click="goToReport"
-    />
+    <div class="fab-container" @click="goToReport">
+      <van-icon name="plus" size="24" color="#fff" />
+    </div>
 
     <!-- 空状态 -->
     <van-empty v-if="issues.length === 0 && !loading" description="暂无问题" />
@@ -307,5 +308,27 @@ onMounted(async () => {
   align-items: center;
   font-size: 12px;
   color: #999;
+}
+
+.footer-users {
+  display: flex;
+  gap: 12px;
+}
+
+/* 浮动新建按钮 */
+.fab-container {
+  position: fixed;
+  right: 24px;
+  bottom: 70px;
+  width: 48px;
+  height: 48px;
+  background: #1989fa;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(25, 137, 250, 0.4);
+  z-index: 999;
+  cursor: pointer;
 }
 </style>

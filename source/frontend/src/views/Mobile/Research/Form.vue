@@ -95,9 +95,9 @@ const basicData = reactive<DeviceResearchBasic>({
 })
 
 const controllerData = reactive<DeviceResearchController>({
-  isInterfaceOccupied: undefined,
+  isInterfaceOccupied: false,
   interfaceType: undefined,
-  hasTouchScreen: undefined,
+  hasTouchScreen: false,
   controllerBrand: '',
   controllerModel: '',
   touchScreenBrand: '',

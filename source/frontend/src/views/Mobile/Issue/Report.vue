@@ -1,37 +1,5 @@
 <template>
   <div class="issue-report-page">
-    <!-- 基本信息 -->
-    <van-cell-group inset title="基本信息">
-      <van-cell>
-        <template #title>
-          <span>当前项目</span>
-        </template>
-        <template #value>
-          <span :class="{ 'no-project': !selectedProject }">
-            {{ selectedProject || '请在【我的】页面选择项目' }}
-          </span>
-        </template>
-      </van-cell>
-      <van-cell
-        is-link
-        title="关联设备"
-        :value="selectedDevice || '选填'"
-        @click="showDevicePicker = true"
-      />
-      <van-cell
-        is-link
-        title="问题类型"
-        :value="selectedType || '请选择'"
-        @click="showTypePicker = true"
-      />
-      <van-cell
-        is-link
-        title="优先级"
-        :value="getPriorityText(formData.priority)"
-        @click="showPriorityPicker = true"
-      />
-    </van-cell-group>
-
     <!-- 问题描述 -->
     <van-cell-group inset title="问题描述">
       <van-field
@@ -39,6 +7,19 @@
         label="标题"
         placeholder="请输入问题标题"
         required
+      />
+      <van-cell
+        is-link
+        title="问题类型"
+        :value="selectedTypeText || '请选择'"
+        required
+        @click="showTypePicker = true"
+      />
+      <van-cell
+        is-link
+        title="优先级"
+        :value="getPriorityText(formData.priority)"
+        @click="showPriorityPicker = true"
       />
       <van-field
         v-model="formData.description"
@@ -51,7 +32,17 @@
       />
     </van-cell-group>
 
-    <!-- 照片上传 -->
+    <!-- 关联信息 -->
+    <van-cell-group inset title="关联信息">
+      <van-cell
+        is-link
+        title="关联设备"
+        :value="selectedDevice || '选填'"
+        @click="showDevicePicker = true"
+      />
+    </van-cell-group>
+
+    <!-- 现场照片 -->
     <van-cell-group inset title="现场照片">
       <div class="photo-section">
         <van-uploader
@@ -63,24 +54,6 @@
           accept="image/*"
         />
       </div>
-    </van-cell-group>
-
-    <!-- 位置信息 -->
-    <van-cell-group inset title="位置信息">
-      <van-cell
-        title="当前位置"
-        :value="locationInfo.address || '获取中...'"
-        is-link
-        @click="fetchLocation"
-      />
-      <van-cell title="经纬度">
-        <template #value>
-          <span v-if="locationInfo.latitude">
-            {{ locationInfo.latitude.toFixed(6) }}, {{ locationInfo.longitude.toFixed(6) }}
-          </span>
-          <span v-else>--</span>
-        </template>
-      </van-cell>
     </van-cell-group>
 
     <!-- 提交按钮 -->
@@ -131,27 +104,15 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast, showLoadingToast, closeToast, type UploaderFileListItem } from 'vant'
 import { mobileIssueApi, type IssueReportRequest, type IssuePriority } from '@/api/issue'
-import { getLocation } from '@/utils/dingtalk'
 import { useMobileProjectStore } from '@/stores/mobileProject'
 
 const router = useRouter()
 const projectStore = useMobileProjectStore()
 
 const submitting = ref(false)
-const showProjectPicker = ref(false)
 const showDevicePicker = ref(false)
 const showTypePicker = ref(false)
 const showPriorityPicker = ref(false)
-
-// 项目列表
-const projectList = computed(() => {
-  return projectStore.projectList.map(p => ({
-    text: p.name,
-    value: p.id
-  }))
-})
-
-const selectedProject = computed(() => projectStore.currentProject?.name || '')
 
 // 表单数据
 const formData = reactive<IssueReportRequest>({
@@ -161,21 +122,13 @@ const formData = reactive<IssueReportRequest>({
   description: '',
   projectId: 0,
   deviceId: undefined,
-  photos: [],
-  location: '',
-  latitude: undefined,
-  longitude: undefined,
-  address: undefined
+  photos: []
 })
 
 // 选中的显示文本
 const selectedDevice = ref('')
-
-// 位置信息
-const locationInfo = ref({
-  latitude: 0,
-  longitude: 0,
-  address: ''
+const selectedTypeText = computed(() => {
+  return typeOptions.find(t => t.value === formData.type)?.text || ''
 })
 
 // 文件列表
@@ -216,16 +169,6 @@ const getPriorityText = (priority: IssuePriority) => {
   return textMap[priority]
 }
 
-// 选择项目
-const onProjectConfirm = ({ selectedOptions }: any) => {
-  const project = projectStore.projectList.find(p => p.id === selectedOptions[0].value)
-  if (project) {
-    projectStore.setCurrentProject(project)
-    formData.projectId = project.id
-  }
-  showProjectPicker.value = false
-}
-
 // 选择设备
 const onDeviceConfirm = ({ selectedOptions }: any) => {
   if (selectedOptions[0].value) {
@@ -245,20 +188,6 @@ const onTypeConfirm = ({ selectedOptions }: any) => {
 const onPriorityConfirm = ({ selectedOptions }: any) => {
   formData.priority = selectedOptions[0].value
   showPriorityPicker.value = false
-}
-
-// 获取位置
-const fetchLocation = async () => {
-  try {
-    const location = await getLocation()
-    locationInfo.value = location
-    formData.latitude = location.latitude
-    formData.longitude = location.longitude
-    formData.address = location.address
-    showToast('位置获取成功')
-  } catch (error) {
-    showToast('获取位置失败')
-  }
 }
 
 // 文件上传后
@@ -290,13 +219,8 @@ const beforeDelete = (file: UploaderFileListItem) => {
 
 // 提交上报
 const handleSubmit = async () => {
-  // 验证
   if (!formData.title) {
     showToast('请输入问题标题')
-    return
-  }
-  if (!formData.projectId) {
-    showToast('请选择项目')
     return
   }
   if (!formData.type) {
@@ -328,8 +252,10 @@ const handleSubmit = async () => {
 }
 
 onMounted(async () => {
-  await projectStore.fetchProjects()
   await projectStore.fetchCurrentProject()
+  if (projectStore.currentProject?.id) {
+    formData.projectId = projectStore.currentProject.id
+  }
 })
 </script>
 

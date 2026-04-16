@@ -1,14 +1,11 @@
 <template>
   <div class="controller-info-step">
     <van-cell-group inset title="控制器信息">
-      <van-field name="isInterfaceOccupied" label="接口被占用" required>
-        <template #input>
-          <van-radio-group v-model="formData.isInterfaceOccupied" direction="horizontal" @change="updateValue">
-            <van-radio :value="true">是</van-radio>
-            <van-radio :value="false">否</van-radio>
-          </van-radio-group>
+      <van-cell center title="接口被占用" required>
+        <template #right-icon>
+          <van-switch v-model="formData.isInterfaceOccupied" size="20" @change="updateValue" />
         </template>
-      </van-field>
+      </van-cell>
 
       <van-field
         name="interfaceType"
@@ -25,14 +22,11 @@
         </template>
       </van-field>
 
-      <van-field name="hasTouchScreen" label="连接触摸屏" required>
-        <template #input>
-          <van-radio-group v-model="formData.hasTouchScreen" direction="horizontal" @change="updateValue">
-            <van-radio :value="true">是</van-radio>
-            <van-radio :value="false">否</van-radio>
-          </van-radio-group>
+      <van-cell center title="连接触摸屏" required>
+        <template #right-icon>
+          <van-switch v-model="formData.hasTouchScreen" size="20" @change="updateValue" />
         </template>
-      </van-field>
+      </van-cell>
 
       <van-field
         v-if="formData.hasTouchScreen === true"
