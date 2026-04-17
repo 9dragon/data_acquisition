@@ -24,4 +24,14 @@ public interface PermissionService extends IService<Permission> {
      * 根据角色获取权限列表
      */
     List<Permission> getByRole(Long roleId);
+
+    /**
+     * 根据用户ID获取所有权限码列表
+     */
+    List<String> getPermissionCodesByUserId(Long userId);
+
+    /**
+     * 根据用户ID获取菜单树
+     */
+    List<Permission> getMenuTreeByUserId(Long userId);
 }

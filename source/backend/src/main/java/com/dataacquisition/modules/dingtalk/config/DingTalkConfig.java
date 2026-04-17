@@ -33,6 +33,11 @@ public class DingTalkConfig {
     private String corpId;
 
     /**
+     * 钉钉用户默认密码（自动创建用户时使用）
+     */
+    private String defaultPassword = "user@123456";
+
+    /**
      * 同步配置
      */
     private SyncConfig sync = new SyncConfig();

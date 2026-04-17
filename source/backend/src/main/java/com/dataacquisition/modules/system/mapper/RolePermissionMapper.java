@@ -19,5 +19,5 @@ public interface RolePermissionMapper extends BaseMapper<RolePermission> {
 
     void deleteByRoleId(@Param("roleId") Long roleId);
 
-    void insertBatch(@Param("roleId") Long roleId, @Param("permissionIds") List<Long> permissionIds);
+    void insertBatch(@Param("roleId") Long roleId, @Param("permissionIds") List<Long> permissionIds, @Param("createdBy") Long createdBy);
 }

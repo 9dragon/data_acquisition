@@ -282,15 +282,16 @@ function handleLocationFail(error: any): Error {
 
 /**
  * 拍照
+ * @param facingMode 摄像头方向：'user' 前置（默认），'environment' 后置
  */
-export function chooseImage(): Promise<string> {
+export function chooseImage(facingMode: 'user' | 'environment' = 'user'): Promise<string> {
   return new Promise((resolve, reject) => {
     if (!isDingTalk()) {
       // 非钉钉环境，使用文件选择调起系统相机
       const input = document.createElement('input')
       input.type = 'file'
       input.accept = 'image/*'
-      input.capture = 'environment'
+      input.capture = facingMode
       input.onchange = (e) => {
         const file = (e.target as HTMLInputElement).files?.[0]
         if (file) {

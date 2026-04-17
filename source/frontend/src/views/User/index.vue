@@ -4,7 +4,7 @@
       <template #header>
         <div class="card-header">
           <span>用户管理</span>
-          <el-button type="primary" @click="handleCreate">新增用户</el-button>
+          <el-button v-if="hasPermission('user:create')" type="primary" @click="handleCreate">新增用户</el-button>
         </div>
       </template>
 
@@ -48,16 +48,22 @@
           </template>
         </el-table-column>
         <el-table-column prop="lastLoginTime" label="最后登录" width="160" />
+        <el-table-column label="角色" width="200">
+          <template #default="{ row }">
+            <span>{{ getRoleNames(row.roleIds) }}</span>
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
             <div class="action-buttons">
-              <el-button link type="primary" :icon="Edit" @click="handleEdit(row)">
+              <el-button v-if="hasPermission('user:edit')" link type="primary" :icon="Edit" @click="handleEdit(row)">
                 编辑
               </el-button>
               <el-button link type="warning" :icon="RefreshRight" @click="handleResetPassword(row)">
                 重置密码
               </el-button>
               <el-popconfirm
+                v-if="hasPermission('user:delete')"
                 title="确认删除"
                 confirm-button-text="确定"
                 cancel-button-text="取消"
@@ -97,13 +103,19 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Edit, Delete, RefreshRight } from '@element-plus/icons-vue'
 import { http } from '@/api/request'
+import { roleApi } from '@/api/role'
+import { usePermissionStore } from '@/stores/permission'
 import UserFormDialog from './UserFormDialog.vue'
+
+const permissionStore = usePermissionStore()
+const hasPermission = (code: string) => permissionStore.hasPermission(code)
 
 const loading = ref(false)
 const tableData = ref<any[]>([])
 const total = ref(0)
 const createDialogRef = ref()
 const editDialogRef = ref()
+const allRoles = ref<any[]>([])
 
 const queryParams = reactive({
   pageNum: 1,
@@ -121,6 +133,19 @@ async function handleQuery() {
   } finally {
     loading.value = false
   }
+}
+
+function getRoleNames(roleIds?: number[]): string {
+  if (!roleIds || roleIds.length === 0) return '-'
+  const names = roleIds
+    .map(id => allRoles.value.find(r => r.id === id)?.name)
+    .filter(Boolean)
+  return names.length > 0 ? names.join(', ') : '-'
+}
+
+async function loadAllRoles() {
+  const res = await roleApi.getRolePage({ page: 1, pageSize: 100 })
+  allRoles.value = res.records
 }
 
 function handleReset() {
@@ -182,6 +207,7 @@ function handleToggleStatus(row: any) {
 }
 
 onMounted(() => {
+  loadAllRoles()
   handleQuery()
 })
 </script>

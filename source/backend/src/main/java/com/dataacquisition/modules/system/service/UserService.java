@@ -18,6 +18,11 @@ public interface UserService extends IService<User>, UserDetailsService {
     User getByUsername(String username);
 
     /**
+     * 根据用户名或手机号获取用户
+     */
+    User getByUsernameOrPhone(String usernameOrPhone);
+
+    /**
      * 创建用户
      */
     Boolean createUser(User user);
@@ -61,4 +66,14 @@ public interface UserService extends IService<User>, UserDetailsService {
      * 切换用户状态
      */
     Boolean toggleStatus(Long id);
+
+    /**
+     * 获取用户的角色ID列表
+     */
+    List<Long> getUserRoleIds(Long userId);
+
+    /**
+     * 分配角色（覆盖式）
+     */
+    Boolean assignRoles(Long userId, List<Long> roleIds);
 }

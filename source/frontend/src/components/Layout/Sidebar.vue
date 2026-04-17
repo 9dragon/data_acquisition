@@ -13,120 +13,32 @@
       active-text-color="#409EFF"
       :unique-opened="true"
     >
-      <!-- 工作台 -->
-      <el-menu-item index="/dashboard">
-        <el-icon><DataBoard /></el-icon>
-        <span>工作台</span>
-      </el-menu-item>
-
-      <!-- 进度管理 -->
-      <el-sub-menu index="progress">
-        <template #title>
-          <el-icon><DataLine /></el-icon>
-          <span>进度管理</span>
-        </template>
-        <el-menu-item index="/plan">
-          <el-icon><Calendar /></el-icon>
-          <span>项目计划</span>
+      <template v-for="menu in menus" :key="menu.code">
+        <el-menu-item v-if="!menu.children || menu.children.length === 0" :index="menu.path || '/'">
+          <el-icon><component :is="getIcon(menu.code)" /></el-icon>
+          <span>{{ menu.name }}</span>
         </el-menu-item>
-        <el-menu-item index="/tasks">
-          <el-icon><List /></el-icon>
-          <span>任务列表</span>
-        </el-menu-item>
-        <el-menu-item index="/attendance-list">
-          <el-icon><Document /></el-icon>
-          <span>签到记录</span>
-        </el-menu-item>
-      </el-sub-menu>
-
-      <!-- 项目管理 -->
-      <el-sub-menu index="project">
-        <template #title>
-          <el-icon><FolderOpened /></el-icon>
-          <span>项目管理</span>
-        </template>
-        <el-menu-item index="/projects">
-          <el-icon><Document /></el-icon>
-          <span>项目列表</span>
-        </el-menu-item>
-        <el-menu-item index="/stages">
-          <el-icon><Flag /></el-icon>
-          <span>项目阶段</span>
-        </el-menu-item>
-      </el-sub-menu>
-
-      <!-- 设备管理 -->
-      <el-sub-menu index="device">
-        <template #title>
-          <el-icon><Monitor /></el-icon>
-          <span>设备管理</span>
-        </template>
-        <el-menu-item index="/devices">
-          <el-icon><Monitor /></el-icon>
-          <span>设备列表</span>
-        </el-menu-item>
-        <el-menu-item index="/device-research">
-          <el-icon><Document /></el-icon>
-          <span>设备调研</span>
-        </el-menu-item>
-        <el-menu-item index="/device-types">
-          <el-icon><SetUp /></el-icon>
-          <span>设备类型</span>
-        </el-menu-item>
-        <el-menu-item index="/workshops">
-          <el-icon><OfficeBuilding /></el-icon>
-          <span>车间管理</span>
-        </el-menu-item>
-      </el-sub-menu>
-
-      <!-- 问题管理 -->
-      <el-sub-menu index="issue">
-        <template #title>
-          <el-icon><Warning /></el-icon>
-          <span>问题管理</span>
-        </template>
-        <el-menu-item index="/issue">
-          <el-icon><Document /></el-icon>
-          <span>问题列表</span>
-        </el-menu-item>
-        <el-menu-item index="/issue/my">
-          <el-icon><User /></el-icon>
-          <span>我的问题</span>
-        </el-menu-item>
-        <el-menu-item index="/issue/stats">
-          <el-icon><DataAnalysis /></el-icon>
-          <span>问题统计</span>
-        </el-menu-item>
-      </el-sub-menu>
-
-      <!-- 系统管理 -->
-      <el-sub-menu index="system">
-        <template #title>
-          <el-icon><Setting /></el-icon>
-          <span>系统管理</span>
-        </template>
-        <el-menu-item index="/users">
-          <el-icon><User /></el-icon>
-          <span>用户管理</span>
-        </el-menu-item>
-        <el-menu-item index="/roles">
-          <el-icon><UserFilled /></el-icon>
-          <span>角色管理</span>
-        </el-menu-item>
-        <el-menu-item index="/attendance-config">
-          <el-icon><Setting /></el-icon>
-          <span>系统配置</span>
-        </el-menu-item>
-      </el-sub-menu>
-
+        <el-sub-menu v-else :index="menu.code">
+          <template #title>
+            <el-icon><component :is="getIcon(menu.code)" /></el-icon>
+            <span>{{ menu.name }}</span>
+          </template>
+          <el-menu-item v-for="child in menu.children" :key="child.code" :index="child.path || '/'">
+            <el-icon><component :is="getIcon(child.code)" /></el-icon>
+            <span>{{ child.name }}</span>
+          </el-menu-item>
+        </el-sub-menu>
+      </template>
     </el-menu>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useLayoutStore } from '@/stores/layout'
+import { usePermissionStore } from '@/stores/permission'
+import { authApi, type MenuPermission } from '@/api/auth'
 import {
   DataBoard,
   DataLine,
@@ -147,7 +59,62 @@ import {
 
 const route = useRoute()
 const layoutStore = useLayoutStore()
+const permissionStore = usePermissionStore()
 const activeMenu = computed(() => route.path)
+const menus = ref<MenuPermission[]>([])
+
+const iconMap: Record<string, any> = {
+  dashboard: DataBoard,
+  progress: DataLine,
+  project: FolderOpened,
+  device: Monitor,
+  issue: Warning,
+  system: Setting,
+  plan: Calendar,
+  tasks: List,
+  'attendance-list': Document,
+  projects: Document,
+  stages: Flag,
+  devices: Monitor,
+  'device-research': Document,
+  'device-types': SetUp,
+  workshops: OfficeBuilding,
+  'issue:list': Document,
+  'issue-my': User,
+  'issue-stats': DataAnalysis,
+  users: User,
+  roles: UserFilled,
+  'attendance-config': Setting
+}
+
+function getIcon(code: string) {
+  return iconMap[code] || Document
+}
+
+async function loadMenus() {
+  try {
+    const data = await authApi.getUserMenus()
+    menus.value = data || []
+    permissionStore.setMenus(data || [])
+  } catch (error) {
+    console.error('Failed to load menus:', error)
+    menus.value = []
+  }
+}
+
+watch(() => permissionStore.menus, (newMenus) => {
+  if (newMenus.length > 0) {
+    menus.value = newMenus
+  }
+}, { immediate: true })
+
+onMounted(() => {
+  if (permissionStore.menus.length === 0) {
+    loadMenus()
+  } else {
+    menus.value = permissionStore.menus
+  }
+})
 </script>
 
 <style scoped>

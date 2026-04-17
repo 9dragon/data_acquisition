@@ -29,6 +29,17 @@
       <el-form-item label="邮箱" prop="email">
         <el-input v-model="form.email" placeholder="请输入邮箱" />
       </el-form-item>
+
+      <el-form-item label="角色" prop="roleIds">
+        <el-select v-model="form.roleIds" multiple placeholder="请选择角色" style="width: 100%">
+          <el-option
+            v-for="role in roleOptions"
+            :key="role.id"
+            :label="role.name"
+            :value="role.id"
+          />
+        </el-select>
+      </el-form-item>
     </el-form>
 
     <template #footer>
@@ -39,15 +50,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { userApi, type User } from '@/api/user'
+import { roleApi, type Role } from '@/api/role'
 
 const visible = ref(false)
 const submitting = ref(false)
 const formRef = ref()
 const currentMode = ref<'create' | 'edit'>('create')
 const currentUserId = ref<number>()
+const roleOptions = ref<Role[]>([])
 
 const form = reactive<{
   username: string
@@ -56,13 +69,15 @@ const form = reactive<{
   phone: string
   email: string
   company: string
+  roleIds: number[]
 }>({
   username: '',
   password: '',
   name: '',
   phone: '',
   email: '',
-  company: ''
+  company: '',
+  roleIds: []
 })
 
 const isEdit = computed(() => currentMode.value === 'edit')
@@ -87,9 +102,15 @@ const rules = {
   ]
 }
 
-function open(mode: 'create' | 'edit' = 'create', user?: User) {
+async function loadRoles() {
+  const res = await roleApi.getRolePage({ page: 1, pageSize: 100 })
+  roleOptions.value = res.records
+}
+
+async function open(mode: 'create' | 'edit' = 'create', user?: User) {
   visible.value = true
   currentMode.value = mode
+  await loadRoles()
   if (mode === 'edit' && user) {
     currentUserId.value = user.id
     form.username = user.username || ''
@@ -98,6 +119,7 @@ function open(mode: 'create' | 'edit' = 'create', user?: User) {
     form.email = user.email || ''
     form.company = user.company || ''
     form.password = ''
+    form.roleIds = user.roleIds || []
   } else {
     currentUserId.value = undefined
     form.username = ''
@@ -106,6 +128,7 @@ function open(mode: 'create' | 'edit' = 'create', user?: User) {
     form.phone = ''
     form.email = ''
     form.company = ''
+    form.roleIds = []
   }
 }
 
@@ -128,6 +151,7 @@ async function handleSubmit() {
         company: form.company || undefined
       }
       await userApi.update(currentUserId.value, data)
+      await userApi.assignRoles(currentUserId.value, form.roleIds)
       ElMessage.success('编辑用户成功')
     } else {
       const data: Omit<User, 'id'> = {
@@ -139,7 +163,8 @@ async function handleSubmit() {
         company: form.company || undefined,
         source: 0
       }
-      await userApi.create(data)
+      const newUser = await userApi.create(data) as unknown as User
+      await userApi.assignRoles(newUser.id, form.roleIds)
       ElMessage.success('新增用户成功')
     }
     handleClose()

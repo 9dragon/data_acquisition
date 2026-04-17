@@ -8,6 +8,8 @@ import com.dataacquisition.common.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.util.List;
+
 /**
  * 用户实体
  */
@@ -107,4 +109,10 @@ public class User extends BaseEntity {
      */
     @TableField("current_project_id")
     private Long currentProjectId;
+
+    /**
+     * 角色ID列表（非数据库字段）
+     */
+    @TableField(exist = false)
+    private List<Long> roleIds;
 }

@@ -28,6 +28,7 @@ dingtalk:
   app-secret: ${DINGTALK_APP_SECRET:}
   agent-id: ${DINGTALK_AGENT_ID:}
   corp-id: ${DINGTALK_CORP_ID:}
+  default-password: ${DINGTALK_DEFAULT_PASSWORD:user@123456}
   sync:
     enabled: ${DINGTALK_SYNC_ENABLED:true}
     cron: "0 0 2 * * ?"

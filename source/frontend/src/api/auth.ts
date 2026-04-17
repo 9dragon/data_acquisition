@@ -15,6 +15,7 @@ export interface LoginRequest {
 export interface LoginResponse {
   token: string
   user: UserInfo
+  permissions: string[]
 }
 
 /**
@@ -27,6 +28,19 @@ export interface UserInfoResponse extends UserInfo {
     name: string
   }>
   permissions?: string[]
+}
+
+/**
+ * 菜单权限
+ */
+export interface MenuPermission {
+  id: number
+  code: string
+  name: string
+  path?: string
+  parentId?: number | null
+  type: string
+  children?: MenuPermission[]
 }
 
 /**
@@ -45,6 +59,13 @@ export const authApi = {
    */
   getUserInfo(): Promise<UserInfoResponse> {
     return http.get('/auth/user-info')
+  },
+
+  /**
+   * 获取当前用户菜单
+   */
+  getUserMenus(): Promise<MenuPermission[]> {
+    return http.get('/auth/menus')
   },
 
   /**

@@ -2,7 +2,9 @@ package com.dataacquisition.modules.system.controller;
 
 import com.dataacquisition.common.response.Result;
 import com.dataacquisition.config.JwtConfig;
+import com.dataacquisition.modules.system.entity.Permission;
 import com.dataacquisition.modules.system.entity.User;
+import com.dataacquisition.modules.system.service.PermissionService;
 import com.dataacquisition.modules.system.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -17,6 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -31,6 +34,7 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final UserService userService;
     private final JwtConfig jwtConfig;
+    private final PermissionService permissionService;
 
     /**
      * 登录
@@ -54,7 +58,7 @@ public class AuthController {
         }
 
         // 获取用户信息
-        User user = userService.getByUsername(username);
+        User user = userService.getByUsernameOrPhone(username);
         if (user == null) {
             return Result.error(1005, "用户不存在");
         }
@@ -69,6 +73,7 @@ public class AuthController {
         Map<String, Object> data = new HashMap<>();
         data.put("token", token);
         data.put("user", getUserInfo(user));
+        data.put("permissions", permissionService.getPermissionCodesByUserId(user.getId()));
 
         return Result.success(data);
     }
@@ -79,7 +84,6 @@ public class AuthController {
     @Operation(summary = "获取当前用户信息")
     @GetMapping("/user-info")
     public Result<Map<String, Object>> getUserInfo() {
-        // 从SecurityContext获取当前用户
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
             return Result.error(1001, "未登录");
@@ -89,6 +93,7 @@ public class AuthController {
         User user = userService.getByUsername(username);
 
         Map<String, Object> userInfo = getUserInfo(user);
+        userInfo.put("permissions", permissionService.getPermissionCodesByUserId(user.getId()));
         return Result.success(userInfo);
     }
 
@@ -115,6 +120,25 @@ public class AuthController {
         userInfo.put("phone", user.getPhone());
         userInfo.put("avatar", user.getAvatar());
         return userInfo;
+    }
+
+    /**
+     * 获取当前用户的菜单
+     */
+    @Operation(summary = "获取当前用户的菜单")
+    @GetMapping("/menus")
+    public Result<List<Permission>> getUserMenus() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return Result.error(1001, "未登录");
+        }
+        String username = authentication.getName();
+        User user = userService.getByUsername(username);
+        if (user == null) {
+            return Result.error(1005, "用户不存在");
+        }
+        List<Permission> menus = permissionService.getMenuTreeByUserId(user.getId());
+        return Result.success(menus);
     }
 
     /**

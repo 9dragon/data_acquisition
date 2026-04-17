@@ -56,6 +56,7 @@ public class UserController {
         wrapper.orderByDesc(User::getCreatedAt);
 
         userService.page(page, wrapper);
+        page.getRecords().forEach(user -> user.setRoleIds(userService.getUserRoleIds(user.getId())));
         return Result.success(page);
     }
 
@@ -80,8 +81,8 @@ public class UserController {
         if (user == null) {
             return Result.error("用户不存在");
         }
-        // 隐藏密码
         user.setPassword(null);
+        user.setRoleIds(userService.getUserRoleIds(id));
         return Result.success(user);
     }
 
@@ -90,9 +91,11 @@ public class UserController {
      */
     @Operation(summary = "新增用户")
     @PostMapping
-    public Result<Void> createUser(@Validated @RequestBody User user) {
+    public Result<User> createUser(@Validated @RequestBody User user) {
         userService.createUser(user);
-        return Result.success();
+        User created = userService.getByUsername(user.getUsername());
+        created.setPassword(null);
+        return Result.success(created);
     }
 
     /**
@@ -176,6 +179,30 @@ public class UserController {
     @PutMapping("/{id}/toggle-status")
     public Result<Void> toggleStatus(@PathVariable Long id) {
         userService.toggleStatus(id);
+        return Result.success();
+    }
+
+    /**
+     * 获取用户的角色ID列表
+     */
+    @Operation(summary = "获取用户的角色ID列表")
+    @GetMapping("/{id}/roles")
+    public Result<List<Long>> getUserRoles(@PathVariable Long id) {
+        List<Long> roleIds = userService.getUserRoleIds(id);
+        return Result.success(roleIds);
+    }
+
+    /**
+     * 分配角色（覆盖式）
+     */
+    @Operation(summary = "分配角色（覆盖式）")
+    @PutMapping("/{id}/roles")
+    public Result<Void> assignRoles(@PathVariable Long id, @RequestBody Map<String, List<Long>> request) {
+        List<Long> roleIds = request.get("roleIds");
+        if (roleIds == null) {
+            roleIds = List.of();
+        }
+        userService.assignRoles(id, roleIds);
         return Result.success();
     }
 }

@@ -18,7 +18,7 @@
         <el-form-item prop="username">
           <el-input
             v-model="loginForm.username"
-            placeholder="请输入用户名"
+            placeholder="请输入用户名或手机号"
             size="large"
             :prefix-icon="User"
             clearable
@@ -62,6 +62,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { User, Lock, Monitor } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
+import { usePermissionStore } from '@/stores/permission'
 import { authApi } from '@/api/auth'
 import { getDefaultRoute } from '@/utils/device'
 import type { FormInstance, FormRules } from 'element-plus'
@@ -69,6 +70,7 @@ import type { FormInstance, FormRules } from 'element-plus'
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
+const permissionStore = usePermissionStore()
 
 const loginFormRef = ref<FormInstance>()
 const loading = ref(false)
@@ -80,8 +82,7 @@ const loginForm = reactive({
 
 const loginRules: FormRules = {
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 3, max: 20, message: '用户名长度为3-20个字符', trigger: 'blur' }
+    { required: true, message: '请输入用户名或手机号', trigger: 'blur' }
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
@@ -104,6 +105,7 @@ const handleLogin = async () => {
     // 保存token和用户信息
     userStore.setToken(response.token)
     userStore.setUserInfo(response.user)
+    permissionStore.setPermissions(response.permissions || [])
 
     ElMessage.success('登录成功')
 

@@ -6,14 +6,19 @@ import com.dataacquisition.common.dto.OptionDto;
 import com.dataacquisition.common.exception.BusinessException;
 import com.dataacquisition.modules.project.entity.Project;
 import com.dataacquisition.modules.project.service.ProjectService;
+import com.dataacquisition.modules.system.entity.Role;
 import com.dataacquisition.modules.system.entity.User;
+import com.dataacquisition.modules.system.entity.UserRole;
+import com.dataacquisition.modules.system.mapper.RoleMapper;
 import com.dataacquisition.modules.system.mapper.UserMapper;
+import com.dataacquisition.modules.system.mapper.UserRoleMapper;
 import com.dataacquisition.modules.system.service.UserService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -30,15 +35,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     private final PasswordEncoder passwordEncoder;
     private final ProjectService projectService;
+    private final UserRoleMapper userRoleMapper;
+    private final RoleMapper roleMapper;
 
-    public UserServiceImpl(PasswordEncoder passwordEncoder, ProjectService projectService) {
+    public UserServiceImpl(PasswordEncoder passwordEncoder, ProjectService projectService,
+                           UserRoleMapper userRoleMapper, RoleMapper roleMapper) {
         this.passwordEncoder = passwordEncoder;
         this.projectService = projectService;
+        this.userRoleMapper = userRoleMapper;
+        this.roleMapper = roleMapper;
     }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = getByUsername(username);
+        User user = getByUsernameOrPhone(username);
         if (user == null) {
             throw new UsernameNotFoundException("用户不存在");
         }
@@ -54,6 +64,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(User::getUsername, username);
         return this.getOne(wrapper);
+    }
+
+    @Override
+    public User getByUsernameOrPhone(String usernameOrPhone) {
+        User user = getByUsername(usernameOrPhone);
+        if (user == null) {
+            user = lambdaQuery().eq(User::getPhone, usernameOrPhone).one();
+        }
+        return user;
     }
 
     @Override
@@ -163,5 +182,38 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         user.setStatus(user.getStatus() == 1 ? 0 : 1);
         return this.updateById(user);
+    }
+
+    @Override
+    public List<Long> getUserRoleIds(Long userId) {
+        return userRoleMapper.selectRoleIdsByUserId(userId);
+    }
+
+    @Override
+    @Transactional
+    public Boolean assignRoles(Long userId, List<Long> roleIds) {
+        User user = this.getById(userId);
+        if (user == null) {
+            throw new BusinessException("用户不存在");
+        }
+        if (roleIds == null) {
+            roleIds = List.of();
+        }
+        for (Long roleId : roleIds) {
+            Role role = roleMapper.selectById(roleId);
+            if (role == null) {
+                throw new BusinessException("角色不存在，roleId: " + roleId);
+            }
+        }
+        LambdaQueryWrapper<UserRole> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(UserRole::getUserId, userId);
+        userRoleMapper.delete(wrapper);
+        for (Long roleId : roleIds) {
+            UserRole userRole = new UserRole();
+            userRole.setUserId(userId);
+            userRole.setRoleId(roleId);
+            userRoleMapper.insert(userRole);
+        }
+        return true;
     }
 }

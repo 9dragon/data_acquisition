@@ -84,6 +84,10 @@
         <div v-else class="photo-upload" @click="takePhoto">
           <van-icon name="photograph" size="40" color="#999" />
           <span>点击拍照</span>
+          <div class="camera-switch" @click.stop="toggleCamera">
+            <van-icon :name="cameraFacing === 'user' ? 'contact' : 'eye-o'" size="16" />
+            <span>{{ cameraFacing === 'user' ? '前置' : '后置' }}</span>
+          </div>
         </div>
       </div>
     </van-cell-group>
@@ -195,6 +199,15 @@ const locationInfo = ref<LocationInfo>({
 
 // 照片
 const photo = ref('')
+
+// 摄像头方向：从 localStorage 读取，默认前置
+const cameraFacing = ref<'user' | 'environment'>(
+  (localStorage.getItem('checkin_camera_facing') as 'user' | 'environment') || 'user'
+)
+const toggleCamera = () => {
+  cameraFacing.value = cameraFacing.value === 'user' ? 'environment' : 'user'
+  localStorage.setItem('checkin_camera_facing', cameraFacing.value)
+}
 
 // 备注
 const remark = ref('')
@@ -319,7 +332,7 @@ const takePhoto = async () => {
     showLoadingToast({ message: '拍照中...', forbidClick: true })
 
     // 调起相机（钉钉环境用 dd.chooseImage，浏览器用 file input）
-    let imageData = await chooseImage()
+    let imageData = await chooseImage(cameraFacing.value)
 
     // 钉钉环境返回 URL，需转为 base64
     if (imageData && !imageData.startsWith('data:')) {
@@ -708,6 +721,18 @@ onUnmounted(() => {
   margin-top: 8px;
   color: #999;
   font-size: 14px;
+}
+
+.camera-switch {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: 6px;
+  padding: 2px 10px;
+  border-radius: 12px;
+  background: #f0f0f0;
+  color: #666;
+  font-size: 12px;
 }
 
 .submit-section {

@@ -14,6 +14,7 @@ export interface User {
   status?: number
   source?: number
   currentProjectId?: number
+  roleIds?: number[]
   createdAt?: string
   updatedAt?: string
 }
@@ -69,7 +70,7 @@ export const userApi = {
   /**
    * 新增用户
    */
-  create: (data: Omit<User, 'id'>): Promise<void> => {
+  create: (data: Omit<User, 'id'>): Promise<User> => {
     return http.post('/users', data)
   },
 
@@ -85,5 +86,19 @@ export const userApi = {
    */
   delete: (id: number): Promise<void> => {
     return http.delete(`/users/${id}`)
+  },
+
+  /**
+   * 获取用户的角色ID列表
+   */
+  getUserRoles: (id: number): Promise<number[]> => {
+    return http.get(`/users/${id}/roles`)
+  },
+
+  /**
+   * 分配角色（覆盖式）
+   */
+  assignRoles: (id: number, roleIds: number[]): Promise<void> => {
+    return http.put(`/users/${id}/roles`, { roleIds })
   }
 }

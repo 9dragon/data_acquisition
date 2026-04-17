@@ -118,7 +118,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         rolePermissionMapper.deleteByRoleId(roleId);
 
         if (permissionIds != null && !permissionIds.isEmpty()) {
-            rolePermissionMapper.insertBatch(roleId, permissionIds);
+            rolePermissionMapper.insertBatch(roleId, permissionIds, 0L);
         }
 
         return true;

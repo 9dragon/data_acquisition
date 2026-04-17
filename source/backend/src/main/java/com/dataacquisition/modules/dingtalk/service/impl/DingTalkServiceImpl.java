@@ -15,6 +15,7 @@ import com.dataacquisition.modules.system.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -37,6 +38,7 @@ public class DingTalkServiceImpl implements DingTalkService {
     private final UserService userService;
     private final JwtConfig jwtConfig;
     private final StringRedisTemplate redisTemplate;
+    private final PasswordEncoder passwordEncoder;
 
     private static final String ACCESS_TOKEN_CACHE_KEY = "dingtalk:access_token";
     private static final long ACCESS_TOKEN_CACHE_EXPIRE = 7200; // 2小时
@@ -246,8 +248,8 @@ public class DingTalkServiceImpl implements DingTalkService {
 
         // 4. 创建新用户
         localUser = new User();
-        localUser.setUsername(dingTalkUser.getUserid());
-        localUser.setPassword(""); // 钉钉用户无需密码
+        localUser.setUsername(dingTalkUser.getMobile());
+        localUser.setPassword(passwordEncoder.encode(dingTalkConfig.getDefaultPassword()));
         updateUserFromDingTalk(localUser, dingTalkUser);
         localUser.setSource(DingTalkConstants.SOURCE_DINGTALK);
         localUser.setStatus(1); // 默认启用
