@@ -11,6 +11,12 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONNull;
+import cn.hutool.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -53,10 +59,37 @@ public class SystemConfigController {
         if (jsonObj == null) {
             return Result.success(config.getConfigValue());
         }
-        if (jsonObj instanceof cn.hutool.json.JSONObject) {
-            return Result.success(((cn.hutool.json.JSONObject) jsonObj).toBean(Map.class));
+        if (jsonObj instanceof JSONObject) {
+            return Result.success(toPlainObject(jsonObj));
+        }
+        if (jsonObj instanceof JSONArray) {
+            return Result.success(toPlainObject((JSONArray) jsonObj));
         }
         return Result.success(jsonObj);
+    }
+
+    /**
+     * 递归转换Hutool JSON对象为纯Java对象，替换JSONNull为null
+     */
+    private static Object toPlainObject(Object obj) {
+        if (obj == null || obj instanceof JSONNull) {
+            return null;
+        }
+        if (obj instanceof JSONObject jsonObj) {
+            Map<String, Object> map = new HashMap<>();
+            for (String key : jsonObj.keySet()) {
+                map.put(key, toPlainObject(jsonObj.get(key)));
+            }
+            return map;
+        }
+        if (obj instanceof JSONArray jsonArr) {
+            List<Object> list = new ArrayList<>();
+            for (Object item : jsonArr) {
+                list.add(toPlainObject(item));
+            }
+            return list;
+        }
+        return obj;
     }
 
     /**
