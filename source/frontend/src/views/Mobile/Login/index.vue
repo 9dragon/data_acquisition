@@ -92,8 +92,8 @@ const userStore = useUserStore()
 const loading = ref(false)
 
 const loginForm = reactive({
-  username: 'admin',
-  password: 'admin123'
+  username: '',
+  password: ''
 })
 
 // 钉钉登录
