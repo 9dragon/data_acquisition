@@ -7,17 +7,19 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.dataacquisition.common.exception.BusinessException;
 import com.dataacquisition.modules.system.entity.Role;
 import com.dataacquisition.modules.system.entity.Permission;
+import com.dataacquisition.modules.system.entity.RolePermission;
+import com.dataacquisition.modules.system.entity.UserRole;
 import com.dataacquisition.modules.system.mapper.RoleMapper;
 import com.dataacquisition.modules.system.mapper.PermissionMapper;
+import com.dataacquisition.modules.system.mapper.RolePermissionMapper;
+import com.dataacquisition.modules.system.mapper.UserRoleMapper;
 import com.dataacquisition.modules.system.service.RoleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 角色Service实现
@@ -27,6 +29,8 @@ import java.util.stream.Collectors;
 public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements RoleService {
 
     private final PermissionMapper permissionMapper;
+    private final RolePermissionMapper rolePermissionMapper;
+    private final UserRoleMapper userRoleMapper;
 
     @Override
     public Role getByCode(String code) {
@@ -50,10 +54,9 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         wrapper.orderByDesc(Role::getCreatedAt);
         IPage<Role> rolePage = this.page(pageParam, wrapper);
 
-        // 填充每个角色的权限数量
         rolePage.getRecords().forEach(role -> {
-            Integer count = getPermissionCount(role.getId());
-            role.setPermissionCount(count);
+            role.setPermissionCount(rolePermissionMapper.countByRoleId(role.getId()));
+            role.setUserCount(userRoleMapper.countByRoleId(role.getId()));
         });
 
         return rolePage;
@@ -61,7 +64,6 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
 
     @Override
     public Boolean createRole(Role role) {
-        // 检查角色编码是否已存在
         if (getByCode(role.getCode()) != null) {
             throw new BusinessException("角色编码已存在");
         }
@@ -75,13 +77,14 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
             throw new BusinessException("角色不存在");
         }
 
-        // 系统预置角色不能修改编码和isSystem标识
         if (existingRole.getIsSystem() == 1) {
             role.setCode(existingRole.getCode());
             role.setIsSystem(existingRole.getIsSystem());
         }
 
-        return this.updateById(role);
+        LambdaQueryWrapper<Role> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Role::getId, role.getId());
+        return this.update(role, wrapper);
     }
 
     @Override
@@ -92,16 +95,15 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
             throw new BusinessException("角色不存在");
         }
 
-        // 系统预置角色不能删除
         if (role.getIsSystem() == 1) {
             throw new BusinessException("系统预置角色不能删除");
         }
 
-        // TODO: 检查角色下是否有用户
-        // if (userService.countByRoleId(id) > 0) {
-        //     throw new BusinessException("角色下有用户，不能删除");
-        // }
+        if (userRoleMapper.countByRoleId(id) > 0) {
+            throw new BusinessException("角色下有用户，不能删除");
+        }
 
+        rolePermissionMapper.deleteByRoleId(id);
         return this.removeById(id);
     }
 
@@ -113,27 +115,18 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
             throw new BusinessException("角色不存在");
         }
 
-        // 将权限ID列表转换为逗号分隔的字符串
-        String permissions = permissionIds != null && !permissionIds.isEmpty()
-                ? String.join(",", permissionIds.stream().map(String::valueOf).collect(Collectors.toList()))
-                : "";
+        rolePermissionMapper.deleteByRoleId(roleId);
 
-        role.setPermissions(permissions);
-        return this.updateById(role);
+        if (permissionIds != null && !permissionIds.isEmpty()) {
+            rolePermissionMapper.insertBatch(roleId, permissionIds);
+        }
+
+        return true;
     }
 
     @Override
     public List<Long> getRolePermissionIds(Long roleId) {
-        Role role = this.getById(roleId);
-        if (role == null || role.getPermissions() == null || role.getPermissions().isEmpty()) {
-            return List.of();
-        }
-
-        // 将逗号分隔的权限ID字符串转换为List<Long>
-        return Arrays.stream(role.getPermissions().split(","))
-                .filter(s -> !s.isEmpty())
-                .map(Long::valueOf)
-                .collect(Collectors.toList());
+        return rolePermissionMapper.selectPermissionIdsByRoleId(roleId);
     }
 
     @Override
@@ -142,14 +135,11 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         if (permissionIds.isEmpty()) {
             return List.of();
         }
-
-        // 批量查询权限详情
         return permissionMapper.selectBatchIds(permissionIds);
     }
 
     @Override
     public Integer getPermissionCount(Long roleId) {
-        List<Long> permissionIds = getRolePermissionIds(roleId);
-        return permissionIds.size();
+        return rolePermissionMapper.countByRoleId(roleId);
     }
 }

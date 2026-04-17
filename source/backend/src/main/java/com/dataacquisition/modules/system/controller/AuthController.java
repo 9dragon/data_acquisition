@@ -55,6 +55,9 @@ public class AuthController {
 
         // 获取用户信息
         User user = userService.getByUsername(username);
+        if (user == null) {
+            return Result.error(1005, "用户不存在");
+        }
 
         // 更新登录信息
         String ip = getClientIp(httpRequest);

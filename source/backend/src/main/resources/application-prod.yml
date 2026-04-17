@@ -32,6 +32,9 @@ dingtalk:
     enabled: ${DINGTALK_SYNC_ENABLED:true}
     cron: "0 0 2 * * ?"
 
+amap:
+  key: ${AMAP_KEY:5a924b205034c26fa79c32ad68dc011a}
+
 logging:
   level:
     com.dataacquisition: info

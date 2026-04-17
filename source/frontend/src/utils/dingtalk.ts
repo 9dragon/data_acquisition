@@ -94,20 +94,75 @@ export interface LocationInfo {
 
 /**
  * 获取地理位置
- * 使用钉钉新版API dd.getLocation
+ * 钉钉环境使用 dd.getLocation，非钉钉环境使用浏览器原生 Geolocation API
  */
 export function getLocation(): Promise<LocationInfo> {
   return new Promise((resolve, reject) => {
     if (!isDingTalk()) {
-      reject(new Error('请在钉钉中打开应用'))
+      // 非钉钉环境，使用浏览器原生定位
+      getLocationWithBrowser(resolve, reject)
       return
     }
 
-    // 配置权限
+    // 钉钉环境
     configDingTalkJSAPI().then(() => {
       getLocationWithDingTalk(resolve, reject)
     })
   })
+}
+
+/**
+ * 使用浏览器原生API获取位置
+ */
+function getLocationWithBrowser(
+  resolve: (value: LocationInfo) => void,
+  reject: (reason: any) => void
+) {
+  if (!navigator.geolocation) {
+    reject(new Error('浏览器不支持定位功能，请使用Chrome或Safari'))
+    return
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+      const locationInfo: LocationInfo = {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        address: ''
+      }
+
+      // 调用后端逆地理编码获取地址
+      try {
+        const { reverseGeocode } = await import('@/api/amap')
+        const addressInfo = await reverseGeocode(locationInfo.latitude, locationInfo.longitude)
+        if (addressInfo.address) locationInfo.address = addressInfo.address
+        if (addressInfo.province) locationInfo.province = addressInfo.province
+        if (addressInfo.city) locationInfo.city = addressInfo.city
+        if (addressInfo.district) locationInfo.district = addressInfo.district
+        if (addressInfo.street) locationInfo.street = addressInfo.street
+      } catch (e) {
+        console.warn('逆地理编码失败，仅使用经纬度', e)
+      }
+
+      resolve(locationInfo)
+    },
+    (error) => {
+      let msg = '定位失败'
+      switch (error.code) {
+        case error.PERMISSION_DENIED:
+          msg = '定位权限被拒绝，请在浏览器设置中允许定位'
+          break
+        case error.POSITION_UNAVAILABLE:
+          msg = '无法获取位置信息'
+          break
+        case error.TIMEOUT:
+          msg = '定位超时，请重试'
+          break
+      }
+      reject(new Error(msg))
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+  )
 }
 
 /**
@@ -226,12 +281,12 @@ function handleLocationFail(error: any): Error {
 }
 
 /**
- * 拍照或选择图片
+ * 拍照
  */
 export function chooseImage(): Promise<string> {
   return new Promise((resolve, reject) => {
     if (!isDingTalk()) {
-      // 非钉钉环境，使用文件选择
+      // 非钉钉环境，使用文件选择调起系统相机
       const input = document.createElement('input')
       input.type = 'file'
       input.accept = 'image/*'

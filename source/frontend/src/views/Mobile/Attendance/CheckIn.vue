@@ -299,12 +299,12 @@ const fetchLocation = async () => {
     }
   } catch (error: any) {
     console.error('获取位置失败:', error)
-    showToast(error.message || '获取位置失败，请确保在钉钉中打开并允许定位权限')
+    showToast(error.message || '获取位置失败，请检查定位权限')
     locationInfo.value = { latitude: 0, longitude: 0, address: '' }
   }
 }
 
-// 拍照 - 直接调起相机，无中间黑屏
+// 拍照 - 直接调起相机
 const takePhoto = async () => {
   if (!locationInfo.value.latitude || locationInfo.value.latitude === 0) {
     showToast('请先获取位置信息')

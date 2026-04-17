@@ -48,14 +48,14 @@ public class User extends BaseEntity {
     private String phone;
 
     /**
+     * 公司
+     */
+    private String company;
+
+    /**
      * 头像URL
      */
     private String avatar;
-
-    /**
-     * 角色ID列表（逗号分隔）
-     */
-    private String roleIds;
 
     /**
      * 状态：0=禁用, 1=启用

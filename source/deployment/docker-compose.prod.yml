@@ -31,6 +31,8 @@ services:
       DINGTALK_AGENT_ID: ${DINGTALK_AGENT_ID:-}
       DINGTALK_CORP_ID: ${DINGTALK_CORP_ID:-}
       DINGTALK_SYNC_ENABLED: ${DINGTALK_SYNC_ENABLED:-false}
+      # 高德地图配置
+      AMAP_KEY: ${AMAP_KEY:-}
       # JVM参数
       JAVA_OPTS: ${JAVA_OPTS:--Xms512m -Xmx1024m -XX:+UseG1GC}
       # Spring Profile

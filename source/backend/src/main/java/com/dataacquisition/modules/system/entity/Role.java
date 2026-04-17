@@ -38,11 +38,6 @@ public class Role extends BaseEntity {
     private String description;
 
     /**
-     * 权限ID列表（逗号分隔）
-     */
-    private String permissions;
-
-    /**
      * 是否系统预置角色：0=否, 1=是
      */
     private Integer isSystem;

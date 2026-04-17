@@ -83,6 +83,10 @@ minio:
   bucketName: data-acquisition
   public-endpoint: ${MINIO_PUBLIC_ENDPOINT:}
 
+# 高德地图配置
+amap:
+  key: ${AMAP_KEY:}
+
 # Knife4j配置
 knife4j:
   enable: true

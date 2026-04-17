@@ -29,8 +29,14 @@
       <el-table :data="tableData" :loading="loading" border stripe>
         <el-table-column prop="username" label="用户名" width="180" />
         <el-table-column prop="name" label="姓名" width="120" />
-        <el-table-column prop="email" label="邮箱" min-width="200" />
+        <el-table-column prop="email" label="邮箱" width="180" />
         <el-table-column prop="phone" label="手机号" width="130" />
+        <el-table-column prop="company" label="公司" min-width="200" />
+        <el-table-column prop="source" label="来源" width="120">
+          <template #default="{ row }">
+            <span>{{ row.source === 1 ? '钉钉用户' : '本地用户' }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
             <el-switch
@@ -81,6 +87,9 @@
       />
     </el-card>
   </div>
+
+  <UserFormDialog ref="createDialogRef" @success="handleQuery" />
+  <UserFormDialog ref="editDialogRef" @success="handleQuery" />
 </template>
 
 <script setup lang="ts">
@@ -88,10 +97,13 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Edit, Delete, RefreshRight } from '@element-plus/icons-vue'
 import { http } from '@/api/request'
+import UserFormDialog from './UserFormDialog.vue'
 
 const loading = ref(false)
 const tableData = ref<any[]>([])
 const total = ref(0)
+const createDialogRef = ref()
+const editDialogRef = ref()
 
 const queryParams = reactive({
   pageNum: 1,
@@ -119,11 +131,11 @@ function handleReset() {
 }
 
 function handleCreate() {
-  ElMessage.info('新增用户功能开发中')
+  createDialogRef.value?.open()
 }
 
 function handleEdit(row: any) {
-  ElMessage.info(`编辑用户：${row.name}`)
+  editDialogRef.value?.open('edit', row)
 }
 
 function handleResetPassword(row: any) {
@@ -147,8 +159,8 @@ function handleDelete(row: any) {
 
 function handleToggleStatus(row: any) {
   const action = row.status === 1 ? '启用' : '禁用'
-  const hint = row.status === 1 
-    ? `启用后用户将可以正常登录系统` 
+  const hint = row.status === 1
+    ? `启用后用户将可以正常登录系统`
     : `禁用后用户将无法登录系统`
 
   ElMessageBox.confirm(

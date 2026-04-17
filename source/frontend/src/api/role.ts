@@ -8,7 +8,6 @@ export interface Role {
   code: string
   name: string
   description?: string
-  permissions?: string
   isSystem?: number
   userCount?: number
   permissionCount?: number
@@ -23,10 +22,9 @@ export interface Permission {
   id: number
   code: string
   name: string
-  type: 'menu' | 'button' | 'api'
+  type: 'menu' | 'button'
   parentId?: number
   path?: string
-  method?: string
   description?: string
   sortOrder: number
   status: number

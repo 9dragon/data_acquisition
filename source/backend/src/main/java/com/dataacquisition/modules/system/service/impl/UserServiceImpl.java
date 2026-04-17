@@ -62,6 +62,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (getByUsername(user.getUsername()) != null) {
             throw new BusinessException("用户名已存在");
         }
+        // 设置默认来源为本地用户
+        if (user.getSource() == null) {
+            user.setSource(0);
+        }
         // 加密密码
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         return this.save(user);

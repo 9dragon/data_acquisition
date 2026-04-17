@@ -35,7 +35,7 @@ public class Permission extends BaseEntity {
     private String name;
 
     /**
-     * 权限类型：menu-菜单, button-按钮, api-接口
+     * 权限类型：menu-菜单, button-按钮
      */
     private String type;
 
@@ -48,11 +48,6 @@ public class Permission extends BaseEntity {
      * 前端路由路径
      */
     private String path;
-
-    /**
-     * HTTP方法
-     */
-    private String method;
 
     /**
      * 权限描述

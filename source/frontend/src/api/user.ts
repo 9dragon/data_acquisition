@@ -6,10 +6,13 @@ import { http } from './request'
 export interface User {
   id?: number
   username: string
+  password?: string
   name: string
   email?: string
   phone?: string
+  company?: string
   status?: number
+  source?: number
   currentProjectId?: number
   createdAt?: string
   updatedAt?: string

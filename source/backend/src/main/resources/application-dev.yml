@@ -19,6 +19,9 @@ minio:
   accessKey: 65RD1skNPDqG
   secretKey: 9VQaHWcHU27t2tYC
 
+amap:
+  key: 5a924b205034c26fa79c32ad68dc011a
+
 dingtalk:
   app-key: dingy7l8pfsax5fcpixx
   app-secret: tWLyh7H4qXDqFKCuyr43WYwYQlX0iTUnWNimPgvBRrd6xxR37C4WNKl4MGpRO2-e

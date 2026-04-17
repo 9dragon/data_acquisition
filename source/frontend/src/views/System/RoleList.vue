@@ -59,9 +59,14 @@
             <el-tag v-else type="info">否</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="permissionCount" label="权限数量" width="120">
+        <el-table-column prop="permissionCount" label="权限数量" width="100">
           <template #default="{ row }">
-            <el-tag type="primary">{{ row.permissionCount || 0 }} 个</el-tag>
+            <el-tag type="primary">{{ row.permissionCount || 0 }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="userCount" label="用户数" width="100">
+          <template #default="{ row }">
+            <el-tag type="info">{{ row.userCount || 0 }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="createdAt" label="创建时间" width="180" />
@@ -180,21 +185,6 @@
                 </el-table>
                 <el-empty v-if="permissionsByType.button.length === 0" description="暂无按钮权限" />
               </el-tab-pane>
-
-              <el-tab-pane label="API权限" name="api">
-                <el-table :data="permissionsByType.api" border stripe>
-                  <el-table-column prop="name" label="权限名称" width="200" />
-                  <el-table-column prop="code" label="权限编码" width="200" />
-                  <el-table-column prop="method" label="HTTP方法" width="100" />
-                  <el-table-column prop="path" label="API路径" />
-                  <el-table-column label="类型" width="100">
-                    <template #default="{ row }">
-                      <el-tag type="warning">API</el-tag>
-                    </template>
-                  </el-table-column>
-                </el-table>
-                <el-empty v-if="permissionsByType.api.length === 0" description="暂无API权限" />
-              </el-tab-pane>
             </el-tabs>
           </div>
         </el-tab-pane>
@@ -215,11 +205,9 @@
               style="margin-bottom: 15px"
             >
               <div class="permission-stats">
-                <span>菜单: {{ permissionStats.menu }} 个</span>
+                <span>菜单: {{ permissionStats.menu }}</span>
                 <el-divider direction="vertical" />
-                <span>按钮: {{ permissionStats.button }} 个</span>
-                <el-divider direction="vertical" />
-                <span>API: {{ permissionStats.api }} 个</span>
+                <span>按钮: {{ permissionStats.button }}</span>
               </div>
             </el-alert>
 
@@ -235,15 +223,14 @@
               <template #default="{ node, data }">
                 <span class="custom-tree-node">
                   <el-icon v-if="data.type === 'menu'"><Folder /></el-icon>
-                  <el-icon v-else-if="data.type === 'button'"><Operation /></el-icon>
-                  <el-icon v-else><Connection /></el-icon>
+                  <el-icon v-else><Operation /></el-icon>
                   <span style="margin-left: 5px">{{ data.name }}</span>
                   <el-tag
                     size="small"
-                    :type="data.type === 'menu' ? 'primary' : data.type === 'button' ? 'success' : 'warning'"
+                    :type="data.type === 'menu' ? 'primary' : 'success'"
                     style="margin-left: 10px"
                   >
-                    {{ data.type === 'menu' ? '菜单' : data.type === 'button' ? '按钮' : 'API' }}
+                    {{ data.type === 'menu' ? '菜单' : '按钮' }}
                   </el-tag>
                 </span>
               </template>
@@ -303,21 +290,6 @@
             </el-table>
             <el-empty v-if="permissionsByType.button.length === 0" description="暂无按钮权限" />
           </el-tab-pane>
-
-          <el-tab-pane label="API权限" name="api">
-            <el-table :data="permissionsByType.api" border stripe>
-              <el-table-column prop="name" label="权限名称" width="200" />
-              <el-table-column prop="code" label="权限编码" width="200" />
-              <el-table-column prop="method" label="HTTP方法" width="100" />
-              <el-table-column prop="path" label="API路径" />
-              <el-table-column label="类型" width="100">
-                <template #default="{ row }">
-                  <el-tag type="warning">API</el-tag>
-                </template>
-              </el-table-column>
-            </el-table>
-            <el-empty v-if="permissionsByType.api.length === 0" description="暂无API权限" />
-          </el-tab-pane>
         </el-tabs>
       </div>
 
@@ -332,9 +304,9 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted, computed } from 'vue'
+import { reactive, ref, onMounted, computed, nextTick } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { Plus, Search, Refresh, InfoFilled, Folder, Operation, Connection } from '@element-plus/icons-vue'
+import { Plus, Search, Refresh, InfoFilled, Folder, Operation } from '@element-plus/icons-vue'
 import { roleApi, permissionApi, type Role, type Permission } from '@/api/role'
 
 const loading = ref(false)
@@ -392,8 +364,7 @@ const permissionStats = computed(() => {
 
   const stats = {
     menu: 0,
-    button: 0,
-    api: 0
+    button: 0
   }
 
   const countPermissions = (permissions: Permission[]) => {
@@ -401,7 +372,6 @@ const permissionStats = computed(() => {
       if (checkedKeysSet.has(p.id)) {
         if (p.type === 'menu') stats.menu++
         else if (p.type === 'button') stats.button++
-        else if (p.type === 'api') stats.api++
       }
       if (p.children) {
         countPermissions(p.children)
@@ -417,15 +387,13 @@ const permissionStats = computed(() => {
 const permissionsByType = computed(() => {
   const menu: Permission[] = []
   const button: Permission[] = []
-  const api: Permission[] = []
 
   rolePermissions.value.forEach(p => {
     if (p.type === 'menu') menu.push(p)
     else if (p.type === 'button') button.push(p)
-    else if (p.type === 'api') api.push(p)
   })
 
-  return { menu, button, api }
+  return { menu, button }
 })
 
 // 获取角色列表
@@ -498,7 +466,6 @@ const handleEdit = async (row: Role) => {
   dialogVisible.value = true
   currentRoleId.value = row.id
 
-  // 加载权限树和当前角色的权限
   try {
     const [permissions, rolePermissionIds, rolePermissionDetail] = await Promise.all([
       permissionApi.getPermissions(),
@@ -509,10 +476,8 @@ const handleEdit = async (row: Role) => {
     permissionTree.value = permissions
     rolePermissions.value = rolePermissionDetail
 
-    // 设置已选中的权限ID列表
-    setTimeout(() => {
-      permissionTreeRef.value?.setCheckedKeys(rolePermissionIds)
-    }, 100)
+    await nextTick()
+    permissionTreeRef.value?.setCheckedKeys(rolePermissionIds)
   } catch (error) {
     ElMessage.error('加载权限失败')
   }
@@ -542,19 +507,21 @@ const handleSubmit = async () => {
     submitLoading.value = true
 
     if (roleForm.id) {
-      // 编辑模式：先更新角色基本信息，再保存权限分配
       await roleApi.updateRole(roleForm.id, roleForm)
 
-      // 如果有权限树，保存权限分配
-      if (permissionTree.value.length > 0) {
-        const checkedKeys = permissionTreeRef.value?.getCheckedKeys() || []
-        await roleApi.assignPermissions(roleForm.id, checkedKeys as number[])
-      }
+      const checkedKeys = permissionTreeRef.value?.getCheckedKeys() || []
+      await roleApi.assignPermissions(roleForm.id, checkedKeys as number[])
 
       ElMessage.success('保存成功')
     } else {
-      // 新增模式
-      await roleApi.createRole(roleForm)
+      const result = await roleApi.createRole(roleForm)
+      const newRoleId = result.id || roleForm.id
+
+      const checkedKeys = permissionTreeRef.value?.getCheckedKeys() || []
+      if (checkedKeys.length > 0) {
+        await roleApi.assignPermissions(newRoleId, checkedKeys as number[])
+      }
+
       ElMessage.success('创建成功')
     }
 
