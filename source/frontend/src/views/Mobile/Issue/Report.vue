@@ -103,7 +103,8 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast, showLoadingToast, closeToast, type UploaderFileListItem } from 'vant'
-import { mobileIssueApi, type IssueReportRequest, type IssuePriority } from '@/api/issue'
+import { issueApi, type IssueCreateParams } from '@/api/issue'
+import type { IssuePriority } from '@/types/issue'
 import { useMobileProjectStore } from '@/stores/mobileProject'
 
 const router = useRouter()
@@ -115,14 +116,13 @@ const showTypePicker = ref(false)
 const showPriorityPicker = ref(false)
 
 // 表单数据
-const formData = reactive<IssueReportRequest>({
+const formData = reactive({
   title: '',
   type: '',
-  priority: 'medium',
+  priority: 'medium' as IssuePriority,
   description: '',
   projectId: 0,
-  deviceId: undefined,
-  photos: []
+  deviceId: undefined as number | undefined
 })
 
 // 选中的显示文本
@@ -190,30 +190,14 @@ const onPriorityConfirm = ({ selectedOptions }: any) => {
   showPriorityPicker.value = false
 }
 
-// 文件上传后
+// 文件上传后（暂未实现后端上传接口，仅本地预览）
 const afterRead = async (file: UploaderFileListItem | UploaderFileListItem[]) => {
-  const files = Array.isArray(file) ? file : [file]
-
-  for (const item of files) {
-    if (item.status === 'uploading') {
-      try {
-        const result = await mobileIssueApi.uploadPhoto(item.file as File)
-        item.status = 'done'
-        formData.photos?.push(result.url)
-      } catch (error) {
-        item.status = 'failed'
-        showToast('上传失败')
-      }
-    }
-  }
+  // TODO: 后端实现通用文件上传接口后对接
+  showToast('照片上传功能暂未开放')
 }
 
 // 删除文件
-const beforeDelete = (file: UploaderFileListItem) => {
-  const index = fileList.value.indexOf(file)
-  if (index > -1) {
-    formData.photos?.splice(index, 1)
-  }
+const beforeDelete = () => {
   return true
 }
 
@@ -236,7 +220,15 @@ const handleSubmit = async () => {
   })
 
   try {
-    await mobileIssueApi.report(formData)
+    const currentUserId = Number(localStorage.getItem('userId')) || 1
+    await issueApi.create({
+      title: formData.title,
+      type: formData.type,
+      priority: formData.priority,
+      description: formData.description,
+      projectId: formData.projectId,
+      deviceId: formData.deviceId
+    }, currentUserId)
     closeToast()
     showToast('上报成功')
 

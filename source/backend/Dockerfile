@@ -2,8 +2,9 @@ FROM amazoncorretto:17-alpine3.19
 
 LABEL maintainer="support@example.com"
 
-# 安装curl用于健康检查
-RUN apk add --no-cache curl tzdata
+# 安装curl、健康检查和字体支持（解决Excel导出字体问题）
+RUN apk add --no-cache curl tzdata fontconfig ttf-dejavu && \
+    fc-cache -fv
 
 WORKDIR /app
 

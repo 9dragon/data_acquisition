@@ -86,10 +86,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance } from 'element-plus'
 import type { DeviceResearchCollection } from '@/types/device'
+import { deviceResearchApi } from '@/api/deviceResearch'
 
 interface Props {
   initialValues?: DeviceResearchCollection
@@ -110,18 +111,17 @@ const emit = defineEmits<{
 
 const formRef = ref<FormInstance>()
 
-// 常见数据项选项
-const commonDataItems = [
-  '设备运行状态',
-  '设备故障信息',
-  '生产数量',
-  '温度数据',
-  '压力数据',
-  '速度/节拍',
-  '能耗数据',
-  '维护提醒',
-  '其他'
-]
+// 数据项选项
+const commonDataItems = ref<string[]>([])
+
+const loadDataItemOptions = async () => {
+  try {
+    const result = await deviceResearchApi.getOptions()
+    commonDataItems.value = result.dataItems || []
+  } catch (error) {
+    console.error('加载数据项选项失败:', error)
+  }
+}
 
 const selectedDataItems = ref<string[]>([])
 
@@ -142,6 +142,11 @@ const rules = {
     { required: true, message: '请填写数据项明细说明', trigger: 'blur' }
   ]
 }
+
+// 加载数据项选项
+onMounted(() => {
+  loadDataItemOptions()
+})
 
 // 初始化表单数据
 watch(() => props.initialValues, (newVal) => {

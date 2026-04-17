@@ -65,7 +65,7 @@ import { useRouter } from 'vue-router'
 import { showToast, showLoadingToast, closeToast } from 'vant'
 import { attendanceApi } from '@/api/attendance'
 import { mobileTaskApi } from '@/api/task'
-import { mobileIssueApi } from '@/api/issue'
+import { issueApi } from '@/api/issue'
 import { useMobileProjectStore } from '@/stores/mobileProject'
 import { navigateWithFullScreen } from '@/utils/routerHelper'
 
@@ -171,7 +171,7 @@ const fetchTodoCount = async () => {
     todoCount.value = taskResult.total || 0
 
     // 获取待处理问题数量
-    const issueResult = await mobileIssueApi.myList({
+    const issueResult = await issueApi.page({
       status: 'open',
       pageNum: 1,
       pageSize: 1

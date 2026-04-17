@@ -91,6 +91,7 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { showToast } from 'vant'
 import type { DeviceResearchCollection } from '@/types/device'
+import { deviceResearchApi } from '@/api/deviceResearch'
 
 interface Props {
   modelValue: DeviceResearchCollection
@@ -110,17 +111,16 @@ const selectedDataItems = ref<string[]>([])
 const tempSelectedItems = ref<string[]>([])
 const showDataItemsPicker = ref(false)
 
-const dataItemOptions = [
-  { text: '设备运行状态', value: '设备运行状态' },
-  { text: '设备故障信息', value: '设备故障信息' },
-  { text: '生产数量', value: '生产数量' },
-  { text: '温度数据', value: '温度数据' },
-  { text: '压力数据', value: '压力数据' },
-  { text: '速度/节拍', value: '速度/节拍' },
-  { text: '能耗数据', value: '能耗数据' },
-  { text: '维护提醒', value: '维护提醒' },
-  { text: '其他', value: '其他' }
-]
+const dataItemOptions = ref<{ text: string; value: string }[]>([])
+
+const loadDataItemOptions = async () => {
+  try {
+    const result = await deviceResearchApi.getOptions()
+    dataItemOptions.value = (result.dataItems || []).map((item: string) => ({ text: item, value: item }))
+  } catch (error) {
+    console.error('加载数据项选项失败:', error)
+  }
+}
 
 // 已选数据项文本
 const selectedDataItemsText = computed(() => {
@@ -157,8 +157,11 @@ const removeDataItem = (index: number) => {
 }
 
 // 初始化
-onMounted(() => {
+onMounted(async () => {
   Object.assign(formData, props.modelValue)
+
+  // 加载数据项选项
+  await loadDataItemOptions()
 
   // 解析已选数据项
   if (formData.dataItems) {

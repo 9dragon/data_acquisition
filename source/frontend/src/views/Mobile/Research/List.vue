@@ -16,52 +16,55 @@
         :immediate-check="false"
         @load="onLoad"
       >
-        <div
-          v-for="item in list"
-          :key="item.id"
-          class="research-item"
-          @click="goToDetail(item.id)"
-        >
-          <div class="research-header">
-            <span class="research-workshop">{{ item.workshopName || '-' }}</span>
-            <van-tag :type="getStatusType(item.researchProgress)">
-              {{ getStatusText(item.researchProgress) }}
-            </van-tag>
-          </div>
+        <van-swipe-cell v-for="item in list" :key="item.id">
+          <div
+            class="research-item"
+            @click="goToDetail(item.id)"
+          >
+            <div class="research-header">
+              <span class="research-workshop">{{ item.workshopName || '-' }}</span>
+              <van-tag :type="getStatusType(item.researchProgress)">
+                {{ getStatusText(item.researchProgress) }}
+              </van-tag>
+            </div>
 
-          <div class="research-title">
-            {{ item.deviceTypeName || '-' }}
-            <span v-if="item.quantity">（{{ item.quantity }}台）</span>
-          </div>
+            <div class="research-title">
+              {{ item.deviceTypeName || '-' }}
+              <span v-if="item.quantity">（{{ item.quantity }}台）</span>
+            </div>
 
-          <div class="research-info" v-if="item.deviceManufacturer">
-            <span class="info-item">
-              <van-icon name="building-o" />
-              {{ item.deviceManufacturer }}
-            </span>
-          </div>
+            <div class="research-info" v-if="item.deviceManufacturer">
+              <span class="info-item">
+                <van-icon name="building-o" />
+                {{ item.deviceManufacturer }}
+              </span>
+            </div>
 
-          <div class="research-progress">
-            <van-progress
-              :percentage="item.researchProgress || 0"
-              :color="getProgressColor(item.researchProgress)"
-              :pivot-text="`${item.researchProgress || 0}%`"
-              pivot-color="#1989fa"
-            />
-          </div>
+            <div class="research-progress">
+              <van-progress
+                :percentage="item.researchProgress || 0"
+                :color="getProgressColor(item.researchProgress)"
+                :pivot-text="`${item.researchProgress || 0}%`"
+                pivot-color="#1989fa"
+              />
+            </div>
 
-          <div class="research-footer">
-            <span class="research-date">{{ formatDate(item.createdAt) }}</span>
-            <van-button
-              v-if="(item.researchProgress || 0) < 100"
-              size="small"
-              type="primary"
-              @click.stop="goToEdit(item.id)"
-            >
-              {{ (item.researchProgress || 0) === 0 ? '开始填报' : '继续填报' }}
-            </van-button>
+            <div class="research-footer">
+              <span class="research-date">{{ formatDate(item.createdAt) }}</span>
+              <van-button
+                v-if="(item.researchProgress || 0) < 100"
+                size="small"
+                type="primary"
+                @click.stop="goToEdit(item.id)"
+              >
+                {{ (item.researchProgress || 0) === 0 ? '开始填报' : '继续填报' }}
+              </van-button>
+            </div>
           </div>
-        </div>
+          <template #right>
+            <van-button square type="danger" text="删除" class="delete-btn" @click="handleDelete(item)" />
+          </template>
+        </van-swipe-cell>
       </van-list>
     </van-pull-refresh>
 
@@ -78,7 +81,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, nextTick, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { showToast } from 'vant'
+import { showToast, showConfirmDialog } from 'vant'
 import { deviceResearchApi } from '@/api/deviceResearch'
 import { useMobileProjectStore } from '@/stores/mobileProject'
 import type { DeviceResearch } from '@/types/device'
@@ -182,6 +185,22 @@ const goToCreate = () => {
     return
   }
   router.push('/mobile/research/create')
+}
+
+// 删除调研
+const handleDelete = (item: DeviceResearch) => {
+  showConfirmDialog({
+    title: '确认删除',
+    message: `确定要删除「${item.deviceTypeName || '该设备'}」的调研记录吗？`
+  }).then(async () => {
+    try {
+      await deviceResearchApi.delete(item.id)
+      showToast('删除成功')
+      list.value = list.value.filter(i => i.id !== item.id)
+    } catch (error) {
+      showToast('删除失败')
+    }
+  }).catch(() => {})
 }
 
 // 加载数据
@@ -320,6 +339,10 @@ onMounted(async () => {
 .research-date {
   font-size: 12px;
   color: #999;
+}
+
+.delete-btn {
+  height: 100%;
 }
 
 /* 浮动新建按钮 */

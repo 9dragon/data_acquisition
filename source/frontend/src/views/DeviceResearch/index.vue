@@ -98,8 +98,8 @@
       >
         <el-table-column type="selection" width="55" />
         <el-table-column prop="projectName" label="所属项目" min-width="120" />
-        <el-table-column prop="workshop" label="所属车间" min-width="100" />
-        <el-table-column prop="deviceType" label="设备类型" min-width="100" />
+        <el-table-column prop="workshopName" label="所属车间" min-width="100" />
+        <el-table-column prop="deviceTypeName" label="设备类型" min-width="100" />
         <el-table-column prop="deviceManufacturer" label="设备厂商" min-width="120" />
         <el-table-column prop="quantity" label="数量" width="70" align="center" />
         <el-table-column label="控制器品牌" min-width="100">

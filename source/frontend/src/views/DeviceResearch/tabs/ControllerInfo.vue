@@ -19,10 +19,12 @@
         placeholder="请选择接口类型"
         allow-clear
       >
-        <el-option label="RJ45" value="RJ45" />
-        <el-option label="RS232" value="RS232" />
-        <el-option label="RS422" value="RS422" />
-        <el-option label="RS485" value="RS485" />
+        <el-option
+          v-for="item in interfaceTypeOptions"
+          :key="item"
+          :label="item"
+          :value="item"
+        />
       </el-select>
     </el-form-item>
 
@@ -154,11 +156,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import MediaUpload, { type MediaAttachment } from '@/components/MediaUpload.vue'
 import type { DeviceResearchController } from '@/types/device'
+import { deviceResearchApi } from '@/api/deviceResearch'
 
 interface Props {
   initialValues?: DeviceResearchController
@@ -180,16 +183,19 @@ const emit = defineEmits<{
 const formRef = ref<FormInstance>()
 const activeMediaType = ref('controller')
 
-// 控制器品牌内置选项
-const controllerBrandOptions = [
-  '魏德米勒',
-  '汇川',
-  '信捷',
-  '欧姆龙',
-  '西门子',
-  '台达',
-  '三菱'
-]
+// 控制器品牌选项
+const controllerBrandOptions = ref<string[]>([])
+const interfaceTypeOptions = ref<string[]>([])
+
+const loadOptions = async () => {
+  try {
+    const result = await deviceResearchApi.getOptions()
+    controllerBrandOptions.value = result.controllerBrand || []
+    interfaceTypeOptions.value = result.interfaceType || []
+  } catch (error) {
+    console.error('加载选项失败:', error)
+  }
+}
 
 // 复选框值
 const checkBoxValues = ref<string[]>([])
@@ -228,6 +234,11 @@ const rules: FormRules = {
     { required: true, message: '请输入控制器品牌', trigger: 'blur' }
   ]
 }
+
+// 加载选项
+onMounted(() => {
+  loadOptions()
+})
 
 // 初始化表单数据
 watch(() => props.initialValues, (newVal) => {

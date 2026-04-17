@@ -72,7 +72,8 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { mobileIssueApi, type MobileIssue, type IssueStatus } from '@/api/issue'
+import { issueApi, type IssueQueryParams } from '@/api/issue'
+import type { Issue, IssueStatus } from '@/types/issue'
 import { useMobileProjectStore } from '@/stores/mobileProject'
 
 const router = useRouter()
@@ -91,7 +92,7 @@ const queryParams = reactive({
 })
 
 // 问题列表
-const issues = ref<MobileIssue[]>([])
+const issues = ref<Issue[]>([])
 
 // 分页状态
 const loading = ref(false)
@@ -203,8 +204,8 @@ const onLoad = async () => {
   loading.value = true
 
   try {
-    const result = await mobileIssueApi.myList(queryParams)
-    const newIssues = result.records || []
+    const result = await issueApi.page(queryParams)
+    const newIssues = result.records || result.data || []
 
     if (queryParams.pageNum === 1) {
       issues.value = newIssues

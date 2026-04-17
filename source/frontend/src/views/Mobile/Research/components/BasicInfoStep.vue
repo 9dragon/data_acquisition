@@ -1,16 +1,5 @@
 <template>
   <div class="basic-info-step">
-    <!-- 当前项目（从我的页面选择） -->
-    <van-cell-group inset title="当前项目">
-      <van-cell>
-        <template #value>
-          <span :class="{ 'no-project': !currentProject }">
-            {{ currentProject?.name || '请在【我的】页面选择项目' }}
-          </span>
-        </template>
-      </van-cell>
-    </van-cell-group>
-
     <van-cell-group inset title="基础信息">
       <van-field
         :model-value="workshopDisplayName"
@@ -121,6 +110,7 @@ import { useMobileProjectStore } from '@/stores/mobileProject'
 import { useDeviceResearchStore } from '@/stores/deviceResearch'
 import { workshopApi, type Workshop } from '@/api/workshop'
 import { deviceTypeApi, type DeviceType } from '@/api/deviceType'
+import { deviceResearchApi } from '@/api/deviceResearch'
 import type { DeviceResearchBasic } from '@/types/device'
 
 interface Props {
@@ -229,19 +219,16 @@ const manufacturerInput = computed({
   }
 })
 
-const manufacturerOptions = [
-  { text: '衡远', value: '衡远' },
-  { text: '金帆', value: '金帆' },
-  { text: '东顺', value: '东顺' },
-  { text: '清时智能', value: '清时智能' },
-  { text: '新东远', value: '新东远' },
-  { text: '三环', value: '三环' },
-  { text: '创为', value: '创为' },
-  { text: '海悦', value: '海悦' },
-  { text: '金润', value: '金润' },
-  { text: '盈定', value: '盈定' },
-  { text: '博兴', value: '博兴' }
-]
+const manufacturerOptions = ref<{ text: string; value: string }[]>([])
+
+const loadManufacturerOptions = async () => {
+  try {
+    const result = await deviceResearchApi.getOptions()
+    manufacturerOptions.value = (result.manufacturer || []).map(m => ({ text: m, value: m }))
+  } catch (error) {
+    console.error('加载设备厂商选项失败:', error)
+  }
+}
 
 const onManufacturerConfirm = ({ selectedOptions }: any) => {
   formData.deviceManufacturer = selectedOptions[0].text
@@ -263,7 +250,7 @@ const onManufacturerInputConfirm = () => {
 }
 
 // 初始化
-onMounted(() => {
+onMounted(async () => {
   Object.assign(formData, props.modelValue)
   // 新建模式时，自动填充上一次选择的车间
   if (!formData.workshopId && deviceResearchStore.lastSelectedWorkshop) {
@@ -271,6 +258,8 @@ onMounted(() => {
     formData.workshopName = deviceResearchStore.lastSelectedWorkshop.workshopName
     updateValue()
   }
+  // 加载设备厂商选项
+  await loadManufacturerOptions()
 })
 
 // 监听当前项目变化 - 添加 immediate 确保初始化时也执行

@@ -96,11 +96,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import type { DeviceResearchBasic } from '@/types/device'
 import type { Project } from '@/types/project'
+import { deviceResearchApi } from '@/api/deviceResearch'
 
 interface Props {
   initialValues?: DeviceResearchBasic
@@ -129,20 +130,17 @@ const emit = defineEmits<{
 
 const formRef = ref<FormInstance>()
 
-// 设备厂商内置选项
-const manufacturerOptions = [
-  '衡远',
-  '金帆',
-  '东顺',
-  '清时智能',
-  '新东远',
-  '三环',
-  '创为',
-  '海悦',
-  '金润',
-  '盈定',
-  '博兴'
-]
+// 设备厂商选项
+const manufacturerOptions = ref<string[]>([])
+
+const loadManufacturerOptions = async () => {
+  try {
+    const result = await deviceResearchApi.getOptions()
+    manufacturerOptions.value = result.manufacturer || []
+  } catch (error) {
+    console.error('加载设备厂商选项失败:', error)
+  }
+}
 
 const formData = reactive<DeviceResearchBasic>({
   projectName: '',
@@ -187,6 +185,11 @@ watch(() => props.projectId, (newVal) => {
   if (newVal && !props.initialValues?.projectName) {
     formData.projectName = newVal
   }
+})
+
+// 加载设备厂商选项
+onMounted(() => {
+  loadManufacturerOptions()
 })
 
 const handleProjectChange = (value: string) => {

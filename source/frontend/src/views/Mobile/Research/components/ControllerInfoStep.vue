@@ -148,6 +148,7 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { showToast, showLoadingToast, closeToast, type UploaderFileListItem } from 'vant'
 import type { DeviceResearchController } from '@/types/device'
 import { isDingTalk, chooseMedia, type MediaResult } from '@/utils/dingtalk'
+import { deviceResearchApi } from '@/api/deviceResearch'
 
 interface Props {
   modelValue: DeviceResearchController
@@ -177,12 +178,16 @@ const updateValue = () => {
 
 // 接口类型选择器
 const showInterfaceTypePicker = ref(false)
-const interfaceTypeOptions = [
-  { text: 'RJ45', value: 'RJ45' },
-  { text: 'RS232', value: 'RS232' },
-  { text: 'RS422', value: 'RS422' },
-  { text: 'RS485', value: 'RS485' }
-]
+const interfaceTypeOptions = ref<{ text: string; value: string }[]>([])
+
+const loadInterfaceTypeOptions = async () => {
+  try {
+    const result = await deviceResearchApi.getOptions()
+    interfaceTypeOptions.value = (result.interfaceType || []).map((item: string) => ({ text: item, value: item }))
+  } catch (error) {
+    console.error('加载接口类型选项失败:', error)
+  }
+}
 
 const onInterfaceTypeConfirm = ({ selectedOptions }: any) => {
   formData.interfaceType = selectedOptions[0].value
@@ -192,15 +197,16 @@ const onInterfaceTypeConfirm = ({ selectedOptions }: any) => {
 
 // 控制器品牌选择器
 const showControllerBrandPicker = ref(false)
-const controllerBrandOptions = [
-  { text: '魏德米勒', value: '魏德米勒' },
-  { text: '汇川', value: '汇川' },
-  { text: '信捷', value: '信捷' },
-  { text: '欧姆龙', value: '欧姆龙' },
-  { text: '西门子', value: '西门子' },
-  { text: '台达', value: '台达' },
-  { text: '三菱', value: '三菱' }
-]
+const controllerBrandOptions = ref<{ text: string; value: string }[]>([])
+
+const loadControllerBrandOptions = async () => {
+  try {
+    const result = await deviceResearchApi.getOptions()
+    controllerBrandOptions.value = (result.controllerBrand || []).map((item: string) => ({ text: item, value: item }))
+  } catch (error) {
+    console.error('加载控制器品牌选项失败:', error)
+  }
+}
 
 const onControllerBrandConfirm = ({ selectedOptions }: any) => {
   formData.controllerBrand = selectedOptions[0].text
@@ -285,8 +291,14 @@ const updateMediaUrls = () => {
 }
 
 // 初始化
-onMounted(() => {
+onMounted(async () => {
   Object.assign(formData, props.modelValue)
+
+  // 加载下拉选项
+  await Promise.all([
+    loadInterfaceTypeOptions(),
+    loadControllerBrandOptions()
+  ])
 
   // 初始化媒体文件
   try {

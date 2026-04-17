@@ -39,6 +39,16 @@ export interface ImportResult {
 }
 
 /**
+ * 设备调研下拉选项
+ */
+export interface DeviceResearchOptions {
+  manufacturer: string[]
+  interfaceType: string[]
+  controllerBrand: string[]
+  dataItems: string[]
+}
+
+/**
  * 设备调研API
  */
 export const deviceResearchApi = {
@@ -68,6 +78,20 @@ export const deviceResearchApi = {
    */
   getByDeviceId: (deviceId: number): Promise<DeviceResearch> => {
     return http.get(`/device-research/device/${deviceId}`)
+  },
+
+  /**
+   * 获取设备调研下拉选项
+   */
+  getOptions: (): Promise<DeviceResearchOptions> => {
+    return http.get('/device-research/options')
+  },
+
+  /**
+   * 更新设备调研下拉选项
+   */
+  updateOptions: (optionKey: string, options: string[]): Promise<void> => {
+    return http.put(`/device-research/options/${optionKey}`, options)
   },
 
   /**

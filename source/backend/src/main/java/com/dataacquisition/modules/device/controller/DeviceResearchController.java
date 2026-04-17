@@ -5,12 +5,17 @@ import com.dataacquisition.common.response.Result;
 import com.dataacquisition.modules.device.dto.*;
 import com.dataacquisition.modules.device.entity.DeviceResearch;
 import com.dataacquisition.modules.device.service.DeviceResearchService;
+import com.dataacquisition.modules.system.service.SystemConfigService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 设备调研Controller
@@ -22,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 public class DeviceResearchController {
 
     private final DeviceResearchService deviceResearchService;
+    private final SystemConfigService systemConfigService;
 
     /**
      * 分页查询设备调研列表
@@ -111,6 +117,47 @@ public class DeviceResearchController {
     @DeleteMapping("/{id}")
     public Result<Void> deleteResearch(@PathVariable Long id) {
         deviceResearchService.removeById(id);
+        return Result.success();
+    }
+
+    /**
+     * 获取设备调研下拉选项
+     */
+    @Operation(summary = "获取设备调研下拉选项")
+    @GetMapping("/options")
+    public Result<Map<String, List<String>>> getOptions() {
+        Map<String, List<String>> options = new HashMap<>();
+        cn.hutool.json.JSONArray jsonArray;
+
+        // 获取设备厂商
+        jsonArray = cn.hutool.json.JSONUtil.parseArray(systemConfigService.getConfigValue("device_research.manufacturer"));
+        options.put("manufacturer", jsonArray != null ? jsonArray.toList(String.class) : List.of());
+
+        // 获取接口类型
+        jsonArray = cn.hutool.json.JSONUtil.parseArray(systemConfigService.getConfigValue("device_research.interface_type"));
+        options.put("interfaceType", jsonArray != null ? jsonArray.toList(String.class) : List.of());
+
+        // 获取控制器品牌
+        jsonArray = cn.hutool.json.JSONUtil.parseArray(systemConfigService.getConfigValue("device_research.controller_brand"));
+        options.put("controllerBrand", jsonArray != null ? jsonArray.toList(String.class) : List.of());
+
+        // 获取数据项
+        jsonArray = cn.hutool.json.JSONUtil.parseArray(systemConfigService.getConfigValue("device_research.data_items"));
+        options.put("dataItems", jsonArray != null ? jsonArray.toList(String.class) : List.of());
+
+        return Result.success(options);
+    }
+
+    /**
+     * 更新设备调研下拉选项
+     */
+    @Operation(summary = "更新设备调研下拉选项")
+    @PutMapping("/options/{optionKey}")
+    public Result<Void> updateOptions(
+            @PathVariable String optionKey,
+            @RequestBody List<String> options) {
+        String configKey = "device_research." + optionKey;
+        systemConfigService.updateConfig(configKey, cn.hutool.json.JSONUtil.toJsonStr(options));
         return Result.success();
     }
 }

@@ -106,12 +106,13 @@
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { showToast, showConfirmDialog } from 'vant'
-import { mobileIssueApi, issueApi, type MobileIssue } from '@/api/issue'
+import { issueApi } from '@/api/issue'
+import type { Issue } from '@/types/issue'
 
 const router = useRouter()
 const route = useRoute()
 
-const issue = ref<MobileIssue>()
+const issue = ref<Issue>()
 const currentUserId = Number(localStorage.getItem('userId')) || 1
 
 // 获取状态类型
@@ -258,7 +259,7 @@ onMounted(async () => {
   }
 
   try {
-    issue.value = await mobileIssueApi.detail(id)
+    issue.value = await issueApi.getById(id)
   } catch (error) {
     showToast('加载失败')
     router.back()
