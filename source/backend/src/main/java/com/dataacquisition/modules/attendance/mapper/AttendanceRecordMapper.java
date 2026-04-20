@@ -16,4 +16,10 @@ public interface AttendanceRecordMapper extends BaseMapper<AttendanceRecord> {
      */
     @Select("SELECT COUNT(DISTINCT DATE(check_in_time)) FROM t_attendance_record WHERE user_id = #{userId}")
     int countDistinctDaysByUserId(Long userId);
+
+    /**
+     * 统计用户签到天数（按项目筛选，按日期去重）
+     */
+    @Select("SELECT COUNT(DISTINCT DATE(check_in_time)) FROM t_attendance_record WHERE user_id = #{userId} AND project_id = #{projectId}")
+    int countDistinctDaysByUserIdAndProject(Long userId, Long projectId);
 }

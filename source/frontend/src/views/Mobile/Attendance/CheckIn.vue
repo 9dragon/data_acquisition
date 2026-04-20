@@ -137,6 +137,7 @@ import { systemConfigApi } from '@/api/systemConfig'
 import { getLocation, type LocationInfo, chooseImage, previewImage as ddPreviewImage } from '@/utils/dingtalk'
 import { useUserStore } from '@/stores/user'
 import { addWatermarkToImage, type WatermarkData, type CanvasWatermarkOptions } from '@/utils/watermark'
+import { compressImage, getCompressOptions } from '@/utils/imageCompress'
 
 // 水印配置接口
 interface WatermarkConfig {
@@ -338,6 +339,10 @@ const takePhoto = async () => {
     if (imageData && !imageData.startsWith('data:')) {
       imageData = await urlToBase64(imageData)
     }
+
+    // 图片压缩
+    const compressOpts = await getCompressOptions()
+    imageData = await compressImage(imageData, compressOpts)
 
     // Canvas 绘制水印
     const watermarkData: WatermarkData = {

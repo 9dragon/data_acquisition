@@ -48,16 +48,24 @@ public class MobileStatsController {
     public Result<Map<String, Object>> getMyStats(@AuthenticationPrincipal UserDetails userDetails) {
         User user = getCurrentUser(userDetails);
 
-        // 签到天数
-        int attendanceDays = attendanceService.getAttendanceDayCount(user.getId());
+        // 签到天数（按当前项目筛选）
+        int attendanceDays = attendanceService.getAttendanceDayCount(user.getId(), user.getCurrentProjectId());
 
-        // 我的任务数（作为负责人的任务）
-        Long taskCount = projectTaskMapper.selectCount(new LambdaQueryWrapper<ProjectTask>()
-                .eq(ProjectTask::getManagerId, user.getId()));
+        // 我的任务数（作为负责人的任务，按当前项目筛选）
+        LambdaQueryWrapper<ProjectTask> taskWrapper = new LambdaQueryWrapper<ProjectTask>()
+                .eq(ProjectTask::getManagerId, user.getId());
+        if (user.getCurrentProjectId() != null) {
+            taskWrapper.eq(ProjectTask::getProjectId, user.getCurrentProjectId());
+        }
+        Long taskCount = projectTaskMapper.selectCount(taskWrapper);
 
-        // 我的问题数（分配给我的问题）
-        Long issueCount = issueMapper.selectCount(new LambdaQueryWrapper<Issue>()
-                .eq(Issue::getAssigneeId, user.getId()));
+        // 我的问题数（分配给我的问题，按当前项目筛选）
+        LambdaQueryWrapper<Issue> issueWrapper = new LambdaQueryWrapper<Issue>()
+                .eq(Issue::getAssigneeId, user.getId());
+        if (user.getCurrentProjectId() != null) {
+            issueWrapper.eq(Issue::getProjectId, user.getCurrentProjectId());
+        }
+        Long issueCount = issueMapper.selectCount(issueWrapper);
 
         Map<String, Object> stats = new HashMap<>();
         stats.put("attendanceDays", attendanceDays);

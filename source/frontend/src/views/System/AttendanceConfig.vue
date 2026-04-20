@@ -218,6 +218,41 @@
         </el-card>
       </el-tab-pane>
 
+      <!-- 图片压缩配置 -->
+      <el-tab-pane label="图片压缩" name="imageCompress">
+        <div class="tab-toolbar">
+          <el-button type="primary" @click="saveImageCompressConfig" :loading="imageCompressSaving">
+            保存配置
+          </el-button>
+        </div>
+
+        <el-card class="config-card">
+          <template #header>
+            <div class="card-title">
+              <el-icon><Picture /></el-icon>
+              <span>压缩参数配置</span>
+            </div>
+          </template>
+          <p class="config-desc">配置全局图片压缩参数，适用于签到拍照、现场采集等所有需要上传图片的场景</p>
+          <el-form :model="imageCompressConfig" label-width="120px">
+            <el-form-item label="最大宽度">
+              <el-input-number v-model="imageCompressConfig.maxWidth" :min="320" :max="4096" :step="160" />
+              <span class="hint">px，超过此宽度将等比缩放</span>
+            </el-form-item>
+
+            <el-form-item label="最大高度">
+              <el-input-number v-model="imageCompressConfig.maxHeight" :min="320" :max="4096" :step="160" />
+              <span class="hint">px，超过此高度将等比缩放</span>
+            </el-form-item>
+
+            <el-form-item label="JPEG质量">
+              <el-slider v-model="imageCompressConfig.quality" :min="0.1" :max="1" :step="0.1" :format-tooltip="(v: number) => Math.round(v * 100) + '%'" style="max-width: 400px" />
+              <span class="hint">0.7 为推荐值，兼顾清晰度与体积</span>
+            </el-form-item>
+          </el-form>
+        </el-card>
+      </el-tab-pane>
+
       <!-- 设备调研配置 -->
       <el-tab-pane label="设备调研" name="deviceResearch">
         <div class="tab-toolbar">
@@ -452,6 +487,27 @@ const saveAttendanceConfig = async () => {
   }
 }
 
+// ==================== 图片压缩配置 ====================
+const imageCompressSaving = ref(false)
+
+const imageCompressConfig = reactive({
+  maxWidth: 1280,
+  maxHeight: 1280,
+  quality: 0.7
+})
+
+const saveImageCompressConfig = async () => {
+  imageCompressSaving.value = true
+  try {
+    await systemConfigApi.updateConfig('system.image_compress', imageCompressConfig)
+    ElMessage.success('保存成功')
+  } catch {
+    ElMessage.error('保存失败')
+  } finally {
+    imageCompressSaving.value = false
+  }
+}
+
 // ==================== 问题管理配置 ====================
 const issueSaving = ref(false)
 
@@ -619,9 +675,11 @@ const loadConfigs = async () => {
     const checkTimes = await systemConfigApi.getConfigJson('attendance.check_times')
     const watermark = await systemConfigApi.getConfigJson('attendance.watermark')
     const types = await systemConfigApi.getConfigJson('issue.types')
+    const imageCompress = await systemConfigApi.getConfigJson('system.image_compress')
 
     if (checkTimes) Object.assign(checkTimesConfig, checkTimes)
     if (watermark) Object.assign(watermarkConfig, watermark)
+    if (imageCompress && typeof imageCompress === 'object') Object.assign(imageCompressConfig, imageCompress)
     if (types && Array.isArray(types)) {
       issueTypes.value = types.map((t: any) => ({ ...t, _editing: false }))
     } else {

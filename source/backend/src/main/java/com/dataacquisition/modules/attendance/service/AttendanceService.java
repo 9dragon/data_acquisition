@@ -76,4 +76,13 @@ public interface AttendanceService {
      * @return 签到天数
      */
     int getAttendanceDayCount(Long userId);
+
+    /**
+     * 统计用户签到天数（按项目筛选，按日期去重）
+     *
+     * @param userId    用户ID
+     * @param projectId 项目ID（null表示不限）
+     * @return 签到天数
+     */
+    int getAttendanceDayCount(Long userId, Long projectId);
 }

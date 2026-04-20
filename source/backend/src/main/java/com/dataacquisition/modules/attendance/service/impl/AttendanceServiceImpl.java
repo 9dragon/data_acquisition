@@ -328,6 +328,14 @@ public class AttendanceServiceImpl implements AttendanceService {
         return attendanceRecordMapper.countDistinctDaysByUserId(userId);
     }
 
+    @Override
+    public int getAttendanceDayCount(Long userId, Long projectId) {
+        if (projectId == null) {
+            return attendanceRecordMapper.countDistinctDaysByUserId(userId);
+        }
+        return attendanceRecordMapper.countDistinctDaysByUserIdAndProject(userId, projectId);
+    }
+
     /**
      * 刷新签到记录的照片预签名URL
      */

@@ -119,6 +119,15 @@ const onProjectSelect = async (action: { project: MobileProject }) => {
   await projectStore.setCurrentProject(action.project)
   showProjectPicker.value = false
   showToast(`已切换到: ${action.project.name}`)
+  await fetchStats()
+}
+
+const fetchStats = async () => {
+  try {
+    stats.value = await mobileStatsApi.getMyStats()
+  } catch (error) {
+    console.error('获取统计信息失败:', error)
+  }
 }
 
 // 跳转路径
@@ -177,12 +186,7 @@ onMounted(async () => {
       console.error('获取用户信息失败:', error)
     }
 
-    // 获取统计信息
-    try {
-      stats.value = await mobileStatsApi.getMyStats()
-    } catch (error) {
-      console.error('获取统计信息失败:', error)
-    }
+    await fetchStats()
   } catch (error) {
     console.error('加载用户信息失败:', error)
   }
