@@ -144,6 +144,13 @@ export const attendanceApi = {
   },
 
   /**
+   * 创建签到记录
+   */
+  create: (data: Partial<AttendanceRecord>): Promise<AttendanceRecord> => {
+    return http.post('/attendance/create', data)
+  },
+
+  /**
    * 导出签到记录
    */
   export: (params: AttendanceQueryParams): Promise<Blob> => {

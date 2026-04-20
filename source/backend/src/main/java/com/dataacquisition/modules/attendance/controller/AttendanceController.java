@@ -2,6 +2,7 @@ package com.dataacquisition.modules.attendance.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dataacquisition.common.response.Result;
+import com.dataacquisition.common.exception.BusinessException;
 import com.dataacquisition.modules.attendance.dto.AttendanceQueryDto;
 import com.dataacquisition.modules.attendance.dto.CheckInRequestDto;
 import com.dataacquisition.modules.attendance.dto.TodayCheckInStats;
@@ -40,7 +41,7 @@ public class AttendanceController {
         String username = userDetails.getUsername();
         User user = userService.getByUsername(username);
         if (user == null) {
-            throw new RuntimeException("用户不存在");
+            throw new BusinessException("用户不存在");
         }
         return user;
     }
@@ -102,6 +103,16 @@ public class AttendanceController {
     public Result<Void> deleteById(@PathVariable Long id) {
         Boolean success = attendanceService.deleteById(id);
         return success ? Result.success() : Result.error("删除失败");
+    }
+
+    /**
+     * 管理员创建签到记录
+     */
+    @Operation(summary = "创建签到记录")
+    @PostMapping("/create")
+    public Result<AttendanceRecord> create(@Valid @RequestBody AttendanceRecord record) {
+        AttendanceRecord created = attendanceService.create(record);
+        return Result.success(created);
     }
 
     /**

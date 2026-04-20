@@ -85,4 +85,12 @@ public interface AttendanceService {
      * @return 签到天数
      */
     int getAttendanceDayCount(Long userId, Long projectId);
+
+    /**
+     * 管理员创建签到记录
+     *
+     * @param record 签到记录
+     * @return 创建的签到记录
+     */
+    AttendanceRecord create(AttendanceRecord record);
 }

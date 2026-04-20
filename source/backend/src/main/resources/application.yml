@@ -3,7 +3,7 @@ server:
   servlet:
     context-path: /api/v1
   tomcat:
-    max-swallow-size: 20MB
+    max-swallow-size: 50MB
 
 spring:
   application:

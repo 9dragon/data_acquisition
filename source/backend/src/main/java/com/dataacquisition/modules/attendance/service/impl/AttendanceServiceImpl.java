@@ -9,6 +9,7 @@ import com.dataacquisition.modules.attendance.dto.AttendanceQueryDto;
 import com.dataacquisition.modules.attendance.dto.CheckInRequestDto;
 import com.dataacquisition.modules.attendance.dto.TodayCheckInStats;
 import com.dataacquisition.modules.attendance.entity.AttendanceRecord;
+import com.dataacquisition.common.exception.BusinessException;
 import com.dataacquisition.modules.attendance.mapper.AttendanceRecordMapper;
 import com.dataacquisition.modules.attendance.service.AttendanceService;
 import com.dataacquisition.modules.project.entity.Project;
@@ -49,25 +50,25 @@ public class AttendanceServiceImpl implements AttendanceService {
         // 获取用户信息
         User user = userService.getById(userId);
         if (user == null) {
-            throw new RuntimeException("用户不存在");
+            throw new BusinessException("用户不存在");
         }
 
         // 获取签到配置
         cn.hutool.json.JSONObject config = systemConfigService.getConfigJson("attendance.check_times");
         if (config == null) {
-            throw new RuntimeException("签到配置未设置");
+            throw new BusinessException("签到配置未设置");
         }
 
         // 获取时段配置
         cn.hutool.json.JSONArray shiftsArray = config.getJSONArray("shifts");
         if (shiftsArray == null || shiftsArray.isEmpty()) {
-            throw new RuntimeException("签到时段配置未设置");
+            throw new BusinessException("签到时段配置未设置");
         }
 
         // 获取前端传递的时段索引
         Integer shiftIndex = request.getShiftIndex();
         if (shiftIndex == null || shiftIndex < 0 || shiftIndex > shiftsArray.size()) {
-            throw new RuntimeException("时段索引无效");
+            throw new BusinessException("时段索引无效");
         }
 
         // 获取对应的时段配置
@@ -95,7 +96,7 @@ public class AttendanceServiceImpl implements AttendanceService {
             .between(AttendanceRecord::getCheckInTime, todayStart, todayEnd));
 
         if (shiftCount > 0) {
-            throw new RuntimeException(shiftConfig.getStr("name") + "已打卡");
+            throw new BusinessException(shiftConfig.getStr("name") + "已打卡");
         }
 
         // 处理照片上传（前端已添加水印，直接保存）
@@ -230,13 +231,13 @@ public class AttendanceServiceImpl implements AttendanceService {
         // 获取签到配置
         cn.hutool.json.JSONObject config = systemConfigService.getConfigJson("attendance.check_times");
         if (config == null) {
-            throw new RuntimeException("签到配置未设置");
+            throw new BusinessException("签到配置未设置");
         }
 
         // 获取时段配置
         cn.hutool.json.JSONArray shiftsArray = config.getJSONArray("shifts");
         if (shiftsArray == null || shiftsArray.isEmpty()) {
-            throw new RuntimeException("签到时段配置未设置");
+            throw new BusinessException("签到时段配置未设置");
         }
 
         // 获取今天的签到记录
@@ -318,7 +319,7 @@ public class AttendanceServiceImpl implements AttendanceService {
     public Object getConfig() {
         JSONObject config = systemConfigService.getConfigJson("attendance.check_times");
         if (config == null) {
-            throw new RuntimeException("签到配置未设置");
+            throw new BusinessException("签到配置未设置");
         }
         return config;
     }
@@ -334,6 +335,29 @@ public class AttendanceServiceImpl implements AttendanceService {
             return attendanceRecordMapper.countDistinctDaysByUserId(userId);
         }
         return attendanceRecordMapper.countDistinctDaysByUserIdAndProject(userId, projectId);
+    }
+
+    @Override
+    @Transactional
+    public AttendanceRecord create(AttendanceRecord record) {
+        if (record.getUserId() != null) {
+            User user = userService.getById(record.getUserId());
+            if (user != null) {
+                record.setUserName(user.getName());
+            }
+        }
+        if (record.getProjectId() != null) {
+            Project project = projectService.getById(record.getProjectId());
+            if (project != null) {
+                record.setProjectName(project.getName());
+            }
+        }
+        if (record.getCheckInTime() == null) {
+            record.setCheckInTime(LocalDateTime.now());
+        }
+        attendanceRecordMapper.insert(record);
+        log.info("管理员创建签到记录: id={}, userId={}, userName={}", record.getId(), record.getUserId(), record.getUserName());
+        return record;
     }
 
     /**
