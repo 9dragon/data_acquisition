@@ -269,10 +269,16 @@ public class AttendanceServiceImpl implements AttendanceService {
             cn.hutool.json.JSONObject shift = shiftsArray.getJSONObject(i);
             TodayCheckInStats.ShiftInfo shiftInfo = new TodayCheckInStats.ShiftInfo();
             shiftInfo.setIndex(i + 1);
+            String startTimeStr = shift.getStr("startTime");
+            String endTimeStr = shift.getStr("endTime");
+            String lateTimeStr = shift.getStr("lateTime");
+            if (startTimeStr == null || endTimeStr == null) {
+                continue;
+            }
             shiftInfo.setName(shift.getStr("name"));
-            shiftInfo.setStartTime(LocalTime.parse(shift.getStr("startTime")));
-            shiftInfo.setEndTime(LocalTime.parse(shift.getStr("endTime")));
-            shiftInfo.setLateTime(LocalTime.parse(shift.getStr("lateTime")));
+            shiftInfo.setStartTime(LocalTime.parse(startTimeStr));
+            shiftInfo.setEndTime(LocalTime.parse(endTimeStr));
+            shiftInfo.setLateTime(lateTimeStr != null ? LocalTime.parse(lateTimeStr) : null);
 
             // 检查是否已打卡
             final int shiftIndex = i + 1;
