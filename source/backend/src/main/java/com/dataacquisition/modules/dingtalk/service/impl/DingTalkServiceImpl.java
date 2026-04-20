@@ -4,6 +4,7 @@ import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.dataacquisition.common.response.Result;
+import com.dataacquisition.common.util.PinyinUtils;
 import com.dataacquisition.config.JwtConfig;
 import com.dataacquisition.modules.dingtalk.config.DingTalkConfig;
 import com.dataacquisition.modules.dingtalk.constant.DingTalkConstants;
@@ -22,9 +23,11 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * 钉钉服务实现
@@ -248,7 +251,12 @@ public class DingTalkServiceImpl implements DingTalkService {
 
         // 4. 创建新用户
         localUser = new User();
-        localUser.setUsername(dingTalkUser.getMobile());
+        String username = generateUniqueUsername(dingTalkUser.getName());
+        // 兜底：如果姓名为空或无法生成拼音，使用 dingtalk_userid
+        if (username == null || username.isEmpty()) {
+            username = "dt_" + dingTalkUser.getUserid();
+        }
+        localUser.setUsername(username);
         localUser.setPassword(passwordEncoder.encode(dingTalkConfig.getDefaultPassword()));
         updateUserFromDingTalk(localUser, dingTalkUser);
         localUser.setSource(DingTalkConstants.SOURCE_DINGTALK);
@@ -256,6 +264,46 @@ public class DingTalkServiceImpl implements DingTalkService {
         userService.save(localUser);
 
         return localUser;
+    }
+
+    /**
+     * 根据姓名拼音生成唯一的username，同名冲突时加数字后缀
+     */
+    private String generateUniqueUsername(String name) {
+        String basePinyin = PinyinUtils.toPinyin(name);
+        if (basePinyin == null || basePinyin.isEmpty()) {
+            return null;
+        }
+
+        User existing = userService.getByUsername(basePinyin);
+        if (existing == null) {
+            return basePinyin;
+        }
+
+        // 查询所有以 basePinyin 开头的 username，找最大数字后缀
+        List<String> similarUsernames = userService.lambdaQuery()
+            .likeRight(User::getUsername, basePinyin)
+            .select(User::getUsername)
+            .list()
+            .stream()
+            .map(User::getUsername)
+            .collect(Collectors.toList());
+
+        int maxSuffix = 0;
+        for (String u : similarUsernames) {
+            if (u.equals(basePinyin)) {
+                maxSuffix = Math.max(maxSuffix, 1);
+            } else if (u.startsWith(basePinyin)) {
+                String suffix = u.substring(basePinyin.length());
+                try {
+                    int num = Integer.parseInt(suffix);
+                    maxSuffix = Math.max(maxSuffix, num);
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+
+        return basePinyin + (maxSuffix + 1);
     }
 
     /**
