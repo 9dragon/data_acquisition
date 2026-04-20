@@ -59,7 +59,7 @@
         border
         stripe
       >
-        <el-table-column prop="projectName" label="项目" width="150" show-overflow-tooltip />
+        <el-table-column prop="projectName" label="项目" width="200" show-overflow-tooltip />
         <el-table-column prop="userName" label="用户姓名" width="120" />
         <el-table-column prop="checkInTime" label="签到时间" width="160">
           <template #default="{ row }">
@@ -86,7 +86,7 @@
             />
           </template>
         </el-table-column>
-        <el-table-column prop="remark" label="备注" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="remark" label="备注" min-width="80" show-overflow-tooltip />
         <el-table-column label="操作" width="160" fixed="right">
           <template #default="{ row }">
             <div class="action-buttons">
