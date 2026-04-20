@@ -310,7 +310,7 @@ export function chooseImage(facingMode: 'user' | 'environment' = 'user'): Promis
 
     // 配置权限
     configDingTalkJSAPI().then(() => {
-      chooseImageWithDingTalk(resolve, reject)
+      chooseImageWithDingTalk(facingMode, resolve, reject)
     })
   })
 }
@@ -319,18 +319,19 @@ export function chooseImage(facingMode: 'user' | 'environment' = 'user'): Promis
  * 使用钉钉拍照
  */
 function chooseImageWithDingTalk(
+  facingMode: 'user' | 'environment',
   resolve: (value: string) => void,
   reject: (reason: any) => void
 ) {
   if (typeof dd.ready === 'function') {
     dd.ready(() => {
-      attemptChooseImage(resolve, reject)
+      attemptChooseImage(facingMode, resolve, reject)
     })
     dd.error((err: any) => {
       reject(new Error('钉钉JSAPI初始化失败'))
     })
   } else {
-    attemptChooseImage(resolve, reject)
+    attemptChooseImage(facingMode, resolve, reject)
   }
 }
 
@@ -338,6 +339,7 @@ function chooseImageWithDingTalk(
  * 调用钉钉拍照API
  */
 function attemptChooseImage(
+  facingMode: 'user' | 'environment',
   resolve: (value: string) => void,
   reject: (reason: any) => void
 ) {
@@ -345,6 +347,7 @@ function attemptChooseImage(
   if (typeof dd.chooseImage === 'function') {
     dd.chooseImage({
       sourceType: ['camera'], // 仅拍照，不包括相册
+      defaultCameraMode: facingMode === 'user' ? 'front' : 'back',
       success: (res: any) => {
         // 新版API返回格式：{ filePaths: string[], files: Object[] }
         const imageUrl = res.filePaths?.[0] || res.url || res.picUrl || res
