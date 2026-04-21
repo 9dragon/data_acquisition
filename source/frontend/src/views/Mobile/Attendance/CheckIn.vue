@@ -81,8 +81,8 @@
           </div>
           <van-icon name="cross" class="photo-delete" @click.stop="deletePhoto" />
         </div>
-        <div v-else class="photo-upload" :class="{ 'photo-disabled': !locationInfo.value.latitude || locationInfo.value.latitude === 0 }" @click="takePhoto">
-          <template v-if="locationInfo.value.latitude && locationInfo.value.latitude !== 0">
+        <div v-else class="photo-upload" :class="{ 'photo-disabled': !locationInfo.latitude || locationInfo.latitude === 0 }" @click="takePhoto">
+          <template v-if="locationInfo.latitude && locationInfo.latitude !== 0">
             <van-icon name="photograph" size="40" color="#999" />
             <span>点击拍照</span>
             <div class="camera-switch" @click.stop="toggleCamera">

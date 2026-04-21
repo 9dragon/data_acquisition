@@ -44,9 +44,6 @@
             <el-icon><Download /></el-icon>
             导出
           </el-button>
-          <el-button v-if="hasPermission('attendance:create')" type="primary" @click="handleCreate">
-            新增
-          </el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -176,51 +173,6 @@
       @close="previewVisible = false"
     />
 
-    <!-- 新增对话框 -->
-    <el-dialog v-model="createVisible" title="新增签到记录" width="500px">
-      <el-form ref="createFormRef" :model="createForm" :rules="createRules" label-width="80px">
-        <el-form-item label="用户" prop="userId">
-          <el-select v-model="createForm.userId" placeholder="请选择用户" filterable style="width: 100%">
-            <el-option
-              v-for="user in userList"
-              :key="user.id"
-              :label="user.name"
-              :value="user.id"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="项目" prop="projectId">
-          <el-select v-model="createForm.projectId" placeholder="请选择项目" clearable style="width: 100%">
-            <el-option
-              v-for="project in projectList"
-              :key="project.id"
-              :label="project.name"
-              :value="project.id"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="签到时间" prop="checkInTime">
-          <el-date-picker
-            v-model="createForm.checkInTime"
-            type="datetime"
-            placeholder="选择签到时间"
-            format="YYYY-MM-DD HH:mm:ss"
-            value-format="YYYY-MM-DD HH:mm:ss"
-            style="width: 100%"
-          />
-        </el-form-item>
-        <el-form-item label="位置" prop="location">
-          <el-input v-model="createForm.location" placeholder="请输入位置" />
-        </el-form-item>
-        <el-form-item label="备注">
-          <el-input v-model="createForm.remark" type="textarea" placeholder="请输入备注" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="createVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleCreateSubmit">确定</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
@@ -231,7 +183,6 @@ import { Download, View, Delete } from '@element-plus/icons-vue'
 import { attendanceApi, type AttendanceRecord, type AttendanceQueryParams } from '@/api/attendance'
 import { useProjectStore } from '@/stores/project'
 import { usePermissionStore } from '@/stores/permission'
-import { http } from '@/api/request'
 
 const permissionStore = usePermissionStore()
 const hasPermission = (code: string) => permissionStore.hasPermission(code)
@@ -251,63 +202,6 @@ const previewUrl = ref('')
 const openPreview = (url: string) => {
   previewUrl.value = url
   previewVisible.value = true
-}
-
-// 新增对话框
-const createVisible = ref(false)
-const createFormRef = ref()
-const createForm = reactive({
-  userId: undefined as number | undefined,
-  projectId: undefined as number | undefined,
-  checkInTime: '',
-  location: '',
-  remark: ''
-})
-const createRules = {
-  userId: [{ required: true, message: '请选择用户', trigger: 'change' }],
-  checkInTime: [{ required: true, message: '请选择签到时间', trigger: 'change' }]
-}
-const userList = ref<any[]>([])
-
-const handleCreate = async () => {
-  createForm.userId = undefined
-  createForm.projectId = undefined
-  createForm.checkInTime = ''
-  createForm.location = ''
-  createForm.remark = ''
-  createVisible.value = true
-  await loadUsers()
-}
-
-const loadUsers = async () => {
-  try {
-    const res = await http.get<any>('/users', { params: { pageNum: 1, pageSize: 100 } })
-    userList.value = res.records || []
-  } catch {
-    userList.value = []
-  }
-}
-
-const handleCreateSubmit = async () => {
-  if (!createFormRef.value) return
-  await createFormRef.value.validate(async (valid) => {
-    if (valid) {
-      try {
-        await attendanceApi.create({
-          userId: createForm.userId,
-          projectId: createForm.projectId,
-          checkInTime: createForm.checkInTime,
-          location: createForm.location,
-          remark: createForm.remark
-        } as Partial<AttendanceRecord>)
-        ElMessage.success('新增成功')
-        createVisible.value = false
-        fetchRecords()
-      } catch {
-        ElMessage.error('新增失败')
-      }
-    }
-  })
 }
 
 const handleDelete = async (row: AttendanceRecord) => {

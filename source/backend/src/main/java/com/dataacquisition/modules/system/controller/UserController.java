@@ -205,4 +205,29 @@ public class UserController {
         userService.assignRoles(id, roleIds);
         return Result.success();
     }
+
+    /**
+     * 更新当前用户个人信息
+     */
+    @Operation(summary = "更新当前用户个人信息")
+    @PutMapping("/profile")
+    public Result<Void> updateProfile(@AuthenticationPrincipal UserDetails userDetails,
+                                       @RequestBody Map<String, String> request) {
+        String username = userDetails.getUsername();
+        User user = userService.getByUsername(username);
+        if (user == null) {
+            return Result.error("用户不存在");
+        }
+        if (request.containsKey("name")) {
+            user.setName(request.get("name"));
+        }
+        if (request.containsKey("phone")) {
+            user.setPhone(request.get("phone"));
+        }
+        if (request.containsKey("email")) {
+            user.setEmail(request.get("email"));
+        }
+        userService.updateUser(user);
+        return Result.success();
+    }
 }

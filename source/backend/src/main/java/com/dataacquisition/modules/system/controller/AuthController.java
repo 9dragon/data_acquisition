@@ -109,6 +109,30 @@ public class AuthController {
     }
 
     /**
+     * 修改密码
+     */
+    @Operation(summary = "修改密码")
+    @PostMapping("/change-password")
+    public Result<Void> changePassword(@RequestBody Map<String, String> request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return Result.error(1001, "未登录");
+        }
+        String username = authentication.getName();
+        User user = userService.getByUsername(username);
+        if (user == null) {
+            return Result.error(1005, "用户不存在");
+        }
+        String oldPassword = request.get("oldPassword");
+        String newPassword = request.get("newPassword");
+        if (oldPassword == null || newPassword == null) {
+            return Result.error("旧密码和新密码不能为空");
+        }
+        userService.changePassword(user.getId(), oldPassword, newPassword);
+        return Result.success();
+    }
+
+    /**
      * 获取用户信息（不包含密码）
      */
     private Map<String, Object> getUserInfo(User user) {

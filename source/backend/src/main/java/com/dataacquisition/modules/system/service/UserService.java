@@ -76,4 +76,9 @@ public interface UserService extends IService<User>, UserDetailsService {
      * 分配角色（覆盖式）
      */
     Boolean assignRoles(Long userId, List<Long> roleIds);
+
+    /**
+     * 修改密码（验证旧密码）
+     */
+    Boolean changePassword(Long userId, String oldPassword, String newPassword);
 }
