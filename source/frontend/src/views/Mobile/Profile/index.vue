@@ -139,16 +139,16 @@ const goToPath = (path: string) => {
 const handleClick = (type: string) => {
   switch (type) {
     case 'info':
-      navigateWithFullScreen(router, '/profile/info')
+      navigateWithFullScreen(router, '/mobile/profile/info')
       break
     case 'password':
-      navigateWithFullScreen(router, '/profile/password')
+      navigateWithFullScreen(router, '/mobile/profile/password')
       break
     case 'settings':
-      navigateWithFullScreen(router, '/profile/settings')
+      navigateWithFullScreen(router, '/mobile/profile/settings')
       break
     case 'about':
-      navigateWithFullScreen(router, '/profile/about')
+      navigateWithFullScreen(router, '/mobile/profile/about')
       break
     default:
       showToast('功能开发中...')

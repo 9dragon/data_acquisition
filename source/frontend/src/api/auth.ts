@@ -73,5 +73,12 @@ export const authApi = {
    */
   logout(): Promise<void> {
     return http.post('/auth/logout')
+  },
+
+  /**
+   * 修改密码
+   */
+  changePassword(data: { oldPassword: string; newPassword: string }): Promise<void> {
+    return http.post('/auth/change-password', data)
   }
 }

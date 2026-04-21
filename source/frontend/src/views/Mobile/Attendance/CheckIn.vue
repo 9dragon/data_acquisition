@@ -81,13 +81,19 @@
           </div>
           <van-icon name="cross" class="photo-delete" @click.stop="deletePhoto" />
         </div>
-        <div v-else class="photo-upload" @click="takePhoto">
-          <van-icon name="photograph" size="40" color="#999" />
-          <span>点击拍照</span>
-          <div class="camera-switch" @click.stop="toggleCamera">
-            <van-icon :name="cameraFacing === 'user' ? 'contact' : 'eye-o'" size="16" />
-            <span>{{ cameraFacing === 'user' ? '前置' : '后置' }}</span>
-          </div>
+        <div v-else class="photo-upload" :class="{ 'photo-disabled': !locationInfo.value.latitude || locationInfo.value.latitude === 0 }" @click="takePhoto">
+          <template v-if="locationInfo.value.latitude && locationInfo.value.latitude !== 0">
+            <van-icon name="photograph" size="40" color="#999" />
+            <span>点击拍照</span>
+            <div class="camera-switch" @click.stop="toggleCamera">
+              <van-icon :name="cameraFacing === 'user' ? 'contact' : 'eye-o'" size="16" />
+              <span>{{ cameraFacing === 'user' ? '前置' : '后置' }}</span>
+            </div>
+          </template>
+          <template v-else>
+            <van-icon name="location-o" size="40" color="#ccc" />
+            <span class="photo-disabled-text">请先获取位置信息</span>
+          </template>
         </div>
       </div>
     </van-cell-group>
@@ -245,12 +251,16 @@ const currentShift = computed(() => {
 const canCheckIn = computed(() => {
   if (!selectedShift.value) return false
   if (selectedShift.value.checked) return false
-  return !!selectedProjectId.value
+  if (!selectedProjectId.value) return false
+  if (!locationInfo.value.latitude || locationInfo.value.latitude === 0) return false
+  return true
 })
 
 const checkInButtonText = computed(() => {
   if (!selectedShift.value) return '请选择打卡时段'
   if (selectedShift.value.checked) return '该时段已打卡'
+  if (!selectedProjectId.value) return '请选择项目'
+  if (!locationInfo.value.latitude || locationInfo.value.latitude === 0) return '正在获取位置...'
   return `确认${selectedShift.value.name}`
 })
 
@@ -738,6 +748,16 @@ onUnmounted(() => {
   background: #f0f0f0;
   color: #666;
   font-size: 12px;
+}
+
+.photo-disabled {
+  border-color: #e0e0e0;
+  background: #f5f5f5;
+  cursor: not-allowed;
+}
+
+.photo-disabled-text {
+  color: #ccc !important;
 }
 
 .submit-section {

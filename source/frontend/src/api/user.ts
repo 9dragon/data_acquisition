@@ -98,7 +98,14 @@ export const userApi = {
   /**
    * 分配角色（覆盖式）
    */
-  assignRoles: (id: number, roleIds: number[]): Promise<void> => {
+  assignRoles: (id: number, roleIds: number[]): Promise<void> {
     return http.put(`/users/${id}/roles`, { roleIds })
+  },
+
+  /**
+   * 更新用户信息
+   */
+  updateProfile: (data: { name?: string; phone?: string; email?: string }): Promise<void> => {
+    return http.put('/users/profile', data)
   }
 }

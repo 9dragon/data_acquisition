@@ -226,6 +226,18 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '个人信息', hideTabBar: true }
       },
       {
+        path: 'profile/edit-info',
+        name: 'ProfileEditInfo',
+        component: () => import('@/views/Mobile/Profile/EditInfo.vue'),
+        meta: { title: '编辑信息', hideTabBar: true }
+      },
+      {
+        path: 'profile/password',
+        name: 'ProfilePassword',
+        component: () => import('@/views/Mobile/Profile/Password.vue'),
+        meta: { title: '修改密码', hideTabBar: true }
+      },
+      {
         path: 'profile/settings',
         name: 'ProfileSettings',
         component: () => import('@/views/Mobile/Profile/Settings.vue'),

@@ -120,7 +120,7 @@
         :page-sizes="[10, 20, 50, 100]"
         layout="total, sizes, prev, pager, next, jumper"
         @size-change="handleQuery"
-        @current-change="handleQuery"
+        @current-change="fetchRecords"
       />
     </el-card>
 
