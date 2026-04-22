@@ -148,9 +148,6 @@
         <el-descriptions-item label="位置描述" :span="2">
           {{ currentRecord?.location }}
         </el-descriptions-item>
-        <el-descriptions-item label="详细地址" :span="2">
-          {{ currentRecord?.address }}
-        </el-descriptions-item>
         <el-descriptions-item label="签到照片" :span="2">
           <el-image
             v-if="currentRecord?.watermarkPhotoUrl || currentRecord?.photoUrl"

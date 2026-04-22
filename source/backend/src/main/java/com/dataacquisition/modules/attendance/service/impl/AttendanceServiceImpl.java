@@ -132,7 +132,6 @@ public class AttendanceServiceImpl implements AttendanceService {
         record.setLocation(request.getLocation());
         record.setLatitude(request.getLatitude());
         record.setLongitude(request.getLongitude());
-        record.setAddress(request.getAddress());
         record.setStatus(isLate ? "LATE" : "NORMAL");
         record.setIsLate(isLate ? 1 : 0);
         record.setShiftIndex(shiftIndex);

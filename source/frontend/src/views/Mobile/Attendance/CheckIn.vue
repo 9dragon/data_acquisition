@@ -54,7 +54,12 @@
     <van-cell-group inset title="签到信息">
       <van-cell title="当前位置">
         <template #value>
-          <span class="address-value">{{ locationInfo.address || '获取中...' }}</span>
+          <span v-if="locationInfo.address" class="address-value">{{ locationInfo.address }}</span>
+          <span v-else-if="locationInfo.latitude && locationInfo.latitude !== 0" class="address-fail">
+            地址获取失败
+            <van-button size="small" type="primary" plain style="margin-left: 8px; padding: 0 8px; height: 24px; font-size: 12px;" @click="fetchLocation">重新获取</van-button>
+          </span>
+          <span v-else class="address-loading">获取中...</span>
         </template>
       </van-cell>
       <van-cell title="经纬度">
@@ -81,14 +86,18 @@
           </div>
           <van-icon name="cross" class="photo-delete" @click.stop="deletePhoto" />
         </div>
-        <div v-else class="photo-upload" :class="{ 'photo-disabled': !locationInfo.latitude || locationInfo.latitude === 0 }" @click="takePhoto">
-          <template v-if="locationInfo.latitude && locationInfo.latitude !== 0">
+        <div v-else class="photo-upload" :class="{ 'photo-disabled': !locationInfo.latitude || locationInfo.latitude === 0 || !locationInfo.address }" @click="takePhoto">
+          <template v-if="locationInfo.latitude && locationInfo.latitude !== 0 && locationInfo.address">
             <van-icon name="photograph" size="40" color="#999" />
             <span>点击拍照</span>
             <div class="camera-switch" @click.stop="toggleCamera">
               <van-icon :name="cameraFacing === 'user' ? 'contact' : 'eye-o'" size="16" />
               <span>{{ cameraFacing === 'user' ? '前置' : '后置' }}</span>
             </div>
+          </template>
+          <template v-else-if="locationInfo.latitude && locationInfo.latitude !== 0 && !locationInfo.address">
+            <van-icon name="location-o" size="40" color="#ccc" />
+            <span class="photo-disabled-text">地址获取失败，点击重试</span>
           </template>
           <template v-else>
             <van-icon name="location-o" size="40" color="#ccc" />
@@ -253,6 +262,7 @@ const canCheckIn = computed(() => {
   if (selectedShift.value.checked) return false
   if (!selectedProjectId.value) return false
   if (!locationInfo.value.latitude || locationInfo.value.latitude === 0) return false
+  if (!locationInfo.value.address) return false
   return true
 })
 
@@ -261,6 +271,7 @@ const checkInButtonText = computed(() => {
   if (selectedShift.value.checked) return '该时段已打卡'
   if (!selectedProjectId.value) return '请选择项目'
   if (!locationInfo.value.latitude || locationInfo.value.latitude === 0) return '正在获取位置...'
+  if (!locationInfo.value.address) return '请获取地址信息'
   return `确认${selectedShift.value.name}`
 })
 
@@ -317,9 +328,33 @@ const fetchLocation = async () => {
       }
     }
 
-    // 显示定位成功提示
-    if (location.address) {
-      console.log('定位成功:', location.address)
+    // 有经纬度但无地址时自动重试一次
+    if (locationInfo.value.latitude && locationInfo.value.latitude !== 0
+        && !locationInfo.value.address) {
+      console.warn('有经纬度但无地址，重试获取...')
+      try {
+        const retryLocation = await getLocation()
+        if (retryLocation.address) {
+          locationInfo.value.address = retryLocation.address
+        }
+        // 重试时也拼接省市区
+        if (!locationInfo.value.address && (retryLocation.province || retryLocation.city || retryLocation.district)) {
+          const parts = []
+          if (retryLocation.province) parts.push(retryLocation.province)
+          if (retryLocation.city && retryLocation.city !== retryLocation.province) parts.push(retryLocation.city)
+          if (retryLocation.district) parts.push(retryLocation.district)
+          if (retryLocation.street) parts.push(retryLocation.street)
+          if (parts.length > 0) locationInfo.value.address = parts.join('')
+        }
+      } catch (e) {
+        console.warn('重试获取地址失败', e)
+      }
+    }
+
+    if (locationInfo.value.address) {
+      console.log('定位成功:', locationInfo.value.address)
+    } else if (locationInfo.value.latitude && locationInfo.value.latitude !== 0) {
+      showToast('获取地址信息失败，请点击重新获取')
     }
   } catch (error: any) {
     console.error('获取位置失败:', error)
@@ -335,6 +370,15 @@ const takePhoto = async () => {
     await fetchLocation()
     if (!locationInfo.value.latitude || locationInfo.value.latitude === 0) {
       showToast('无法获取位置，请检查定位权限')
+      return
+    }
+  }
+
+  if (!locationInfo.value.address) {
+    showToast('地址信息获取失败，正在重试...')
+    await fetchLocation()
+    if (!locationInfo.value.address) {
+      showToast('无法获取地址信息，请稍后重试')
       return
     }
   }
@@ -589,6 +633,17 @@ onUnmounted(() => {
   text-align: right;
   word-break: break-all;
   white-space: normal;
+}
+
+.address-fail {
+  color: #ee0a24;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+}
+
+.address-loading {
+  color: #999;
 }
 
 /* 坐标值不换行、右对齐 */

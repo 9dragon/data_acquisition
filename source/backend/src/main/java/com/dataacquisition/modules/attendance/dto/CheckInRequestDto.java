@@ -33,9 +33,6 @@ public class CheckInRequestDto {
     @Schema(description = "位置描述")
     private String location;
 
-    @Schema(description = "详细地址")
-    private String address;
-
     @Schema(description = "备注")
     private String remark;
 }

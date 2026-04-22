@@ -9,7 +9,6 @@ export interface CheckInRequest {
   latitude?: number
   longitude?: number
   location?: string
-  address?: string
   remark?: string
 }
 
@@ -26,7 +25,6 @@ export interface AttendanceRecord {
   location?: string
   latitude?: number
   longitude?: number
-  address?: string
   status: 'NORMAL' | 'LATE'
   remark?: string
   createTime: string

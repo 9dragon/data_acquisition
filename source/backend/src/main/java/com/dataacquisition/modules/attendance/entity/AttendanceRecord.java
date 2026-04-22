@@ -74,11 +74,6 @@ public class AttendanceRecord {
     private BigDecimal longitude;
 
     /**
-     * 详细地址
-     */
-    private String address;
-
-    /**
      * 状态: NORMAL-正常, LATE-迟到
      */
     private String status;
