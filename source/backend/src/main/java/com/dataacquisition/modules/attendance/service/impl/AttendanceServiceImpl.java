@@ -86,18 +86,14 @@ public class AttendanceServiceImpl implements AttendanceService {
         LocalTime currentTime = now.toLocalTime();
         LocalDate today = now.toLocalDate();
 
-        // 检查该时段今日是否已打卡
+        // 查询该时段今日是否已有打卡记录（支持覆盖重新打卡）
         LocalDateTime todayStart = today.atStartOfDay();
         LocalDateTime todayEnd = todayStart.plusDays(1);
 
-        Long shiftCount = attendanceRecordMapper.selectCount(new LambdaQueryWrapper<AttendanceRecord>()
+        AttendanceRecord existingRecord = attendanceRecordMapper.selectOne(new LambdaQueryWrapper<AttendanceRecord>()
             .eq(AttendanceRecord::getUserId, userId)
             .eq(AttendanceRecord::getShiftIndex, shiftIndex)
             .between(AttendanceRecord::getCheckInTime, todayStart, todayEnd));
-
-        if (shiftCount > 0) {
-            throw new BusinessException(shiftConfig.getStr("name") + "已打卡");
-        }
 
         // 处理照片上传（前端已添加水印，直接保存）
         String photoUrl = null;
@@ -121,7 +117,27 @@ public class AttendanceServiceImpl implements AttendanceService {
             isLate = currentTime.isAfter(lateTime);
         }
 
-        // 创建签到记录
+        if (existingRecord != null) {
+            // 覆盖更新已有记录
+            existingRecord.setProjectId(request.getProjectId());
+            existingRecord.setCheckInTime(now);
+            existingRecord.setPhotoUrl(photoUrl);
+            existingRecord.setPhotoPath(photoPath);
+            existingRecord.setLocation(request.getLocation());
+            existingRecord.setLatitude(request.getLatitude());
+            existingRecord.setLongitude(request.getLongitude());
+            existingRecord.setStatus(isLate ? "LATE" : "NORMAL");
+            existingRecord.setIsLate(isLate ? 1 : 0);
+            existingRecord.setRemark(request.getRemark());
+
+            attendanceRecordMapper.updateById(existingRecord);
+
+            log.info("用户覆盖签到成功: userId={}, userName={}, shift={}, isLate={}, recordId={}",
+                userId, user.getName(), shiftConfig.getStr("name"), isLate, existingRecord.getId());
+            return existingRecord;
+        }
+
+        // 创建新签到记录
         AttendanceRecord record = new AttendanceRecord();
         record.setProjectId(request.getProjectId());
         record.setUserId(userId);

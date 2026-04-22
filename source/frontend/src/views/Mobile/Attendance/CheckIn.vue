@@ -145,7 +145,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { showToast, showLoadingToast, closeToast } from 'vant'
+import { showToast, showLoadingToast, closeToast, showDialog } from 'vant'
 import { useRouter } from 'vue-router'
 import { attendanceApi, type ShiftInfo } from '@/api/attendance'
 import { systemConfigApi } from '@/api/systemConfig'
@@ -259,7 +259,6 @@ const currentShift = computed(() => {
 
 const canCheckIn = computed(() => {
   if (!selectedShift.value) return false
-  if (selectedShift.value.checked) return false
   if (!selectedProjectId.value) return false
   if (!locationInfo.value.latitude || locationInfo.value.latitude === 0) return false
   if (!locationInfo.value.address) return false
@@ -268,10 +267,10 @@ const canCheckIn = computed(() => {
 
 const checkInButtonText = computed(() => {
   if (!selectedShift.value) return '请选择打卡时段'
-  if (selectedShift.value.checked) return '该时段已打卡'
   if (!selectedProjectId.value) return '请选择项目'
   if (!locationInfo.value.latitude || locationInfo.value.latitude === 0) return '正在获取位置...'
   if (!locationInfo.value.address) return '请获取地址信息'
+  if (selectedShift.value.checked) return `重新${selectedShift.value.name}`
   return `确认${selectedShift.value.name}`
 })
 
@@ -281,7 +280,7 @@ const checkInHint = computed(() => {
     if (nextShift) {
       return `下一打卡时段: ${nextShift.startTime} - ${nextShift.name}`
     }
-    return '今日所有时段已完成'
+    return '今日所有时段已打卡，如需修改可重新选择打卡'
   }
   return null
 })
@@ -301,10 +300,6 @@ let timer: number | null = null
 
 // 选择打卡时段
 const selectShift = (shift: ShiftInfo) => {
-  if (shift.checked) {
-    showToast('该时段已打卡，无法选择')
-    return
-  }
   selectedShiftId.value = shift.index
 }
 
@@ -521,6 +516,22 @@ const handleCheckIn = async () => {
     return
   }
 
+  // 覆盖重新打卡确认
+  if (selectedShift.value.checked) {
+    try {
+      await showDialog({
+        title: '重新打卡',
+        message: `您已在该时段完成打卡（${selectedShift.value.checkInTime}），确定要覆盖重新打卡吗？`,
+        showCancelButton: true,
+        confirmButtonText: '确定重新打卡',
+        cancelButtonText: '取消',
+        confirmButtonColor: '#07c160'
+      })
+    } catch {
+      return
+    }
+  }
+
   if (!selectedProjectId.value) {
     showToast('请选择项目')
     return
@@ -559,7 +570,7 @@ const handleCheckIn = async () => {
     })
 
     closeToast()
-    showToast('签到成功')
+    showToast(selectedShift.value.checked ? '重新打卡成功' : '签到成功')
 
     // 刷新今日统计
     await fetchTodayStats()
@@ -592,8 +603,8 @@ onMounted(async () => {
   await fetchTodayStats()
   updateCurrentShift()
 
-  // 默认选择当前时段
-  const current = shifts.value.find(s => s.isCurrent && !s.checked)
+  // 默认选择当前时段（即使已打卡，方便覆盖重新打卡）
+  const current = shifts.value.find(s => s.isCurrent)
   if (current) {
     selectedShiftId.value = current.index
   } else {
