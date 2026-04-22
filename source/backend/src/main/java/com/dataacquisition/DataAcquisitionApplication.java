@@ -16,7 +16,7 @@ public class DataAcquisitionApplication {
         System.out.println("""
                 ========================================
                    工业数据采集项目管理系统启动成功!
-                   API文档地址: http://localhost:8080/api/doc.html
+                   API文档地址: http://localhost:8080/api/v1/doc.html
                 ========================================
                 """);
     }
