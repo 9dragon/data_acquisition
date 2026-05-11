@@ -40,7 +40,7 @@
         <el-form-item>
           <el-button type="primary" @click="handleQuery">查询</el-button>
           <el-button @click="handleReset">重置</el-button>
-          <el-button type="success" @click="handleExport">
+          <el-button type="success" :loading="exportLoading" @click="handleExport">
             <el-icon><Download /></el-icon>
             导出
           </el-button>
@@ -175,7 +175,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElLoading } from 'element-plus'
 import { Download, View, Delete } from '@element-plus/icons-vue'
 import { attendanceApi, type AttendanceRecord, type AttendanceQueryParams } from '@/api/attendance'
 import { useProjectStore } from '@/stores/project'
@@ -262,6 +262,7 @@ const handleReset = () => {
 }
 
 // 导出
+const exportLoading = ref(false)
 const handleExport = async () => {
   try {
     // 同步日期范围到查询参数
@@ -273,28 +274,34 @@ const handleExport = async () => {
       queryParams.endDate = undefined
     }
 
-    ElMessage.success('正在导出...')
-    const blob = await attendanceApi.export(queryParams)
+    exportLoading.value = true
+    const loadingInstance = ElLoading.service({ text: '正在导出签到记录，请稍候...', background: 'rgba(0, 0, 0, 0.7)' })
+    try {
+      const blob = await attendanceApi.export(queryParams)
 
-    // 根据日期范围生成文件名
-    let fileName: string
-    if (queryParams.startDate && queryParams.endDate) {
-      fileName = `签到记录_${queryParams.startDate}至${queryParams.endDate}.xlsx`
-    } else {
-      fileName = '签到记录_全部.xlsx'
+      // 根据日期范围生成文件名
+      let fileName: string
+      if (queryParams.startDate && queryParams.endDate) {
+        fileName = `签到记录_${queryParams.startDate}至${queryParams.endDate}.xlsx`
+      } else {
+        fileName = '签到记录_全部.xlsx'
+      }
+
+      // 创建下载链接
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = fileName
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+
+      ElMessage.success('导出成功')
+    } finally {
+      loadingInstance.close()
+      exportLoading.value = false
     }
-
-    // 创建下载链接
-    const url = window.URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = fileName
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    window.URL.revokeObjectURL(url)
-
-    ElMessage.success('导出成功')
   } catch (error) {
     ElMessage.error('导出失败')
   }
