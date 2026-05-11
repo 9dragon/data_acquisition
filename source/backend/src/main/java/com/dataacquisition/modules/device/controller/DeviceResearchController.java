@@ -4,8 +4,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dataacquisition.common.response.Result;
 import com.dataacquisition.modules.device.dto.*;
 import com.dataacquisition.modules.device.entity.DeviceResearch;
+import com.dataacquisition.modules.device.service.DeviceResearchImportExportService;
 import com.dataacquisition.modules.device.service.DeviceResearchService;
 import com.dataacquisition.modules.system.service.SystemConfigService;
+import lombok.extern.slf4j.Slf4j;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,6 +22,7 @@ import java.util.Map;
 /**
  * 设备调研Controller
  */
+@Slf4j
 @Tag(name = "设备调研", description = "设备调研相关接口")
 @RestController
 @RequestMapping("/device-research")
@@ -27,6 +30,7 @@ import java.util.Map;
 public class DeviceResearchController {
 
     private final DeviceResearchService deviceResearchService;
+    private final DeviceResearchImportExportService importExportService;
     private final SystemConfigService systemConfigService;
 
     /**
@@ -159,5 +163,41 @@ public class DeviceResearchController {
         String configKey = "device_research." + optionKey;
         systemConfigService.updateConfig(configKey, cn.hutool.json.JSONUtil.toJsonStr(options));
         return Result.success();
+    }
+
+    /**
+     * 下载设备调研导入模板
+     */
+    @Operation(summary = "下载设备调研导入模板")
+    @GetMapping("/template")
+    public void downloadTemplate(jakarta.servlet.http.HttpServletResponse response) throws java.io.IOException {
+        importExportService.downloadTemplate(response);
+    }
+
+    /**
+     * 批量导入设备调研数据
+     */
+    @Operation(summary = "批量导入设备调研数据")
+    @PostMapping("/import")
+    public Result<com.dataacquisition.modules.device.dto.DeviceResearchImportResult> importData(
+            @Parameter(description = "Excel文件") @org.springframework.web.bind.annotation.RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        try {
+            com.dataacquisition.modules.device.dto.DeviceResearchImportResult result = importExportService.importData(file);
+            return Result.success("导入完成", result);
+        } catch (Exception e) {
+            log.error("导入设备调研数据失败", e);
+            return Result.error("导入失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 批量导出设备调研数据
+     */
+    @Operation(summary = "批量导出设备调研数据")
+    @PostMapping("/export")
+    public void exportData(
+            @Parameter(description = "调研记录ID列表（为空则导出全部）") @org.springframework.web.bind.annotation.RequestBody(required = false) java.util.List<java.lang.Long> ids,
+            jakarta.servlet.http.HttpServletResponse response) throws java.io.IOException {
+        importExportService.exportData(ids, response);
     }
 }
