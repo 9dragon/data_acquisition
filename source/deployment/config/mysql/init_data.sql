@@ -23,4 +23,4 @@ INSERT INTO `t_stage` VALUES (6, 'acceptance', '验收阶段', '项目验收和�
 -- ----------------------------
 -- Records of t_user
 -- ----------------------------
-INSERT INTO `t_user` VALUES (1, 'admin', 'admin123', '系统管理员', 'admin@example.com', NULL, NULL, '1', 1, '2026-04-09 16:10:59', '10.0.0.25', NULL, '2026-03-23 13:00:27', 0, '2026-03-24 15:26:43', 0, NULL, NULL, NULL, 0, NULL, 2);
+INSERT INTO `t_user` VALUES (1, 'admin', 'admin123', '系统管理员', 'admin@example.com', NULL, NULL, 1, '2026-04-09 16:10:59', '10.0.0.25', NULL, '2026-03-23 13:00:27', 0, '2026-03-24 15:26:43', 0, NULL, NULL, NULL, 0, NULL, 2);
