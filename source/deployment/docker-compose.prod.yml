@@ -38,7 +38,7 @@ services:
       # Spring Profile
       SPRING_PROFILES_ACTIVE: prod
     ports:
-      - "8080:8080"
+      - "18080:18080"
     volumes:
       - ./logs/backend:/var/log/data-acquisition
     networks:
