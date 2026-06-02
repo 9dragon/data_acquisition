@@ -528,6 +528,44 @@ build_new_images() {
     print_info "镜像版本信息已更新"
 }
 
+# 同步部署配置文件
+sync_config_files() {
+    print_step "同步部署配置文件..."
+
+    local source_deploy_dir="${SOURCE_DIR}/deployment"
+
+    if [ ! -d "$source_deploy_dir" ]; then
+        print_warning "源码中未找到 deployment 目录，跳过配置同步"
+        return
+    fi
+
+    # 同步 docker-compose 文件
+    if [ -f "${source_deploy_dir}/docker-compose.yml" ]; then
+        cp "${source_deploy_dir}/docker-compose.yml" "${PROJECT_DIR}/docker-compose.yml"
+        print_info "已同步 docker-compose.yml"
+    fi
+
+    if [ -f "${source_deploy_dir}/docker-compose.prod.yml" ]; then
+        cp "${source_deploy_dir}/docker-compose.prod.yml" "${PROJECT_DIR}/docker-compose.prod.yml"
+        print_info "已同步 docker-compose.prod.yml"
+    fi
+
+    # 同步 nginx 配置
+    if [ -d "${source_deploy_dir}/config/nginx" ]; then
+        mkdir -p "${PROJECT_DIR}/config/nginx"
+        cp -r "${source_deploy_dir}/config/nginx/"* "${PROJECT_DIR}/config/nginx/"
+        print_info "已同步 nginx 配置"
+    fi
+
+    # 同步 .env 文件（仅当部署目录不存在时）
+    if [ -f "${source_deploy_dir}/.env" ] && [ ! -f "${PROJECT_DIR}/.env" ]; then
+        cp "${source_deploy_dir}/.env" "${PROJECT_DIR}/.env"
+        print_info "已同步 .env（首次）"
+    fi
+
+    print_info "配置文件同步完成"
+}
+
 # 停止应用服务
 stop_app_services() {
     print_step "停止应用服务..."
@@ -603,7 +641,7 @@ health_check() {
     local attempt=0
 
     while [ $attempt -lt $max_attempts ]; do
-        if docker exec data-acquisition-backend curl -f http://localhost:8080/api/v1/actuator/health >/dev/null 2>&1; then
+        if docker exec data-acquisition-backend curl -f http://localhost:18080/api/v1/actuator/health >/dev/null 2>&1; then
             print_info "后端服务健康检查通过"
             return 0
         fi
@@ -734,6 +772,7 @@ main() {
     # 选择更新目标（检测变更 + 用户交互）
     select_target
 
+    sync_config_files
     build_new_images
     stop_app_services
     update_database
