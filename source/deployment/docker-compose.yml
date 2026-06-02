@@ -86,7 +86,7 @@ services:
       TZ: Asia/Shanghai
       SPRING_PROFILES_ACTIVE: dev
     ports:
-      - "8080:8080"
+      - "18080:18080"
     networks:
       - data-acquisition-network
     depends_on:
