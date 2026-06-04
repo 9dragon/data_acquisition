@@ -168,6 +168,12 @@ print_info "Nginx 已启动"
 # 步骤 3: 获取真正的 Let's Encrypt 证书
 print_info "步骤 3/4: 获取 Let's Encrypt 证书..."
 
+# 删除自签名证书目录，让 certbot 创建自己的目录
+# nginx 已将自签名证书加载到内存中，删除文件不影响当前运行
+rm -rf "certbot/conf/live/${DOMAIN}"
+rm -rf "certbot/conf/archive/${DOMAIN}"
+rm -f "certbot/conf/renewal/${DOMAIN}.conf"
+
 docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm --entrypoint certbot \
     certbot certonly \
     --webroot \
