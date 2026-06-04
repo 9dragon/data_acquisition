@@ -563,6 +563,17 @@ sync_config_files() {
         print_info "已同步 .env（首次）"
     fi
 
+    # 同步 certbot 脚本
+    if [ -d "${source_deploy_dir}/scripts" ]; then
+        mkdir -p "${PROJECT_DIR}/scripts"
+        for script in init-letsencrypt.sh renew-cert.sh; do
+            if [ -f "${source_deploy_dir}/scripts/${script}" ]; then
+                cp "${source_deploy_dir}/scripts/${script}" "${PROJECT_DIR}/scripts/${script}"
+                chmod +x "${PROJECT_DIR}/scripts/${script}"
+            fi
+        done
+    fi
+
     print_info "配置文件同步完成"
 }
 
@@ -577,7 +588,7 @@ stop_app_services() {
     case "$UPDATE_TARGET" in
         frontend) services="frontend" ;;
         backend)  services="backend" ;;
-        all)      services="backend frontend" ;;
+        all)      services="backend frontend certbot" ;;
     esac
 
     print_info "停止服务: $services"
@@ -610,15 +621,23 @@ start_new_version() {
         return 1
     fi
 
-    # 更新 docker-compose.prod.yml 中的镜像版本
-    # 这里需要动态更新镜像标签
+    # 确保 certbot 目录存在
+    mkdir -p certbot/conf certbot/var certbot/www
+
+    # 检查 SSL 证书是否已配置
+    if [ ! -f "certbot/conf/live/pm.anosi.cn/fullchain.pem" ]; then
+        print_warning "SSL 证书未配置，请运行初始化脚本："
+        print_info "  sudo ./scripts/init-letsencrypt.sh"
+        print_info "  然后重新执行更新"
+        return 1
+    fi
 
     # 根据更新目标启动对应服务
     local services=""
     case "$UPDATE_TARGET" in
-        frontend) services="frontend" ;;
+        frontend) services="frontend certbot" ;;
         backend)  services="backend" ;;
-        all)      services="backend frontend" ;;
+        all)      services="backend frontend certbot" ;;
     esac
 
     print_info "启动服务: $services"
@@ -740,8 +759,8 @@ Git Commit: ${git_commit}
 更新时间: $(date +%Y-%m-%d\ %H:%M:%S)
 
 ========== 访问地址 ==========
-前端页面: http://localhost
-后端API: http://localhost:8080/api/v1
+前端页面: https://pm.anosi.cn
+后端API: https://pm.anosi.cn/api/v1
 
 ========== 管理命令 ==========
 查看状态: ${PROJECT_DIR}/scripts/manage.sh status
