@@ -1,0 +1,4 @@
+FROM certbot/certbot:latest
+
+# 安装 docker CLI，用于续期后自动 reload nginx
+RUN apt-get update && apt-get install -y --no-install-recommends docker.io && rm -rf /var/lib/apt/lists/*

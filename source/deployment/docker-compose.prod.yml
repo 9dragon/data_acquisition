@@ -96,7 +96,10 @@ services:
 
   # Certbot - Let's Encrypt 证书自动管理
   certbot:
-    image: certbot/certbot:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.certbot
+    image: data-acquisition-certbot:latest
     container_name: data-acquisition-certbot
     restart: unless-stopped
     volumes:

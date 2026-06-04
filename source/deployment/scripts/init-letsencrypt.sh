@@ -147,6 +147,9 @@ print_info "自签名备用证书已创建"
 # 步骤 2: 启动 Nginx
 print_info "步骤 2/4: 启动 Nginx..."
 
+# 先构建 certbot 镜像（需要包含 docker CLI）
+docker compose -f docker-compose.yml -f docker-compose.prod.yml build certbot 2>/dev/null || true
+
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d frontend
 
 # 等待 Nginx 启动
@@ -173,7 +176,7 @@ print_info "Nginx 已启动"
 # 步骤 3: 获取真正的 Let's Encrypt 证书
 print_info "步骤 3/4: 获取 Let's Encrypt 证书..."
 
-docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm \
+docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm --entrypoint certbot \
     certbot certonly \
     --webroot \
     --webroot-path=/var/www/certbot \
