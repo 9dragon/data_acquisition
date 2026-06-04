@@ -142,7 +142,7 @@ print_info "步骤 2/4: 启动 Nginx..."
 # 先构建 certbot 镜像（需要包含 docker CLI）
 docker compose -f docker-compose.yml -f docker-compose.prod.yml build certbot 2>/dev/null || true
 
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d frontend
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --force-recreate frontend
 
 # 等待 Nginx 启动
 RETRIES=0
