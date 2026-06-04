@@ -134,14 +134,6 @@ openssl req -x509 -nodes -newkey rsa:2048 \
     -subj "/CN=${DOMAIN}" \
     2>/dev/null
 
-# 创建 certbot 需要的 archive 和 renewal 目录结构
-mkdir -p "certbot/conf/archive/${DOMAIN}"
-mkdir -p "certbot/conf/renewal"
-
-# 复制到 archive 目录（certbot 内部需要）
-cp "certbot/conf/live/${DOMAIN}/privkey.pem" "certbot/conf/archive/${DOMAIN}/privkey1.pem"
-cp "certbot/conf/live/${DOMAIN}/fullchain.pem" "certbot/conf/archive/${DOMAIN}/fullchain1.pem"
-
 print_info "自签名备用证书已创建"
 
 # 步骤 2: 启动 Nginx
