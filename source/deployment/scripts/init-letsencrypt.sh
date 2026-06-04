@@ -5,7 +5,8 @@
 # 功能: 首次获取 SSL 证书（解决 Nginx 需要 cert 先启动的鸡生蛋问题）
 #
 # 使用方法:
-#   sudo ./init-letsencrypt.sh
+#   sudo bash init-letsencrypt.sh
+#   sudo bash init-letsencrypt.sh --project-dir /opt/data-acquisition
 #
 # 前提条件:
 #   1. 域名 DNS 已指向本服务器 IP
@@ -25,11 +26,49 @@ NC='\033[0m'
 # 配置
 DOMAIN=${DOMAIN:-pm.anosi.cn}
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
 print_info()  { echo -e "${GREEN}[INFO]${NC} $1"; }
 print_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 print_warn()  { echo -e "${YELLOW}[WARN]${NC} $1"; }
+
+# 解析参数
+PROJECT_DIR=""
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --project-dir)
+            PROJECT_DIR="$2"
+            shift 2
+            ;;
+        *)
+            print_error "未知参数: $1"
+            echo "使用方法: sudo bash init-letsencrypt.sh [--project-dir <path>]"
+            exit 1
+            ;;
+    esac
+done
+
+# 自动检测项目目录
+if [ -z "$PROJECT_DIR" ]; then
+    # 按优先级检测：标准部署目录 > 脚本上级目录
+    if [ -d "/opt/data-acquisition" ] && [ -f "/opt/data-acquisition/docker-compose.prod.yml" ]; then
+        PROJECT_DIR="/opt/data-acquisition"
+    elif [ -f "${SCRIPT_DIR}/../docker-compose.prod.yml" ]; then
+        PROJECT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+    else
+        print_error "无法自动检测部署目录"
+        print_info "请使用 --project-dir 参数指定，例如:"
+        print_info "  sudo bash init-letsencrypt.sh --project-dir /opt/data-acquisition"
+        exit 1
+    fi
+fi
+
+print_info "部署目录: $PROJECT_DIR"
+
+# 检查关键文件
+if [ ! -f "${PROJECT_DIR}/docker-compose.prod.yml" ]; then
+    print_error "未找到 docker-compose.prod.yml: ${PROJECT_DIR}/docker-compose.prod.yml"
+    exit 1
+fi
 
 # 检查是否为 root
 if [ "$EUID" -ne 0 ]; then
@@ -48,26 +87,24 @@ elif [ -f .env ]; then
     set -a
     source .env
     set +a
+else
+    print_warn "未找到 .env.production 或 .env 文件"
 fi
 
 DOMAIN=${DOMAIN:-pm.anosi.cn}
 CERTBOT_EMAIL=${CERTBOT_EMAIL:-}
 
-# 检查域名
 print_info "域名: $DOMAIN"
 
 # 检查是否已存在有效证书
 if [ -d "certbot/conf/live/${DOMAIN}" ] && [ -f "certbot/conf/live/${DOMAIN}/fullchain.pem" ]; then
-    # 检查是否为自签名证书
-    if openssl x509 -in "certbot/conf/live/${DOMAIN}/fullchain.pem" -noout -subject 2>/dev/null | grep -q "CN=${DOMAIN}"; then
-        ISSUER=$(openssl x509 -in "certbot/conf/live/${DOMAIN}/fullchain.pem" -noout -issuer 2>/dev/null)
-        if echo "$ISSUER" | grep -q "Let's Encrypt"; then
-            print_info "已存在 Let's Encrypt 证书，跳过获取"
-            print_info "如需重新获取，请先删除 certbot/conf/live/${DOMAIN} 目录"
-            exit 0
-        fi
+    ISSUER=$(openssl x509 -in "certbot/conf/live/${DOMAIN}/fullchain.pem" -noout -issuer 2>/dev/null || true)
+    if echo "$ISSUER" | grep -q "Let's Encrypt"; then
+        print_info "已存在 Let's Encrypt 证书，跳过获取"
+        print_info "如需重新获取，请先删除 certbot/conf/live/${DOMAIN} 目录"
+        exit 0
     fi
-    print_warn "检测到已有证书文件，将尝试重新获取"
+    print_warn "检测到已有证书文件（非 Let's Encrypt），将尝试重新获取"
 fi
 
 # 获取邮箱
