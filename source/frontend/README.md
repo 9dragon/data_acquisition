@@ -42,7 +42,7 @@ npm run dev
 
 访问地址: http://localhost:3000
 
-开发环境会自动代理后端API请求到 `http://localhost:8080`
+开发环境会自动代理后端API请求到 `http://localhost:18080`
 
 ### 生产构建
 
@@ -124,7 +124,7 @@ chore: 构建/工具链更新
 创建 `.env.local` 文件配置本地环境变量:
 
 ```env
-VITE_API_BASE_URL=http://localhost:8080/api
+VITE_API_BASE_URL=http://localhost:18080/api
 ```
 
 ### 代理配置
@@ -135,7 +135,7 @@ VITE_API_BASE_URL=http://localhost:8080/api
 server: {
   proxy: {
     '/api': {
-      target: 'http://localhost:8080',
+      target: 'http://localhost:18080',
       changeOrigin: true
     }
   }
@@ -153,7 +153,7 @@ npm install
 ```
 
 ### Q: 接口请求跨域?
-A: 开发环境已配置代理，确保后端服务运行在 8080 端口
+A: 开发环境已配置代理，确保后端服务运行在 18080 端口
 
 ### Q: 构建后页面空白?
 A: 检查服务器是否配置了 SPA 模式，所有路由应指向 index.html

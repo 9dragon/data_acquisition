@@ -18,6 +18,9 @@ public class AttendanceQueryDto {
     @Schema(description = "用户ID")
     private Long userId;
 
+    @Schema(description = "用户姓名")
+    private String userName;
+
     @Schema(description = "开始日期")
     private LocalDate startDate;
 

@@ -85,6 +85,7 @@ export interface ShiftConfig {
 export interface AttendanceQueryParams {
   projectId?: number
   userId?: number
+  userName?: string
   startDate?: string
   endDate?: string
   status?: string

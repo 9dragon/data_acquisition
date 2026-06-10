@@ -16,7 +16,7 @@ export default defineConfig({
     allowedHosts: ['pm.anosi.cn'],
     proxy: {
       '/api': {
-        target: 'http://10.0.0.25:8080',
+        target: 'http://10.0.0.25:18080',
         changeOrigin: true,
         rewrite: (path) => path
       }

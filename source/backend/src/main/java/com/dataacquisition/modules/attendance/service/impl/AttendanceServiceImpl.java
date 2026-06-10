@@ -198,6 +198,11 @@ public class AttendanceServiceImpl implements AttendanceService {
             wrapper.eq(AttendanceRecord::getUserId, query.getUserId());
         }
 
+        // 用户姓名模糊筛选
+        if (StrUtil.isNotBlank(query.getUserName())) {
+            wrapper.like(AttendanceRecord::getUserName, query.getUserName());
+        }
+
         // 状态筛选
         if (StrUtil.isNotBlank(query.getStatus())) {
             wrapper.eq(AttendanceRecord::getStatus, query.getStatus());
