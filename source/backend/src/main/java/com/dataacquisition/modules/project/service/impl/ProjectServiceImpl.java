@@ -5,19 +5,27 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.dataacquisition.common.dto.OptionDto;
 import com.dataacquisition.modules.project.entity.Project;
+import com.dataacquisition.modules.project.entity.ProjectMember;
 import com.dataacquisition.modules.project.mapper.ProjectMapper;
+import com.dataacquisition.modules.project.service.ProjectMemberService;
 import com.dataacquisition.modules.project.service.ProjectService;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
  * 项目Service实现
  */
 @Service
+@RequiredArgsConstructor
 public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> implements ProjectService {
+
+    private final ProjectMemberService projectMemberService;
 
     @Override
     public Page<Project> pageProjects(Page<Project> page, String keyword, Integer status, String stage) {
@@ -43,12 +51,18 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> impl
         // 排序
         wrapper.orderByDesc(Project::getCreatedAt);
 
-        return this.page(page, wrapper);
+        Page<Project> result = this.page(page, wrapper);
+        fillManagerInfo(result.getRecords());
+        return result;
     }
 
     @Override
     public Project getProjectDetail(Long id) {
-        return this.getById(id);
+        Project project = this.getById(id);
+        if (project != null) {
+            fillManagerInfo(Collections.singletonList(project));
+        }
+        return project;
     }
 
     @Override
@@ -70,5 +84,29 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> impl
         return list.stream()
                 .map(p -> new OptionDto(p.getId(), p.getName()))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 批量填充项目的经理信息（managerUserId、managerName）
+     * 通过 ProjectMemberService.getActiveManagersMap 获取（已填充 userName），
+     * 避免直接依赖 UserService 造成循环引用。
+     */
+    private void fillManagerInfo(List<Project> projects) {
+        if (projects == null || projects.isEmpty()) {
+            return;
+        }
+        List<Long> projectIds = projects.stream()
+                .map(Project::getId).collect(Collectors.toList());
+        Map<Long, ProjectMember> managerMap = projectMemberService.getActiveManagersMap(projectIds);
+        if (managerMap.isEmpty()) {
+            return;
+        }
+        for (Project p : projects) {
+            ProjectMember m = managerMap.get(p.getId());
+            if (m != null) {
+                p.setManagerUserId(m.getUserId());
+                p.setManagerName(m.getUserName());
+            }
+        }
     }
 }

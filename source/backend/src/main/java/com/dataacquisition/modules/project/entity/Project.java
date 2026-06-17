@@ -56,10 +56,16 @@ public class Project extends BaseEntity {
     private Integer priority;
 
     /**
-     * 项目负责人姓名
+     * 项目负责人姓名（非数据库字段，由 t_project_member(role=MANAGER) 关联 t_user 动态填充）
      */
-    @TableField("manager_name")
+    @TableField(exist = false)
     private String managerName;
+
+    /**
+     * 项目负责人用户ID（非数据库字段，用于表单提交，由后端写入 t_project_member(MANAGER)）
+     */
+    @TableField(exist = false)
+    private Long managerUserId;
 
     /**
      * 团队成员ID列表（逗号分隔）

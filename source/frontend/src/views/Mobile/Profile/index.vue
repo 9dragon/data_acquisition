@@ -41,6 +41,18 @@
       </div>
     </div>
 
+    <!-- 项目管理入口（仅项目经理可见） -->
+    <van-cell-group v-if="isManager" title="项目管理" inset>
+      <van-cell
+        title="签到管理"
+        label="实时查看组员打卡情况"
+        is-link
+        icon="manager-o"
+        class="icon-green"
+        @click="goToManagerDashboard"
+      />
+    </van-cell-group>
+
     <!-- 功能菜单 -->
     <van-cell-group title="账户设置" inset>
       <van-cell title="个人信息" is-link icon="user-o" class="icon-blue" @click="handleClick('info')" />
@@ -77,12 +89,30 @@ import { showConfirmDialog, showToast } from 'vant'
 import { useUserStore } from '@/stores/user'
 import { useMobileProjectStore, type MobileProject } from '@/stores/mobileProject'
 import { authApi } from '@/api/auth'
+import { attendanceApi } from '@/api/attendance'
 import { mobileStatsApi } from '@/api/mobileStats'
 import { navigateWithFullScreen } from '@/utils/routerHelper'
 
 const router = useRouter()
 const userStore = useUserStore()
 const projectStore = useMobileProjectStore()
+
+// 当前用户是否是项目经理
+const isManager = ref(false)
+
+const checkManagerRole = async () => {
+  try {
+    isManager.value = await attendanceApi.isManager()
+  } catch (error) {
+    console.error('检查项目经理身份失败:', error)
+    isManager.value = false
+  }
+}
+
+// 跳转到签到管理看板
+const goToManagerDashboard = () => {
+  navigateWithFullScreen(router, '/mobile/attendance/manager-dashboard')
+}
 
 // 应用版本
 const appVersion = ref('v1.0.0')
@@ -177,7 +207,10 @@ onMounted(async () => {
   try {
     await projectStore.fetchProjects()
     await projectStore.fetchCurrentProject()
-    
+
+    // 检查是否是项目经理
+    await checkManagerRole()
+
     // 获取用户信息
     try {
       const user = await authApi.getUserInfo()

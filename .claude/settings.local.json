@@ -127,7 +127,8 @@
       "Bash(cmd /c \"start /B mvn spring-boot:run -Dspring-boot.run.profiles=dev\")",
       "Bash(find /d/work/projects/data_acquisition/source/backend/src/main/java/com/dataacquisition/modules/workshop -type f -name *.java)",
       "Bash(find D:/work/projects/data_acquisition/source/backend/src/main/java/com/dataacquisition/modules/process -type f -name *.java)",
-      "Bash(bash start.sh backend)"
+      "Bash(bash start.sh backend)",
+      "Bash(git checkout *)"
     ]
   }
 }

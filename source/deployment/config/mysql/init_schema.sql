@@ -351,7 +351,6 @@ CREATE TABLE `t_project`  (
   `status` int(0) NULL DEFAULT 0 COMMENT '状态：0=待启动, 1=进行中, 2=已完成, 3=已取消',
   `start_date` date NULL DEFAULT NULL COMMENT '开始日期',
   `end_date` date NULL DEFAULT NULL COMMENT '结束日期',
-  `manager_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '项目负责人姓名',
   `created_by` bigint(0) NULL DEFAULT NULL COMMENT '创建人ID',
   `created_at` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
   `updated_by` bigint(0) NULL DEFAULT NULL COMMENT '更新人ID',
@@ -545,5 +544,30 @@ CREATE TABLE `t_workshop`  (
   INDEX `idx_project_id`(`project_id`) USING BTREE,
   INDEX `idx_deleted`(`deleted`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '车间表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for t_project_member
+-- ----------------------------
+DROP TABLE IF EXISTS `t_project_member`;
+CREATE TABLE `t_project_member`  (
+  `id` bigint(0) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `project_id` bigint(0) NOT NULL COMMENT '项目ID',
+  `user_id` bigint(0) NOT NULL COMMENT '用户ID',
+  `role` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'MEMBER' COMMENT '角色：MANAGER=项目经理, MEMBER=普通成员',
+  `is_active` tinyint(0) NULL DEFAULT 1 COMMENT '是否有效：0=已退出, 1=有效',
+  `joined_at` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '加入时间',
+  `remark` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '备注',
+  `created_by` bigint(0) NULL DEFAULT NULL COMMENT '创建人ID',
+  `created_at` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
+  `updated_by` bigint(0) NULL DEFAULT NULL COMMENT '更新人ID',
+  `updated_at` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
+  `deleted` int(0) NULL DEFAULT 0 COMMENT '删除标记（0=未删除，1=已删除）',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_project_user`(`project_id`, `user_id`) USING BTREE,
+  INDEX `idx_user_id`(`user_id`) USING BTREE,
+  INDEX `idx_manager_lookup`(`user_id`, `role`) USING BTREE,
+  INDEX `idx_project_role`(`project_id`, `role`) USING BTREE,
+  INDEX `idx_deleted`(`deleted`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '项目-成员关系表（多对多）' ROW_FORMAT = Dynamic;
 
 SET FOREIGN_KEY_CHECKS = 1;

@@ -28,6 +28,7 @@ export interface Project extends BaseEntity {
   priority?: ProjectPriority;
   managerId?: number;
   managerName?: string;
+  managerUserId?: number;
   teamMembers?: string;
   progress?: number;
   startDate?: string;

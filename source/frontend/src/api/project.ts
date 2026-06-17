@@ -12,6 +12,8 @@ export interface Project {
   stage?: string
   createdAt?: string
   updatedAt?: string
+  managerName?: string
+  managerUserId?: number
 }
 
 /**
@@ -66,7 +68,7 @@ export const projectApi = {
   /**
    * 新增项目
    */
-  create: (data: Omit<Project, 'id'>): Promise<void> => {
+  create: (data: Omit<Project, 'id'>): Promise<number> => {
     return http.post('/projects', data)
   },
 
@@ -82,5 +84,53 @@ export const projectApi = {
    */
   delete: (id: number): Promise<void> => {
     return http.delete(`/projects/${id}`)
+  }
+}
+
+/**
+ * 项目成员
+ */
+export interface ProjectMember {
+  id?: number
+  projectId?: number
+  userId: number
+  userName?: string
+  userPhone?: string
+  role: 'MANAGER' | 'MEMBER'
+  isActive?: number
+  joinedAt?: string
+  remark?: string
+}
+
+/**
+ * 项目成员API
+ */
+export const projectMemberApi = {
+  /**
+   * 获取项目成员列表
+   */
+  list: (projectId: number): Promise<ProjectMember[]> => {
+    return http.get(`/projects/${projectId}/members`)
+  },
+
+  /**
+   * 批量添加项目成员
+   */
+  add: (projectId: number, userIds: number[], role: 'MANAGER' | 'MEMBER'): Promise<number> => {
+    return http.post(`/projects/${projectId}/members`, { userIds, role })
+  },
+
+  /**
+   * 修改成员角色
+   */
+  updateRole: (projectId: number, userId: number, role: 'MANAGER' | 'MEMBER'): Promise<void> => {
+    return http.put(`/projects/${projectId}/members/${userId}`, { role })
+  },
+
+  /**
+   * 移除项目成员
+   */
+  remove: (projectId: number, userId: number): Promise<void> => {
+    return http.delete(`/projects/${projectId}/members/${userId}`)
   }
 }

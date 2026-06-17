@@ -39,6 +39,17 @@
       </div>
     </van-cell-group>
 
+    <!-- 项目经理快捷入口（仅项目经理可见） -->
+    <van-cell-group v-if="isManager" inset>
+      <van-cell
+        title="签到管理"
+        label="查看项目成员打卡情况"
+        is-link
+        icon="manager-o"
+        @click="goToManagerDashboard"
+      />
+    </van-cell-group>
+
     <!-- 当前项目（从我的页面选择） -->
     <van-cell-group inset title="当前项目">
       <van-cell>
@@ -178,6 +189,22 @@ import { navigateWithFullScreen } from '@/utils/routerHelper'
 
 const userStore = useUserStore()
 const projectStore = useMobileProjectStore()
+
+// 当前用户是否是项目经理
+const isManager = ref(false)
+
+const checkManagerRole = async () => {
+  try {
+    isManager.value = await attendanceApi.isManager()
+  } catch (error) {
+    console.error('检查项目经理身份失败:', error)
+    isManager.value = false
+  }
+}
+
+const goToManagerDashboard = () => {
+  navigateWithFullScreen(router, '/mobile/attendance/manager-dashboard')
+}
 
 // 项目列表
 const projectList = computed(() => {
@@ -599,6 +626,9 @@ onMounted(async () => {
 
   await projectStore.fetchProjects()
   await projectStore.fetchCurrentProject()
+
+  // 检查是否是项目经理（决定是否显示"签到管理"快捷入口）
+  await checkManagerRole()
 
   await fetchTodayStats()
   updateCurrentShift()

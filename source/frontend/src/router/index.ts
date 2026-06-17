@@ -31,6 +31,24 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '项目列表', icon: 'FolderOpened' }
       },
       {
+        path: 'projects/create',
+        name: 'ProjectCreate',
+        component: () => import('@/views/Project/ProjectEdit.vue'),
+        meta: { title: '新增项目', hidden: true }
+      },
+      {
+        path: 'projects/:id',
+        name: 'ProjectDetail',
+        component: () => import('@/views/Project/ProjectDetail.vue'),
+        meta: { title: '项目详情', hidden: true }
+      },
+      {
+        path: 'projects/:id/edit',
+        name: 'ProjectEdit',
+        component: () => import('@/views/Project/ProjectEdit.vue'),
+        meta: { title: '编辑项目', hidden: true }
+      },
+      {
         path: 'plan',
         name: 'Plan',
         component: () => import('@/views/Plan/PlanList.vue'),
@@ -176,6 +194,12 @@ const routes: RouteRecordRaw[] = [
         name: 'AttendanceRecords',
         component: () => import('@/views/Mobile/Attendance/Records.vue'),
         meta: { title: '签到记录', keepAlive: true }
+      },
+      {
+        path: 'attendance/manager-dashboard',
+        name: 'AttendanceManagerDashboard',
+        component: () => import('@/views/Mobile/Attendance/ManagerDashboard.vue'),
+        meta: { title: '签到管理', hideTabBar: true }
       },
       {
         path: 'task/list',

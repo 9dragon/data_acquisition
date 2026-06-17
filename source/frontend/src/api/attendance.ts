@@ -94,6 +94,90 @@ export interface AttendanceQueryParams {
 }
 
 /**
+ * 项目经理视角 - 项目概览
+ */
+export interface ProjectOverview {
+  projectId: number
+  projectName: string
+  projectCode?: string
+  totalMembers: number
+  checkedInMembers: number
+  pendingMembers: number
+  lateMembers: number
+  checkInRate: number
+}
+
+/**
+ * 最新签到流水条目
+ */
+export interface RecentCheckIn {
+  recordId: number
+  projectId: number
+  projectName?: string
+  userId: number
+  userName: string
+  checkInTime: string
+  shiftName?: string
+  status: 'NORMAL' | 'LATE'
+  location?: string
+  photoUrl?: string
+}
+
+/**
+ * 当前班次信息
+ */
+export interface CurrentShiftInfo {
+  index: number
+  name: string
+  startTime: string
+  endTime: string
+  lateTime?: string
+  isCurrent: boolean
+}
+
+/**
+ * 项目经理视角 - 总览
+ */
+export interface ManagerOverview {
+  isManager: boolean
+  projects: ProjectOverview[]
+  recentCheckIns: RecentCheckIn[]
+  aggregate: {
+    totalProjects: number
+    totalMembers: number
+    checkedInMembers: number
+    pendingMembers: number
+    lateMembers: number
+  }
+  currentShift: CurrentShiftInfo | null
+}
+
+/**
+ * 成员今日签到状态
+ */
+export interface MemberStatus {
+  userId: number
+  userName: string
+  phone?: string
+  role: 'MANAGER' | 'MEMBER'
+  checkedIn: boolean
+  hasLate: boolean
+  checkedShifts: number
+  status: 'CHECKED' | 'PENDING' | 'LATE'
+  firstCheckInTime?: string
+  lastCheckInTime?: string
+  records: Array<{
+    id: number
+    shiftIndex?: number
+    shiftName?: string
+    checkInTime: string
+    status: 'NORMAL' | 'LATE'
+    location?: string
+    photoUrl?: string
+  }>
+}
+
+/**
  * 分页响应
  */
 export interface PageResponse<T> {
@@ -168,5 +252,33 @@ export const attendanceApi = {
    */
   getConfig: (): Promise<AttendanceConfig> => {
     return http.get('/attendance/config')
+  },
+
+  /**
+   * 判断当前用户是否是任意项目的项目经理
+   */
+  isManager: (): Promise<boolean> => {
+    return http.get('/attendance/manager/has-projects')
+  },
+
+  /**
+   * 项目经理名下所有项目的今日签到概览
+   */
+  managerOverview: (): Promise<ManagerOverview> => {
+    return http.get('/attendance/manager/overview')
+  },
+
+  /**
+   * 项目经理名下项目下拉列表
+   */
+  managerProjects: (): Promise<Array<{ id: number; name: string }>> => {
+    return http.get('/attendance/manager/projects')
+  },
+
+  /**
+   * 项目经理查看指定项目成员的今日签到明细
+   */
+  managerMembersStatus: (projectId: number): Promise<MemberStatus[]> => {
+    return http.get(`/attendance/manager/project/${projectId}/members-status`)
   }
 }
