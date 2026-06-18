@@ -128,7 +128,10 @@
       "Bash(find /d/work/projects/data_acquisition/source/backend/src/main/java/com/dataacquisition/modules/workshop -type f -name *.java)",
       "Bash(find D:/work/projects/data_acquisition/source/backend/src/main/java/com/dataacquisition/modules/process -type f -name *.java)",
       "Bash(bash start.sh backend)",
-      "Bash(git checkout *)"
+      "Bash(git checkout *)",
+      "Bash(git merge *)",
+      "Bash(git check-ignore *)",
+      "Bash(git stash *)"
     ]
   }
 }
