@@ -102,9 +102,9 @@ const handleDingTalkLogin = async () => {
   try {
     const success = await dingtalkStore.auth()
     if (success) {
-      // 登录成功，跳转到默认路由
+      // 移动端登录后跳转到移动端首页，不依赖 UA 检测（避免鸿蒙等系统误判）
       const redirectPath = route.query.redirect as string
-      const targetPath = redirectPath || getDefaultRoute()
+      const targetPath = redirectPath || '/mobile'
       navigateWithFullScreen(router, targetPath)
     }
   } catch (error: any) {
@@ -129,9 +129,9 @@ const handlePasswordLogin = async () => {
 
     showToast('登录成功')
 
-    // 跳转到默认路由
+    // 移动端登录后跳转到移动端首页，不依赖 UA 检测（避免鸿蒙等系统误判）
     const redirectPath = route.query.redirect as string
-    const targetPath = redirectPath || getDefaultRoute()
+    const targetPath = redirectPath || '/mobile'
     navigateWithFullScreen(router, targetPath)
   } catch (error: any) {
     showToast(error.message || '登录失败')

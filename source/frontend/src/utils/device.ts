@@ -14,7 +14,10 @@ const MOBILE_KEYWORDS = [
   'iPod',
   'BlackBerry',
   'IEMobile',
-  'Opera Mini'
+  'Opera Mini',
+  'HarmonyOS',
+  'OpenHarmony',
+  'Phone'
 ]
 
 /**
