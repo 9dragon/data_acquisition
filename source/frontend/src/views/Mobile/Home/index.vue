@@ -2,23 +2,41 @@
   <div class="mobile-home">
     <!-- 今日签到状态 -->
     <div class="today-status">
-      <div class="status-card" :class="attendanceStatus">
-        <div class="status-icon">
-          <van-icon :name="attendanceIcon" size="40" />
+      <div class="status-card" :class="[attendanceStatus, { 'manager-mode': isManager }]">
+        <div class="personal-row">
+          <div class="status-icon">
+            <van-icon :name="attendanceIcon" size="40" />
+          </div>
+          <div class="status-text">
+            <div class="status-title">{{ attendanceText }}</div>
+            <div class="status-time" v-if="checkedShifts > 0">{{ checkedShifts }}/{{ totalShifts }} 次</div>
+          </div>
+          <van-button
+            v-if="attendanceStatus !== 'complete'"
+            type="primary"
+            size="small"
+            round
+            @click="goToCheckIn"
+          >
+            {{ attendanceStatus === 'none' ? '立即签到' : '继续签到' }}
+          </van-button>
         </div>
-        <div class="status-text">
-          <div class="status-title">{{ attendanceText }}</div>
-          <div class="status-time" v-if="checkedShifts > 0">{{ checkedShifts }}/{{ totalShifts }} 次</div>
-        </div>
-        <van-button
-          v-if="attendanceStatus !== 'complete'"
-          type="primary"
-          size="small"
-          round
-          @click="goToCheckIn"
+        <div
+          v-if="isManager && managerOverview"
+          class="manager-row"
+          @click="goToManagerDashboard"
         >
-          {{ attendanceStatus === 'none' ? '立即签到' : '继续签到' }}
-        </van-button>
+          <van-icon name="bar-chart-o" size="16" />
+          <span class="manager-label">组员签到</span>
+          <span class="manager-stats" v-if="managerOverview.aggregate.totalMembers > 0">
+            已签 {{ managerOverview.aggregate.checkedInMembers }}/{{ managerOverview.aggregate.totalMembers }}
+            <span v-if="managerOverview.aggregate.pendingMembers > 0">
+              · 未签 {{ managerOverview.aggregate.pendingMembers }}
+            </span>
+          </span>
+          <span class="manager-stats" v-else>暂无组员</span>
+          <van-icon name="arrow" size="14" class="manager-arrow" />
+        </div>
       </div>
     </div>
 
@@ -63,7 +81,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast, showLoadingToast, closeToast } from 'vant'
-import { attendanceApi } from '@/api/attendance'
+import { attendanceApi, type ManagerOverview } from '@/api/attendance'
 import { mobileTaskApi } from '@/api/task'
 import { issueApi } from '@/api/issue'
 import { useMobileProjectStore } from '@/stores/mobileProject'
@@ -75,6 +93,10 @@ const projectStore = useMobileProjectStore()
 // 今日签到统计
 const checkedShifts = ref(0)
 const totalShifts = ref(0)
+
+// 项目经理身份 + 组员签到概览
+const isManager = ref(false)
+const managerOverview = ref<ManagerOverview | null>(null)
 
 // 签到状态 computed
 const attendanceStatus = computed(() => {
@@ -137,6 +159,30 @@ const goToCheckIn = () => {
   navigateWithFullScreen(router, '/mobile/attendance/check-in')
 }
 
+// 检查项目经理身份
+const checkManagerRole = async () => {
+  try {
+    isManager.value = await attendanceApi.isManager()
+  } catch (error) {
+    console.error('检查项目经理身份失败:', error)
+    isManager.value = false
+  }
+}
+
+// 获取组员签到概览（仅项目经理调用）
+const fetchManagerOverview = async () => {
+  try {
+    managerOverview.value = await attendanceApi.managerOverview()
+  } catch (error) {
+    console.error('获取组员签到概览失败:', error)
+  }
+}
+
+// 跳转到签到管理看板
+const goToManagerDashboard = () => {
+  navigateWithFullScreen(router, '/mobile/attendance/manager-dashboard')
+}
+
 // 检查今日签到
 const checkTodayAttendance = async () => {
   try {
@@ -196,6 +242,14 @@ onMounted(async () => {
 
     // 获取待办数量
     await fetchTodoCount()
+
+    // 检查项目经理身份
+    await checkManagerRole()
+
+    // 仅项目经理拉取组员签到概览
+    if (isManager.value) {
+      await fetchManagerOverview()
+    }
   } catch (error) {
     console.error('初始化失败:', error)
   } finally {
@@ -230,6 +284,41 @@ onMounted(async () => {
 .status-card.partial {
   background: linear-gradient(135deg, #ff976a 0%, #ffa366 100%);
   color: #fff;
+}
+
+.status-card.manager-mode {
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0;
+}
+
+.personal-row {
+  display: flex;
+  align-items: center;
+  padding: 20px;
+}
+
+.manager-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.manager-row .manager-label {
+  font-weight: 500;
+}
+
+.manager-row .manager-stats {
+  flex: 1;
+  opacity: 0.9;
+}
+
+.manager-row .manager-arrow {
+  opacity: 0.85;
 }
 
 .status-icon {
