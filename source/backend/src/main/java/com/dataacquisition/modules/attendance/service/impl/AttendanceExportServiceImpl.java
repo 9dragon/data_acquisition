@@ -4,7 +4,6 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.write.metadata.style.WriteCellStyle;
 import com.alibaba.excel.write.style.HorizontalCellStyleStrategy;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dataacquisition.modules.attendance.dto.AttendanceExportDto;
 import com.dataacquisition.modules.attendance.dto.AttendanceQueryDto;
 import com.dataacquisition.modules.attendance.entity.AttendanceRecord;
@@ -40,12 +39,10 @@ public class AttendanceExportServiceImpl implements AttendanceExportService {
     @Override
     public void exportToExcel(AttendanceQueryDto query, HttpServletResponse response) {
         try {
-            // 设置不分页，获取所有数据
-            query.setPageNum(1);
-            query.setPageSize(50000);
-            Page<AttendanceRecord> page = attendanceService.getList(query);
+            // 全量查询导出数据，不走分页
+            List<AttendanceRecord> records = attendanceService.getExportList(query);
 
-            List<AttendanceExportDto> exportData = convertToExportData(page.getRecords());
+            List<AttendanceExportDto> exportData = convertToExportData(records);
 
             // 设置响应头
             response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");

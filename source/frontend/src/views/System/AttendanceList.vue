@@ -177,7 +177,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElLoading } from 'element-plus'
 import { Download, View, Delete } from '@element-plus/icons-vue'
-import { attendanceApi, type AttendanceRecord, type AttendanceQueryParams } from '@/api/attendance'
+import { attendanceApi, type AttendanceRecord, type AttendanceQueryParams, type AttendanceExportParams } from '@/api/attendance'
 import { useProjectStore } from '@/stores/project'
 import { usePermissionStore } from '@/stores/permission'
 
@@ -277,7 +277,14 @@ const handleExport = async () => {
     exportLoading.value = true
     const loadingInstance = ElLoading.service({ text: '正在导出签到记录，请稍候...', background: 'rgba(0, 0, 0, 0.7)' })
     try {
-      const blob = await attendanceApi.export(queryParams)
+      const exportParams: AttendanceExportParams = {
+        projectId: queryParams.projectId,
+        userName: queryParams.userName,
+        startDate: queryParams.startDate,
+        endDate: queryParams.endDate,
+        status: queryParams.status
+      }
+      const blob = await attendanceApi.export(exportParams)
 
       // 根据日期范围生成文件名
       let fileName: string

@@ -186,6 +186,32 @@ public class AttendanceServiceImpl implements AttendanceService {
     public Page<AttendanceRecord> getList(AttendanceQueryDto query) {
         Page<AttendanceRecord> page = new Page<>(query.getPageNum(), query.getPageSize());
 
+        LambdaQueryWrapper<AttendanceRecord> wrapper = buildQueryWrapper(query);
+        Page<AttendanceRecord> result = attendanceRecordMapper.selectPage(page, wrapper);
+
+        // 填充项目名称
+        fillProjectNames(result.getRecords());
+
+        refreshPhotoUrls(result);
+        return result;
+    }
+
+    @Override
+    public List<AttendanceRecord> getExportList(AttendanceQueryDto query) {
+        LambdaQueryWrapper<AttendanceRecord> wrapper = buildQueryWrapper(query);
+        List<AttendanceRecord> records = attendanceRecordMapper.selectList(wrapper);
+
+        // 填充项目名称
+        fillProjectNames(records);
+
+        refreshPhotoUrls(records);
+        return records;
+    }
+
+    /**
+     * 构建签到记录查询条件
+     */
+    private LambdaQueryWrapper<AttendanceRecord> buildQueryWrapper(AttendanceQueryDto query) {
         LambdaQueryWrapper<AttendanceRecord> wrapper = new LambdaQueryWrapper<>();
 
         // 项目筛选
@@ -217,11 +243,17 @@ public class AttendanceServiceImpl implements AttendanceService {
         }
 
         wrapper.orderByDesc(AttendanceRecord::getCheckInTime);
+        return wrapper;
+    }
 
-        Page<AttendanceRecord> result = attendanceRecordMapper.selectPage(page, wrapper);
-
-        // 填充项目名称
-        for (AttendanceRecord record : result.getRecords()) {
+    /**
+     * 填充项目名称
+     */
+    private void fillProjectNames(List<AttendanceRecord> records) {
+        if (records == null) {
+            return;
+        }
+        for (AttendanceRecord record : records) {
             if (record.getProjectId() != null) {
                 Project project = projectService.getById(record.getProjectId());
                 if (project != null) {
@@ -229,9 +261,6 @@ public class AttendanceServiceImpl implements AttendanceService {
                 }
             }
         }
-
-        refreshPhotoUrls(result);
-        return result;
     }
 
     @Override
@@ -394,11 +423,20 @@ public class AttendanceServiceImpl implements AttendanceService {
     }
 
     /**
-     * 批量刷新签到记录的照片预签名URL
+     * 批量刷新签到记录的照片预签名URL（分页）
      */
     private void refreshPhotoUrls(Page<AttendanceRecord> page) {
-        if (page != null && page.getRecords() != null) {
-            for (AttendanceRecord record : page.getRecords()) {
+        if (page != null) {
+            refreshPhotoUrls(page.getRecords());
+        }
+    }
+
+    /**
+     * 批量刷新签到记录的照片预签名URL（列表）
+     */
+    private void refreshPhotoUrls(List<AttendanceRecord> records) {
+        if (records != null) {
+            for (AttendanceRecord record : records) {
                 refreshPhotoUrl(record);
             }
         }

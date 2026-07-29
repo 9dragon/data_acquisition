@@ -89,9 +89,14 @@ export interface AttendanceQueryParams {
   startDate?: string
   endDate?: string
   status?: string
-  pageNum: number
-  pageSize: number
+  pageNum?: number
+  pageSize?: number
 }
+
+/**
+ * 签到导出参数（不含分页）
+ */
+export type AttendanceExportParams = Omit<AttendanceQueryParams, 'pageNum' | 'pageSize'>
 
 /**
  * 项目经理视角 - 项目概览
@@ -236,7 +241,7 @@ export const attendanceApi = {
   /**
    * 导出签到记录
    */
-  export: (params: AttendanceQueryParams): Promise<Blob> => {
+  export: (params: AttendanceExportParams): Promise<Blob> => {
     return http.get('/attendance/export', { params, responseType: 'blob' })
   },
 

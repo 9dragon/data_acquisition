@@ -6,6 +6,8 @@ import com.dataacquisition.modules.attendance.dto.CheckInRequestDto;
 import com.dataacquisition.modules.attendance.dto.TodayCheckInStats;
 import com.dataacquisition.modules.attendance.entity.AttendanceRecord;
 
+import java.util.List;
+
 /**
  * 签到服务接口
  */
@@ -36,6 +38,14 @@ public interface AttendanceService {
      * @return 签到记录分页
      */
     Page<AttendanceRecord> getList(AttendanceQueryDto query);
+
+    /**
+     * 获取导出所需的全部签到记录（不分页）
+     *
+     * @param query 查询条件
+     * @return 签到记录列表
+     */
+    List<AttendanceRecord> getExportList(AttendanceQueryDto query);
 
     /**
      * 获取签到详情
