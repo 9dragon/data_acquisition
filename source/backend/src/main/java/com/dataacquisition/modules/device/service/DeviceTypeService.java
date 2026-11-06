@@ -67,4 +67,13 @@ public interface DeviceTypeService extends IService<DeviceType> {
      * @return 选项列表
      */
     List<OptionDto> getDeviceTypeOptions(Long projectId, String keyword);
+
+    /**
+     * 根据名称获取设备类型，不存在则自动创建（用于调研表单手动输入）
+     *
+     * @param projectId 项目ID
+     * @param name      设备类型名称
+     * @return 选项
+     */
+    OptionDto createOrGetByName(Long projectId, String name);
 }

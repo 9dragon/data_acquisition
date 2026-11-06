@@ -8,6 +8,7 @@ import com.dataacquisition.modules.workshop.mapper.WorkshopMapper;
 import com.dataacquisition.modules.workshop.service.WorkshopService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,5 +42,35 @@ public class WorkshopServiceImpl extends ServiceImpl<WorkshopMapper, Workshop> i
         return list.stream()
                 .map(w -> new OptionDto(w.getId(), w.getName()))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public OptionDto createOrGetByName(Long projectId, String name) {
+        if (StringUtils.isBlank(name)) {
+            throw new IllegalArgumentException("车间名称不能为空");
+        }
+        if (projectId == null) {
+            throw new IllegalArgumentException("项目ID不能为空");
+        }
+
+        String normalizeName = name.trim();
+
+        // 按名称查找同项目下的车间，存在则直接返回
+        LambdaQueryWrapper<Workshop> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Workshop::getProjectId, projectId)
+                .eq(Workshop::getName, normalizeName)
+                .last("LIMIT 1");
+        Workshop existing = this.getOne(wrapper);
+        if (existing != null) {
+            return new OptionDto(existing.getId(), existing.getName());
+        }
+
+        // 不存在则自动创建
+        Workshop workshop = new Workshop();
+        workshop.setName(normalizeName);
+        workshop.setProjectId(projectId);
+        this.save(workshop);
+        return new OptionDto(workshop.getId(), workshop.getName());
     }
 }

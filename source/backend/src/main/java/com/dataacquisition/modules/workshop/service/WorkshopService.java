@@ -15,4 +15,9 @@ public interface WorkshopService extends IService<Workshop> {
      * 获取车间选项列表（用于下拉选择器）
      */
     List<OptionDto> getWorkshopOptions(Long projectId, String keyword);
+
+    /**
+     * 根据名称获取车间，不存在则自动创建（用于调研表单手动输入）
+     */
+    OptionDto createOrGetByName(Long projectId, String name);
 }

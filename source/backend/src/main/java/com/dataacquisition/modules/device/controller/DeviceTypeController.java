@@ -77,6 +77,20 @@ public class DeviceTypeController {
     }
 
     /**
+     * 根据名称获取设备类型，不存在则自动创建（用于调研表单手动输入）
+     */
+    @Operation(summary = "根据名称获取设备类型，不存在则自动创建")
+    @PostMapping("/create-or-get")
+    public Result<OptionDto> createOrGetDeviceType(@RequestBody DeviceType deviceType) {
+        try {
+            OptionDto option = deviceTypeService.createOrGetByName(deviceType.getProjectId(), deviceType.getName());
+            return Result.success(option);
+        } catch (IllegalArgumentException e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
+    /**
      * 更新设备类型
      */
     @Operation(summary = "更新设备类型")

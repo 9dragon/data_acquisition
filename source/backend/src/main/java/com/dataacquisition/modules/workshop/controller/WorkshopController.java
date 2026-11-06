@@ -58,6 +58,20 @@ public class WorkshopController {
     }
 
     /**
+     * 根据名称获取车间，不存在则自动创建（用于调研表单手动输入）
+     */
+    @Operation(summary = "根据名称获取车间，不存在则自动创建")
+    @PostMapping("/create-or-get")
+    public Result<OptionDto> createOrGetWorkshop(@RequestBody Workshop workshop) {
+        try {
+            OptionDto option = workshopService.createOrGetByName(workshop.getProjectId(), workshop.getName());
+            return Result.success(option);
+        } catch (IllegalArgumentException e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
+    /**
      * 获取车间选项列表（用于下拉选择器）
      */
     @Operation(summary = "获取车间选项列表")

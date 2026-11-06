@@ -57,7 +57,9 @@
         v-model="formData.controllerModel"
         name="controllerModel"
         label="控制器型号"
-        placeholder="请输入控制器型号（选填）"
+        placeholder="请输入控制器型号"
+        required
+        :rules="[{ required: true, message: '请输入控制器型号' }]"
       />
 
       <van-cell-group inset title="提供的资料">
@@ -344,6 +346,10 @@ defineExpose({
     }
     if (!formData.controllerBrand) {
       showToast('请选择或输入控制器品牌')
+      return false
+    }
+    if (!formData.controllerModel) {
+      showToast('请输入控制器型号')
       return false
     }
     return true

@@ -100,7 +100,7 @@ export interface MediaAttachment {
 // 调研控制器信息
 export interface DeviceResearchController {
   isInterfaceOccupied?: boolean;              // 接口被占用
-  interfaceType?: 'RJ45' | 'RJ232';           // 控制器接口类型
+  interfaceType?: string;             // 控制器接口类型
   hasTouchScreen?: boolean;                   // 连接触摸屏
   controllerBrand?: string;                   // 控制器品牌
   controllerModel?: string;                   // 控制器型号

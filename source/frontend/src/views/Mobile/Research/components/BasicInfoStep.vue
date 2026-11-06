@@ -2,27 +2,31 @@
   <div class="basic-info-step">
     <van-cell-group inset title="基础信息">
       <van-field
-        :model-value="workshopDisplayName"
+        v-model="formData.workshopName"
         name="workshop"
         label="所属车间"
-        placeholder="请选择车间"
-        is-link
-        readonly
+        placeholder="请输入或选择车间"
         required
-        :rules="[{ required: true, message: '请选择车间' }]"
-        @click="showWorkshopPicker = true"
-      />
+        :rules="[{ required: true, message: '请输入或选择车间' }]"
+        @blur="onWorkshopFieldBlur"
+      >
+        <template #button>
+          <van-button size="small" class="picker-btn" @click="showWorkshopPicker = true">选择</van-button>
+        </template>
+      </van-field>
       <van-field
-        :model-value="deviceTypeDisplayName"
+        v-model="formData.deviceTypeName"
         name="deviceType"
         label="设备类型"
-        placeholder="请选择设备类型"
-        is-link
-        readonly
+        placeholder="请输入或选择设备类型"
         required
-        :rules="[{ required: true, message: '请选择设备类型' }]"
-        @click="showDeviceTypePicker = true"
-      />
+        :rules="[{ required: true, message: '请输入或选择设备类型' }]"
+        @blur="onDeviceTypeFieldBlur"
+      >
+        <template #button>
+          <van-button size="small" class="picker-btn" @click="showDeviceTypePicker = true">选择</van-button>
+        </template>
+      </van-field>
       <van-field
         v-model.number="formData.quantity"
         name="quantity"
@@ -39,12 +43,9 @@
         v-model="manufacturerInput"
         name="deviceManufacturer"
         label="设备厂商"
-        placeholder="请选择或输入设备厂商"
-        is-link
-        readonly
+        placeholder="请输入设备厂商"
         required
-        :rules="[{ required: true, message: '请选择或输入设备厂商' }]"
-        @click="showManufacturerPicker = true"
+        :rules="[{ required: true, message: '请输入设备厂商' }]"
       />
       <van-field
         v-model="formData.remarks"
@@ -78,28 +79,7 @@
       />
     </van-popup>
 
-    <!-- 设备厂商选择器（支持选择和输入） -->
-    <van-popup v-model:show="showManufacturerPicker" position="bottom" round>
-      <div class="manufacturer-picker">
-        <div class="picker-header">
-          <van-button type="primary" size="small" @click="showManufacturerInput = true">自定义输入</van-button>
-        </div>
-        <van-picker
-          :columns="manufacturerOptions"
-          @confirm="onManufacturerConfirm"
-          @cancel="showManufacturerPicker = false"
-        />
-      </div>
-    </van-popup>
-
-    <!-- 设备厂商自定义输入弹窗 -->
-    <van-dialog v-model:show="showManufacturerInput" title="输入设备厂商" show-cancel-button @confirm="onManufacturerInputConfirm">
-      <van-field
-        v-model="customManufacturer"
-        placeholder="请输入设备厂商名称"
-        autofocus
-      />
-    </van-dialog>
+    <!-- 设备厂商不提供下拉选择，直接手动输入 -->
   </div>
 </template>
 
@@ -108,9 +88,8 @@ import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { showToast } from 'vant'
 import { useMobileProjectStore } from '@/stores/mobileProject'
 import { useDeviceResearchStore } from '@/stores/deviceResearch'
-import { workshopApi, type Workshop } from '@/api/workshop'
-import { deviceTypeApi, type DeviceType } from '@/api/deviceType'
-import { deviceResearchApi } from '@/api/deviceResearch'
+import { workshopApi } from '@/api/workshop'
+import { deviceTypeApi } from '@/api/deviceType'
 import type { DeviceResearchBasic } from '@/types/device'
 
 interface Props {
@@ -129,10 +108,6 @@ const deviceResearchStore = useDeviceResearchStore()
 const currentProject = computed(() => projectStore.currentProject)
 
 const formData = reactive<DeviceResearchBasic>({ ...props.modelValue })
-
-// 显示名称
-const workshopDisplayName = computed(() => formData.workshopName || '请选择')
-const deviceTypeDisplayName = computed(() => formData.deviceTypeName || '请选择')
 
 // 监听 props.modelValue 变化，同步到 formData
 watch(() => props.modelValue, (newVal) => {
@@ -207,10 +182,101 @@ const onDeviceTypeConfirm = ({ selectedOptions }: any) => {
   updateValue()
 }
 
-// 设备厂商选择器（支持选择和输入）
-const showManufacturerPicker = ref(false)
-const showManufacturerInput = ref(false)
-const customManufacturer = ref('')
+// 车间手动输入：失焦时按名称匹配或自动创建车间
+const onWorkshopFieldBlur = async () => {
+  const name = (formData.workshopName || '').trim()
+  if (!name) {
+    if (formData.workshopId) {
+      formData.workshopId = ''
+      updateValue()
+    }
+    return
+  }
+
+  // 已有同名称车间则直接关联
+  const existing = workshopOptions.value.find(w => w.text === name)
+  if (existing) {
+    formData.workshopId = existing.value
+    formData.workshopName = name
+    updateValue()
+    return
+  }
+
+  // 不存在则自动创建，创建成功后保留用户当前输入
+  formData.workshopId = ''
+  updateValue()
+  const created = await createOrGetWorkshop(name)
+  if (!created || formData.workshopName !== name) return
+  formData.workshopId = created.value
+  formData.workshopName = created.text
+  updateValue()
+}
+
+const createOrGetWorkshop = async (name: string): Promise<{ text: string; value: string } | null> => {
+  try {
+    const result = await workshopApi.createOrGet({
+      name,
+      projectId: currentProject.value?.id
+    })
+    const option = { text: result.name, value: result.id != null ? result.id.toString() : name }
+    if (!workshopOptions.value.some(w => w.value === option.value)) {
+      workshopOptions.value = [option, ...workshopOptions.value]
+    }
+    return option
+  } catch (error) {
+    console.error('创建车间失败:', error)
+    showToast('创建车间失败')
+    return null
+  }
+}
+
+// 设备类型手动输入：失焦时按名称匹配或自动创建
+const onDeviceTypeFieldBlur = async () => {
+  const name = (formData.deviceTypeName || '').trim()
+  if (!name) {
+    if (formData.deviceTypeId) {
+      formData.deviceTypeId = ''
+      updateValue()
+    }
+    return
+  }
+
+  const existing = deviceTypeOptions.value.find(t => t.text === name)
+  if (existing) {
+    formData.deviceTypeId = existing.value
+    formData.deviceTypeName = name
+    updateValue()
+    return
+  }
+
+  formData.deviceTypeId = ''
+  updateValue()
+  const created = await createOrGetDeviceType(name)
+  if (!created || formData.deviceTypeName !== name) return
+  formData.deviceTypeId = created.value
+  formData.deviceTypeName = created.text
+  updateValue()
+}
+
+const createOrGetDeviceType = async (name: string): Promise<{ text: string; value: string } | null> => {
+  try {
+    const result = await deviceTypeApi.createOrGet({
+      name,
+      projectId: currentProject.value?.id
+    })
+    const option = { text: result.name, value: result.id != null ? result.id.toString() : name }
+    if (!deviceTypeOptions.value.some(t => t.value === option.value)) {
+      deviceTypeOptions.value = [option, ...deviceTypeOptions.value]
+    }
+    return option
+  } catch (error) {
+    console.error('创建设备类型失败:', error)
+    showToast('创建设备类型失败')
+    return null
+  }
+}
+
+// 设备厂商：自定义输入，不提供下拉选择
 const manufacturerInput = computed({
   get: () => formData.deviceManufacturer || '',
   set: (val) => {
@@ -218,36 +284,6 @@ const manufacturerInput = computed({
     updateValue()
   }
 })
-
-const manufacturerOptions = ref<{ text: string; value: string }[]>([])
-
-const loadManufacturerOptions = async () => {
-  try {
-    const result = await deviceResearchApi.getOptions()
-    manufacturerOptions.value = (result.manufacturer || []).map(m => ({ text: m, value: m }))
-  } catch (error) {
-    console.error('加载设备厂商选项失败:', error)
-  }
-}
-
-const onManufacturerConfirm = ({ selectedOptions }: any) => {
-  formData.deviceManufacturer = selectedOptions[0].text
-  showManufacturerPicker.value = false
-  updateValue()
-}
-
-const onManufacturerInputConfirm = () => {
-  if (!customManufacturer.value.trim()) {
-    showToast('请输入设备厂商名称')
-    return false
-  }
-  formData.deviceManufacturer = customManufacturer.value.trim()
-  showManufacturerInput.value = false
-  showManufacturerPicker.value = false
-  customManufacturer.value = ''
-  updateValue()
-  return true
-}
 
 // 初始化
 onMounted(async () => {
@@ -258,8 +294,6 @@ onMounted(async () => {
     formData.workshopName = deviceResearchStore.lastSelectedWorkshop.workshopName
     updateValue()
   }
-  // 加载设备厂商选项
-  await loadManufacturerOptions()
 })
 
 // 监听当前项目变化 - 添加 immediate 确保初始化时也执行
@@ -286,12 +320,12 @@ defineExpose({
       showToast('请在【我的】页面选择项目')
       return false
     }
-    if (!formData.workshopId) {
-      showToast('请选择车间')
+    if (!formData.workshopId || !formData.workshopName) {
+      showToast('请输入或选择车间')
       return false
     }
-    if (!formData.deviceTypeId) {
-      showToast('请选择设备类型')
+    if (!formData.deviceTypeId || !formData.deviceTypeName) {
+      showToast('请输入或选择设备类型')
       return false
     }
     if (!formData.quantity || formData.quantity <= 0) {
@@ -299,7 +333,7 @@ defineExpose({
       return false
     }
     if (!formData.deviceManufacturer) {
-      showToast('请选择或输入设备厂商')
+      showToast('请输入设备厂商')
       return false
     }
     return true
@@ -320,13 +354,8 @@ defineExpose({
   color: #969799;
 }
 
-.manufacturer-picker {
-  max-height: 50vh;
-}
-
-.picker-header {
-  padding: 12px 16px;
-  text-align: right;
-  border-bottom: 1px solid #ebedf0;
+.picker-btn {
+  /* 供手动输入字段触发下拉选择 */
+  flex-shrink: 0;
 }
 </style>

@@ -86,5 +86,12 @@ export const deviceTypeApi = {
    */
   delete: (id: number): Promise<void> => {
     return http.delete(`/device-types/${id}`)
+  },
+
+  /**
+   * 根据名称获取设备类型，不存在则自动创建
+   */
+  createOrGet: (data: { name: string; projectId?: number }): Promise<Option> => {
+    return http.post('/device-types/create-or-get', data)
   }
 }

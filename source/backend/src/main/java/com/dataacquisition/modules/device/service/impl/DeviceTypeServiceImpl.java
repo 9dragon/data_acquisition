@@ -179,4 +179,40 @@ public class DeviceTypeServiceImpl extends ServiceImpl<DeviceTypeMapper, DeviceT
                 .map(dt -> new OptionDto(dt.getId(), dt.getName()))
                 .collect(Collectors.toList());
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public OptionDto createOrGetByName(Long projectId, String name) {
+        if (StringUtils.isBlank(name)) {
+            throw new IllegalArgumentException("设备类型名称不能为空");
+        }
+
+        String normalizeName = name.trim();
+
+        // 按名称查找设备类型（项目专属），存在则直接返回
+        LambdaQueryWrapper<DeviceType> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(DeviceType::getName, normalizeName);
+        if (projectId != null) {
+            wrapper.eq(DeviceType::getProjectId, projectId);
+        }
+        wrapper.last("LIMIT 1");
+        DeviceType existing = this.getOne(wrapper);
+        if (existing != null) {
+            return new OptionDto(existing.getId(), existing.getName());
+        }
+
+        // 不存在则自动创建
+        DeviceType deviceType = new DeviceType();
+        deviceType.setName(normalizeName);
+        deviceType.setCode("DT" + System.currentTimeMillis());
+        deviceType.setProjectId(projectId);
+        if (projectId != null) {
+            Project project = projectMapper.selectById(projectId);
+            if (project != null) {
+                deviceType.setProjectName(project.getName());
+            }
+        }
+        this.save(deviceType);
+        return new OptionDto(deviceType.getId(), deviceType.getName());
+    }
 }

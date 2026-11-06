@@ -55,5 +55,12 @@ export const workshopApi = {
    */
   getById: (id: number): Promise<Workshop> => {
     return http.get(`/workshops/${id}`)
+  },
+
+  /**
+   * 根据名称获取车间，不存在则自动创建
+   */
+  createOrGet: (data: { name: string; projectId?: number }): Promise<Option> => {
+    return http.post('/workshops/create-or-get', data)
   }
 }
